@@ -30,6 +30,9 @@ export const metadata: Metadata = {
   description:
     "Painel de dados imersivo sobre Coimbra. Clima, mobilidade, universidade e mercado imobiliário em tempo real.",
   keywords: ["Coimbra", "dados", "dashboard", "Portugal", "tempo real"],
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 export default function RootLayout({
