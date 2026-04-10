@@ -18,23 +18,22 @@ export default function SectionReveal({ children, className = '', id }: SectionR
     const el = ref.current
     if (!el) return
 
-    const idx = sectionIndex++
-    const xFrom = idx % 2 === 0 ? -30 : 30
+    sectionIndex++
 
     gsap.fromTo(
       el,
-      { opacity: 0, y: 40, x: xFrom },
+      { opacity: 0, y: 32 },
       {
         opacity: 1,
         y: 0,
-        x: 0,
-        duration: 1.1,
-        ease: 'power3.out',
+        duration: 0.9,
+        ease: 'power2.out',
         scrollTrigger: {
           trigger: el,
-          start: 'top 88%',
-          end: 'top 55%',
-          scrub: 0.6,
+          start: 'top 90%',
+          end: 'top 60%',
+          scrub: false,
+          once: true,
         },
       }
     )
@@ -51,7 +50,7 @@ export default function SectionReveal({ children, className = '', id }: SectionR
       ref={ref}
       id={id}
       className={className}
-      style={{ padding: '5rem 4rem' }}
+      style={{ padding: '6rem 4rem' }}
     >
       <div style={{ maxWidth: '1280px', marginLeft: 'auto', marginRight: 'auto' }}>
         {children}

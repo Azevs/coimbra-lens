@@ -43,7 +43,7 @@ export default function RiverModule() {
 
   if (isLoading || !river) {
     return (
-      <GlassCard style={{ alignSelf: 'start' }}>
+      <GlassCard>
         <div className="animate-pulse space-y-3">
           <div className="h-4 bg-[var(--bg-primary)] rounded w-28" />
           <div className="h-10 bg-[var(--bg-primary)] rounded w-20" />
@@ -59,7 +59,6 @@ export default function RiverModule() {
 
   return (
     <GlassCard style={{
-      alignSelf: 'start',
       ...(alertLevel ? { border: `1px solid ${alertColor}40`, boxShadow: `0 0 20px ${alertColor}20` } : {}),
     }}>
       <span style={{ fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.75rem' }}>

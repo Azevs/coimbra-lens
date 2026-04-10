@@ -16,14 +16,14 @@ export default function ClimateSection() {
         title="Clima & Qualidade do Ar"
         subtitle="Dados meteorológicos e ambientais de Coimbra em tempo real."
       />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem' }}>
         <WeatherModule />
         <AirQualityModule />
         <WaterQualityModule />
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem', marginTop: '1.5rem', alignItems: 'start' }}>
-        <ForecastPanel />
         <RiverModule />
+      </div>
+      <div style={{ marginTop: '1.5rem' }}>
+        <ForecastPanel />
       </div>
     </SectionReveal>
   )

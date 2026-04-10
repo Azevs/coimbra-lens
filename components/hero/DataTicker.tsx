@@ -48,26 +48,53 @@ export default function DataTicker() {
   return (
     <div
       ref={tickerRef}
-      className="fixed top-0 left-0 right-0 z-[60] h-10 overflow-hidden"
+      className="fixed top-0 left-0 right-0 z-[60] overflow-hidden"
       style={{
-        background: 'rgba(7, 11, 20, 0.85)',
-        backdropFilter: 'blur(10px)',
+        background: 'var(--bg-sunken)',
+        borderBottom: '1px solid var(--border-subtle)',
+        height: '36px',
       }}
     >
       <div ref={innerRef} className="flex items-center h-full whitespace-nowrap">
         {[...allItems, ...allItems].map((item, i) => (
           <span key={i} className="flex items-center shrink-0">
-            <span style={{ margin: '0 6px' }}>{item.icon}</span>
-            <span style={{ color: 'var(--text-secondary)', fontSize: '11px', fontFamily: 'var(--font-dm-sans)', marginRight: '6px' }}>
-              {item.label}
+            <span style={{
+              fontFamily: 'var(--font-jetbrains)',
+              fontSize: '9px',
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: 'var(--text-tertiary)',
+              marginRight: '6px',
+              marginLeft: '18px',
+            }}>
+              {item.icon} {item.label}
             </span>
-            <span className="font-data" style={{ fontSize: '12px' }}>{item.value}</span>
+            <span style={{
+              fontFamily: 'var(--font-jetbrains)',
+              fontSize: '11px',
+              fontWeight: 500,
+              color: 'var(--text-data)',
+              fontFeatureSettings: "'tnum' 1",
+            }}>
+              {item.value}
+            </span>
             {item.unit && (
-              <span style={{ color: 'var(--text-secondary)', fontSize: '11px', marginLeft: '3px', marginRight: '2px' }}>
+              <span style={{
+                fontFamily: 'var(--font-jetbrains)',
+                fontSize: '9px',
+                color: 'var(--text-tertiary)',
+                marginLeft: '3px',
+              }}>
                 {item.unit}
               </span>
             )}
-            <span style={{ color: 'var(--accent-blue)', margin: '0 14px', fontSize: '10px', opacity: 0.6 }}>◆</span>
+            <span style={{
+              color: 'var(--accent)',
+              margin: '0 4px 0 18px',
+              fontSize: '6px',
+              opacity: 0.5,
+              flexShrink: 0,
+            }}>◆</span>
           </span>
         ))}
       </div>

@@ -31,21 +31,35 @@ export default function Home() {
       <RealEstate />
       <ParishRanking />
       {/* Footer */}
-      <footer style={{ padding: '3rem 2rem', textAlign: 'center', borderTop: '1px solid var(--glass-border)' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
-          <p className="font-display" style={{ fontSize: '1.125rem', color: 'var(--text-primary)' }}>
-            Coimbra<span style={{ color: 'var(--accent-gold)' }}>Lens</span>
-          </p>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-            A cidade em dados · {new Date().getFullYear()}
-          </p>
-          <p style={{ fontSize: '0.625rem', color: 'var(--text-secondary)', marginTop: '1rem', opacity: 0.6 }}>
-            Dados de referência 2024. Fontes:{' '}
-            <a href="https://www.open-meteo.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-gold)', textDecoration: 'underline' }}>Open-Meteo</a>
+      <footer style={{
+        borderTop: '1px solid var(--border-panel)',
+        background: 'var(--bg-sunken)',
+        padding: '3rem 4rem',
+      }}>
+        <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1.5rem' }}>
+          <div>
+            <p style={{
+              fontFamily: 'var(--font-fraunces)',
+              fontWeight: 700,
+              fontSize: '1rem',
+              letterSpacing: '-0.03em',
+              color: 'var(--text-primary)',
+              marginBottom: '0.25rem',
+            }}>
+              Coimbra<span style={{ color: 'var(--accent)', fontStyle: 'italic', fontWeight: 300 }}>Lens</span>
+            </p>
+            <p style={{ fontFamily: 'var(--font-ibm-plex)', fontSize: '0.75rem', color: 'var(--text-tertiary)', fontWeight: 300 }}>
+              A cidade em dados · {new Date().getFullYear()}
+            </p>
+          </div>
+          <p style={{ fontFamily: 'var(--font-jetbrains)', fontSize: '9px', color: 'var(--text-tertiary)', letterSpacing: '0.06em', lineHeight: 1.8, maxWidth: '480px', textAlign: 'right' }}>
+            FONTES:{' '}
+            <a href="https://www.open-meteo.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Open-Meteo</a>
             {' · '}
-            <a href="https://openaq.org" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-gold)', textDecoration: 'underline' }}>OpenAQ</a>
-            {' · INE · CAOP · UC · '}
-            <a href="https://www.transit.land/terms" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-gold)', textDecoration: 'underline' }}>Transitland (Termos)</a>
+            <a href="https://openaq.org" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'none' }}>OpenAQ</a>
+            {' · INE · CAOP · UC · SNIRH · AIMA · '}
+            <a href="https://www.transit.land/terms" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Transitland</a>
+            {' · Mapbox'}
           </p>
         </div>
       </footer>

@@ -8,22 +8,22 @@ import CityScore from './CityScore'
 export default function HeroSection() {
   const heroRef = useRef<HTMLDivElement>(null)
   const line1 = useRef<HTMLDivElement>(null)
-  const line2 = useRef<HTMLDivElement>(null)
-  const line3 = useRef<HTMLDivElement>(null)
-  const line4 = useRef<HTMLDivElement>(null)
-  const scrollRef = useRef<HTMLDivElement>(null)
+  const line2 = useRef<HTMLSpanElement>(null)
+  const line3 = useRef<HTMLSpanElement>(null)
+  const line4 = useRef<HTMLParagraphElement>(null)
+  const scrollIndicator = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const tl = gsap.timeline({ delay: 0.5 })
+    const tl = gsap.timeline({ delay: 0.3 })
 
-    tl.from(line1.current, { y: 30, duration: 0.8, ease: 'power2.out' })
-      .from(line2.current, { y: 40, duration: 0.9, ease: 'power2.out' }, '-=0.4')
-      .from(line3.current, { y: 40, duration: 0.9, ease: 'power2.out' }, '-=0.5')
-      .from(line4.current, { y: 20, duration: 0.7, ease: 'power2.out' }, '-=0.4')
+    tl.fromTo(line1.current,   { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' })
+      .fromTo(line2.current,   { opacity: 0, y: 48 }, { opacity: 1, y: 0, duration: 0.9, ease: 'power3.out' }, '-=0.2')
+      .fromTo(line3.current,   { opacity: 0, y: 48 }, { opacity: 1, y: 0, duration: 0.9, ease: 'power3.out' }, '-=0.6')
+      .fromTo(line4.current,   { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }, '-=0.4')
+      .fromTo(scrollIndicator.current, { opacity: 0 }, { opacity: 1, duration: 0.8, ease: 'power1.out' }, '-=0.2')
 
-    // Parallax
     gsap.to('.hero-bg', {
-      yPercent: -30,
+      yPercent: -25,
       ease: 'none',
       scrollTrigger: {
         trigger: heroRef.current,
@@ -39,72 +39,120 @@ export default function HeroSection() {
   return (
     <>
       <DataTicker />
-      <div ref={heroRef} className="relative h-screen overflow-hidden flex items-center justify-center">
+      <div ref={heroRef} className="relative h-screen overflow-hidden" style={{ display: 'flex', alignItems: 'flex-end' }}>
         {/* Video Background */}
         <div className="hero-bg absolute inset-0">
-          {/* Dark fallback behind video */}
-          <div
-            className="absolute inset-0"
-            style={{ background: 'radial-gradient(ellipse at 50% 50%, #0D1525 0%, #070B14 100%)' }}
-          />
+          <div className="absolute inset-0" style={{ background: '#0A0D12' }} />
           <video
-            autoPlay
-            muted
-            loop
-            playsInline
+            autoPlay muted loop playsInline
             className="absolute inset-0 w-full h-full object-cover"
+            style={{ opacity: 0.22 }}
           >
-            <source
-              src="https://videos.pexels.com/video-files/6962693/6962693-uhd_2560_1440_30fps.mp4"
-              type="video/mp4"
-            />
+            <source src="https://videos.pexels.com/video-files/6962693/6962693-uhd_2560_1440_30fps.mp4" type="video/mp4" />
           </video>
         </div>
 
-        {/* Overlay gradient */}
-        <div
-          className="absolute inset-0 z-10"
-          style={{
-            background: 'linear-gradient(to bottom, rgba(7,11,20,0.6) 0%, rgba(7,11,20,0.85) 50%, rgba(7,11,20,0.98) 100%)',
-          }}
-        />
+        {/* Vignette — darker at edges, lighter at center */}
+        <div className="absolute inset-0 z-10" style={{
+          background: 'radial-gradient(ellipse 80% 70% at 30% 60%, transparent 0%, rgba(10,13,18,0.7) 60%, rgba(10,13,18,0.97) 100%)',
+        }} />
+        {/* Bottom fade */}
+        <div className="absolute bottom-0 left-0 right-0 z-10" style={{ height: '40%', background: 'linear-gradient(to bottom, transparent, var(--bg-primary))' }} />
 
-        {/* Content */}
-        <div className="relative z-20 text-center px-4">
-          <div ref={line1} className="font-data text-sm tracking-widest mb-4">
+        {/* Content — left-aligned, bottom-anchored */}
+        <div className="relative z-20" style={{ padding: '0 4rem 6rem', maxWidth: '1280px', width: '100%', margin: '0 auto' }}>
+
+          {/* Eyebrow */}
+          <div
+            ref={line1}
+            style={{
+              fontFamily: 'var(--font-jetbrains)',
+              fontSize: '10px',
+              letterSpacing: '0.2em',
+              color: 'var(--accent)',
+              marginBottom: '1.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem',
+            }}
+          >
+            <span style={{ width: '32px', height: '1px', background: 'var(--accent)', display: 'inline-block' }} />
             DADOS EM TEMPO REAL · COIMBRA · {year}
           </div>
-          <h1>
-            <span ref={line2} className="font-display text-6xl md:text-8xl lg:text-9xl text-[var(--text-primary)] block" style={{ textShadow: '0 4px 30px rgba(0,0,0,0.8)' }}>
+
+          {/* Main title */}
+          <h1 style={{ overflow: 'hidden', marginBottom: '0.25rem' }}>
+            <span
+              ref={line2}
+              style={{
+                fontFamily: 'var(--font-fraunces)',
+                fontWeight: 700,
+                fontSize: 'clamp(4rem, 11vw, 8.5rem)',
+                letterSpacing: '-0.04em',
+                color: 'var(--text-primary)',
+                lineHeight: 0.9,
+                display: 'block',
+              }}
+            >
               Coimbra
             </span>
-            <span ref={line3} className="font-display text-6xl md:text-8xl lg:text-9xl text-[var(--accent-gold)] block" style={{ textShadow: '0 4px 30px rgba(201,168,76,0.5)' }}>
+          </h1>
+          <h1 style={{ overflow: 'hidden', marginBottom: '2rem' }}>
+            <span
+              ref={line3}
+              style={{
+                fontFamily: 'var(--font-fraunces)',
+                fontWeight: 300,
+                fontStyle: 'italic',
+                fontSize: 'clamp(4rem, 11vw, 8.5rem)',
+                letterSpacing: '-0.04em',
+                color: 'var(--accent)',
+                lineHeight: 0.9,
+                display: 'block',
+              }}
+            >
               Lens
             </span>
           </h1>
-          <p ref={line4} className="text-[var(--text-primary)] text-lg md:text-xl max-w-lg mx-auto" style={{ marginTop: '2.5rem', textShadow: '0 2px 10px rgba(0,0,0,0.8)' }}>
-            A cidade em dados. Viva, precisa, agora.
+
+          {/* Descriptor line */}
+          <p
+            ref={line4}
+            style={{
+              fontFamily: 'var(--font-ibm-plex)',
+              fontSize: '1rem',
+              fontWeight: 300,
+              color: 'var(--text-secondary)',
+              maxWidth: '26rem',
+              lineHeight: 1.6,
+            }}
+          >
+            A cidade em dados —<br />viva, precisa, agora.
           </p>
         </div>
 
-        {/* City Score arc */}
+        {/* City Score — top-right */}
         <CityScore />
 
         {/* Scroll indicator */}
-        <div ref={scrollRef} className="absolute bottom-8 z-20 flex flex-col items-center gap-2" style={{ opacity: 1 }}>
-          <span className="label-text" style={{ color: '#ffffff', textShadow: '0 2px 8px rgba(0,0,0,0.9)', letterSpacing: '0.2em' }}>EXPLORAR</span>
-          <svg
-            className="animate-bounce-down"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#C9A84C"
-            strokeWidth="2.5"
-            style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.8))' }}
-          >
-            <path d="M12 5v14M19 12l-7 7-7-7" />
-          </svg>
+        <div
+          ref={scrollIndicator}
+          className="absolute z-20"
+          style={{ bottom: '2.5rem', left: '4rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}
+        >
+          <span style={{
+            fontFamily: 'var(--font-ibm-plex)',
+            fontSize: '9px',
+            fontWeight: 500,
+            letterSpacing: '0.2em',
+            textTransform: 'uppercase',
+            color: 'var(--text-tertiary)',
+            writingMode: 'vertical-rl',
+            transform: 'rotate(180deg)',
+          }}>
+            Explorar
+          </span>
+          <div style={{ width: '1px', height: '48px', background: 'linear-gradient(to bottom, var(--accent), transparent)' }} className="animate-bounce-down" />
         </div>
       </div>
     </>

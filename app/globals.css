@@ -1,42 +1,52 @@
 @import "tailwindcss";
 
 :root {
-  /* Base Dark */
-  --bg-primary: #070B14;
-  --bg-secondary: #0D1525;
-  --bg-glass: rgba(13, 21, 37, 0.6);
+  /* ── Carta Náutica Palette ───────────────────────────── */
+  --bg-primary:    #0A0D12;   /* near-black ink */
+  --bg-secondary:  #0F1318;   /* panel background */
+  --bg-raised:     #141920;   /* elevated surface */
+  --bg-sunken:     #080B0F;   /* recessed / inset */
 
-  /* Accents */
-  --accent-gold: #C9A84C;
-  --accent-blue: #2E86C1;
-  --accent-teal: #1ABC9C;
-  --accent-red: #E74C3C;
+  /* Single dominant accent: terracotta / wax seal */
+  --accent:        #C1440E;   /* primary accent */
+  --accent-dim:    #8A3008;   /* muted / secondary accent */
+  --accent-glow:   rgba(193, 68, 14, 0.18);
 
-  /* Text */
-  --text-primary: #F0F4FF;
-  --text-secondary: #8899BB;
-  --text-data: #C9A84C;
+  /* Supporting palette — muted, desaturated */
+  --tone-blue:     #3D6E8C;   /* data blue */
+  --tone-teal:     #2E7D6E;   /* secondary data */
+  --tone-amber:    #B07D3A;   /* warm data */
+  --tone-muted:    #4A5568;   /* disabled / tertiary */
 
-  /* Glassmorphism */
-  --glass-border: rgba(201, 168, 76, 0.15);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-  --glass-blur: blur(16px);
+  /* Text — high contrast, WCAG AA guaranteed */
+  --text-primary:   #E8EAF0;  /* 14:1 on bg-primary */
+  --text-secondary: #8C95A8;  /* 5.2:1 on bg-primary */
+  --text-tertiary:  #535D6E;  /* decorative only */
+  --text-data:      #D4884A;  /* data readouts */
+
+  /* Borders */
+  --border-strong:  rgba(193, 68, 14, 0.35);
+  --border-subtle:  rgba(255, 255, 255, 0.06);
+  --border-panel:   rgba(255, 255, 255, 0.08);
+
+  /* Shadows — layered depth */
+  --shadow-sm:   0 1px 3px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-md:   0 4px 12px rgba(0,0,0,0.6), 0 2px 4px rgba(0,0,0,0.5);
+  --shadow-lg:   0 16px 40px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.5);
+  --shadow-accent: 0 0 0 1px var(--border-strong), 0 8px 24px rgba(193,68,14,0.12);
+
+  /* Kept for backward compat — mapped to new system */
+  --accent-gold:  var(--tone-amber);
+  --accent-blue:  var(--tone-blue);
+  --accent-teal:  var(--tone-teal);
+  --accent-red:   #B03A2E;
+  --glass-border: var(--border-panel);
+  --glass-shadow: var(--shadow-md);
+  --glass-blur:   blur(0px);
+  --bg-glass:     var(--bg-secondary);
 }
 
-@theme inline {
-  --color-bg-primary: var(--bg-primary);
-  --color-bg-secondary: var(--bg-secondary);
-  --color-accent-gold: var(--accent-gold);
-  --color-accent-blue: var(--accent-blue);
-  --color-accent-teal: var(--accent-teal);
-  --color-accent-red: var(--accent-red);
-  --color-text-primary: var(--text-primary);
-  --color-text-secondary: var(--text-secondary);
-  --font-display: var(--font-playfair);
-  --font-mono: var(--font-dm-mono);
-  --font-sans: var(--font-dm-sans);
-}
-
+/* ── Reset ──────────────────────────────────────────────────────────────── */
 * {
   margin: 0;
   padding: 0;
@@ -47,26 +57,27 @@ html {
   overflow-x: hidden;
 }
 
+/* ── Base ───────────────────────────────────────────────────────────────── */
 body {
   background: var(--bg-primary);
   color: var(--text-primary);
-  font-family: var(--font-dm-sans), sans-serif;
+  font-family: var(--font-ibm-plex), 'IBM Plex Sans', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
   overflow-x: hidden;
+  /* Subtle paper/ink noise texture */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
 }
 
-/* Layout containers */
+/* ── Layout ─────────────────────────────────────────────────────────────── */
 .page-section {
-  padding: 5rem 2rem;
+  padding: 6rem 2rem;
 }
 @media (min-width: 768px) {
-  .page-section {
-    padding: 5rem 4rem;
-  }
+  .page-section { padding: 6rem 4rem; }
 }
 @media (min-width: 1024px) {
-  .page-section {
-    padding: 5rem 6rem;
-  }
+  .page-section { padding: 7rem 6rem; }
 }
 
 .section-container {
@@ -75,146 +86,191 @@ body {
   margin-right: auto;
 }
 
-/* Glassmorphism Card */
+/* ── Panel / Card System ────────────────────────────────────────────────── */
+/* Replaces glassmorphism — solid, engraved, layered */
 .glass-card {
-  background: var(--bg-glass);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-  border-radius: 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-panel);
+  border-radius: 4px;
+  box-shadow: var(--shadow-md);
+  padding: 1.5rem;
+  position: relative;
+}
+
+/* Accent-left variant — used for key stat cards */
+.panel-accent {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-panel);
+  border-left: 2px solid var(--accent);
+  border-radius: 4px;
+  box-shadow: var(--shadow-md);
   padding: 1.5rem;
 }
 
-/* Typography */
+/* Inset / recessed panel */
+.panel-inset {
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: 3px;
+  padding: 1rem;
+}
+
+/* ── Typography Scale ───────────────────────────────────────────────────── */
 .font-display {
-  font-family: var(--font-playfair), serif;
+  font-family: var(--font-fraunces), 'Fraunces', Georgia, serif;
   font-weight: 700;
+  letter-spacing: -0.03em;
+  font-variation-settings: 'SOFT' 50, 'WONK' 0;
+}
+
+.font-display-italic {
+  font-family: var(--font-fraunces), 'Fraunces', Georgia, serif;
+  font-style: italic;
+  font-weight: 300;
   letter-spacing: -0.02em;
 }
 
 .font-data {
-  font-family: var(--font-dm-mono), monospace;
-  font-weight: 600;
-  color: var(--accent-gold);
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+  font-weight: 500;
+  color: var(--text-data);
+  font-feature-settings: 'zero' 1, 'tnum' 1;
 }
 
 .label-text {
-  font-family: var(--font-dm-sans), sans-serif;
+  font-family: var(--font-ibm-plex), 'IBM Plex Sans', sans-serif;
   text-transform: uppercase;
-  letter-spacing: 0.15em;
-  font-size: 11px;
+  letter-spacing: 0.14em;
+  font-size: 10px;
+  font-weight: 500;
 }
 
-/* Button Micro-interactions */
+/* ── Signature detail: cartographic rule ────────────────────────────────── */
+/* Used in SectionTitle — a thin rule with diamond midpoint */
+.cartographic-rule {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 1.5rem;
+  width: 100%;
+}
+.cartographic-rule::before,
+.cartographic-rule::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--border-strong));
+}
+.cartographic-rule::after {
+  background: linear-gradient(to left, transparent, var(--border-strong));
+}
+.cartographic-rule-diamond {
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  transform: rotate(45deg);
+  flex-shrink: 0;
+  margin: 0 10px;
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+/* ── Interaction ────────────────────────────────────────────────────────── */
 .btn-primary {
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all 0.18s cubic-bezier(0.2, 0, 0, 1);
 }
 .btn-primary:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 8px 25px rgba(201, 168, 76, 0.4);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-accent);
 }
 .btn-primary:active {
-  transform: translateY(0) scale(0.98);
+  transform: translateY(0);
 }
 
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: var(--bg-primary);
-}
+/* ── Scrollbar ──────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
 ::-webkit-scrollbar-thumb {
-  background: rgba(201, 168, 76, 0.3);
-  border-radius: 3px;
+  background: var(--accent-dim);
+  border-radius: 2px;
 }
 
-/* Range slider thumb */
+/* ── Range slider ───────────────────────────────────────────────────────── */
 input[type='range']::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--accent-gold);
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--accent);
   cursor: pointer;
-  border: 2px solid var(--bg-primary);
-  box-shadow: 0 0 8px rgba(201, 168, 76, 0.5);
+  border: none;
+  box-shadow: 0 0 6px rgba(193,68,14,0.5);
 }
 input[type='range']::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--accent-gold);
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--accent);
   cursor: pointer;
-  border: 2px solid var(--bg-primary);
-  box-shadow: 0 0 8px rgba(201, 168, 76, 0.5);
+  border: none;
+  box-shadow: 0 0 6px rgba(193,68,14,0.5);
 }
 
-/* Mapbox overrides */
-.mapboxgl-canvas {
-  outline: none;
-}
+/* ── Mapbox ─────────────────────────────────────────────────────────────── */
+.mapboxgl-canvas { outline: none; }
 
-/* Bounce animation for scroll indicator */
+/* ── Animations ─────────────────────────────────────────────────────────── */
 @keyframes bounce-down {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(8px); }
+  50%       { transform: translateY(6px); }
 }
 .animate-bounce-down {
-  animation: bounce-down 2s ease-in-out infinite;
+  animation: bounce-down 2.4s ease-in-out infinite;
 }
 
-/* Ticker separator */
-.ticker-separator {
-  color: var(--accent-blue);
-  margin: 0 16px;
-}
-
-/* Flip animation for bus board */
 @keyframes flip-in {
   from { transform: rotateX(-90deg); opacity: 0; }
-  to { transform: rotateX(0); opacity: 1; }
+  to   { transform: rotateX(0);      opacity: 1; }
 }
 .flip-in {
-  animation: flip-in 0.6s ease-out;
+  animation: flip-in 0.5s cubic-bezier(0.2, 0, 0, 1);
   transform-origin: top center;
 }
 
-/* Gradient text */
+@keyframes pulse-accent {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+/* ── Gradient text ──────────────────────────────────────────────────────── */
 .gradient-text {
-  background: linear-gradient(135deg, var(--accent-gold), var(--accent-blue));
+  background: linear-gradient(135deg, var(--accent) 0%, var(--tone-amber) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* ── Mobile layout ─────────────────────────────────────────────────────── */
-
+/* ── Mobile ─────────────────────────────────────────────────────────────── */
 @media (max-width: 767px) {
-  /* Section padding shrinks on mobile */
   section[style*="padding: 5rem 4rem"],
   section[style*="padding:5rem 4rem"] {
-    padding: 3rem 1.25rem !important;
+    padding: 3.5rem 1.25rem !important;
   }
 
-  /* Force all CSS-grid sections to single column */
-  [style*="grid-template-columns: repeat(2"] ,
-  [style*="grid-template-columns: repeat(3"] ,
+  [style*="grid-template-columns: repeat(2"],
+  [style*="grid-template-columns: repeat(3"],
+  [style*="grid-template-columns: repeat(4"],
   [style*="grid-template-columns: 1fr 1fr"],
   [style*="grid-template-columns: 2fr 1fr"],
   [style*="grid-template-columns: '1fr 1fr'"] {
     grid-template-columns: 1fr !important;
   }
 
-  /* Parish ranking bar column tighter */
   [style*="grid-template-columns: 2rem 1fr 10rem 7rem"] {
     grid-template-columns: 1.5rem 1fr 5rem 4rem !important;
     gap: 0.5rem !important;
   }
 
-  /* Navbar hidden on small screens */
   nav[style*="top: 40px"] {
     display: none !important;
   }
