@@ -9,11 +9,12 @@ import { useMapLayers, type LayerType } from '@/hooks/useMapLayers'
 import MapLayerControls from './MapLayerControls'
 import ParishPanel from './ParishPanel'
 import SectionTitle from '@/components/ui/SectionTitle'
+import { colorMix } from '@/lib/color'
 
 const LAYER_META: Record<LayerType, { label: string; unit: string; min: string; max: string; gradFrom: string; gradTo: string }> = {
-  economia: { label: 'Rendimento Médio', unit: '€/mês', min: '€980', max: '€1 420', gradFrom: '#2E86C1', gradTo: '#C9A84C' },
-  demografia: { label: 'População', unit: 'habitantes', min: '580', max: '38 200', gradFrom: '#1ABC9C', gradTo: '#E74C3C' },
-  mobilidade: { label: 'Fluxo Diário', unit: 'viagens est.', min: '70', max: '4 584', gradFrom: '#0D1525', gradTo: '#2E86C1' },
+  economia: { label: 'Rendimento Médio', unit: '€/mês', min: '€980', max: '€1 420', gradFrom: 'var(--tone-blue)', gradTo: 'var(--tone-amber)' },
+  demografia: { label: 'População', unit: 'habitantes', min: '580', max: '38 200', gradFrom: 'var(--tone-teal)', gradTo: 'var(--tone-crimson)' },
+  mobilidade: { label: 'Fluxo Diário', unit: 'viagens est.', min: '70', max: '4 584', gradFrom: 'var(--bg-secondary)', gradTo: 'var(--tone-blue)' },
 }
 
 function MapLegend({ layer }: { layer: LayerType }) {
@@ -36,9 +37,9 @@ function MapLegend({ layer }: { layer: LayerType }) {
       </p>
       <div style={{ height: '8px', borderRadius: '4px', background: `linear-gradient(90deg, ${meta.gradFrom}, ${meta.gradTo})`, marginBottom: '0.35rem' }} />
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: '10px', fontFamily: 'var(--font-dm-mono)', color: 'var(--text-secondary)' }}>{meta.min}</span>
+        <span style={{ fontSize: '10px', fontFamily: 'var(--font-jetbrains)', color: 'var(--text-secondary)' }}>{meta.min}</span>
         <span style={{ fontSize: '9px', color: 'var(--text-secondary)' }}>{meta.unit}</span>
-        <span style={{ fontSize: '10px', fontFamily: 'var(--font-dm-mono)', color: 'var(--text-secondary)' }}>{meta.max}</span>
+        <span style={{ fontSize: '10px', fontFamily: 'var(--font-jetbrains)', color: 'var(--text-secondary)' }}>{meta.max}</span>
       </div>
     </motion.div>
   )
@@ -141,7 +142,7 @@ export default function CoimbraMap() {
       dot.style.borderRadius = '50%'
       dot.style.background = color
       dot.style.border = '2px solid rgba(255,255,255,0.5)'
-      dot.style.boxShadow = `0 0 6px ${color}80`
+      dot.style.boxShadow = `0 0 6px ${colorMix(color, 50)}`
       dot.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease'
       dot.style.transformOrigin = 'center center'
       el.appendChild(dot)
@@ -161,28 +162,28 @@ export default function CoimbraMap() {
         <div style="margin-bottom:5px">
           <div style="display:flex;justify-content:space-between;margin-bottom:2px">
             <span style="font-size:9px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.08em">Rendimento</span>
-            <span style="font-size:9px;font-family:monospace;color:#C9A84C">€${parish.income}/mês</span>
+            <span style="font-size:9px;font-family:monospace;color:var(--tone-amber)">€${parish.income}/mês</span>
           </div>
           <div style="height:3px;background:rgba(255,255,255,0.07);border-radius:2px">
-            <div style="height:100%;width:${incomePct}%;background:#C9A84C;border-radius:2px;box-shadow:0 0 4px #C9A84C60"></div>
+            <div style="height:100%;width:${incomePct}%;background:var(--tone-amber);border-radius:2px;box-shadow:0 0 4px var(--tone-amber)60"></div>
           </div>
         </div>
         <div style="margin-bottom:5px">
           <div style="display:flex;justify-content:space-between;margin-bottom:2px">
             <span style="font-size:9px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.08em">População</span>
-            <span style="font-size:9px;font-family:monospace;color:#1ABC9C">${parish.population.toLocaleString('pt-PT')}</span>
+            <span style="font-size:9px;font-family:monospace;color:var(--tone-teal)">${parish.population.toLocaleString('pt-PT')}</span>
           </div>
           <div style="height:3px;background:rgba(255,255,255,0.07);border-radius:2px">
-            <div style="height:100%;width:${popPct}%;background:#1ABC9C;border-radius:2px;box-shadow:0 0 4px #1ABC9C60"></div>
+            <div style="height:100%;width:${popPct}%;background:var(--tone-teal);border-radius:2px;box-shadow:0 0 4px var(--tone-teal)60"></div>
           </div>
         </div>
         <div>
           <div style="display:flex;justify-content:space-between;margin-bottom:2px">
             <span style="font-size:9px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.08em">Mobilidade</span>
-            <span style="font-size:9px;font-family:monospace;color:#2E86C1">${mobility.toLocaleString('pt-PT')}/dia</span>
+            <span style="font-size:9px;font-family:monospace;color:var(--tone-blue)">${mobility.toLocaleString('pt-PT')}/dia</span>
           </div>
           <div style="height:3px;background:rgba(255,255,255,0.07);border-radius:2px">
-            <div style="height:100%;width:${mobPct}%;background:#2E86C1;border-radius:2px;box-shadow:0 0 4px #2E86C160"></div>
+            <div style="height:100%;width:${mobPct}%;background:var(--tone-blue);border-radius:2px;box-shadow:0 0 4px var(--tone-blue)60"></div>
           </div>
         </div>
         <div style="font-size:8px;color:rgba(255,255,255,0.25);margin-top:7px;text-align:center">clique para detalhes</div>
@@ -196,7 +197,7 @@ export default function CoimbraMap() {
       })
       el.addEventListener('mouseleave', () => {
         dot.style.transform = 'scale(1)'
-        dot.style.boxShadow = `0 0 6px ${color}80`
+        dot.style.boxShadow = `0 0 6px ${colorMix(color, 50)}`
         card.style.opacity = '0'
       })
 
@@ -220,8 +221,8 @@ export default function CoimbraMap() {
   }, [activeLayer, setParish])
 
   return (
-    <section id="mapa" style={{ padding: '5rem 4rem', position: 'relative' }}>
-      <div style={{ maxWidth: '1280px', marginLeft: 'auto', marginRight: 'auto' }}>
+    <section id="mapa" className="page-section" style={{ position: 'relative' }}>
+      <div className="section-container">
         <SectionTitle
           label="EXPLORAÇÃO GEOGRÁFICA"
           title="Mapa Interativo"

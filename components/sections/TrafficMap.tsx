@@ -6,17 +6,32 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import SectionReveal from '@/components/ui/SectionReveal'
 import SectionTitle from '@/components/ui/SectionTitle'
 import GlassCard from '@/components/ui/GlassCard'
+import DataSource from '@/components/ui/DataSource'
+import { live } from '@/lib/provenance'
+import { colorMix } from '@/lib/color'
 
 const TRAFFIC_LAYERS = [
   { id: 'flow', label: 'Fluxo', icon: '🚗' },
   { id: 'incidents', label: 'Incidentes', icon: '⚠️' },
 ]
 
+/**
+ * O Mapbox avalia estas cores fora do CSS, por isso são hexadecimais
+ * literais e não tokens. Correspondem a --state-fair / warn / poor / bad.
+ */
+const CONGESTION = {
+  low:      '#5C9A5C',
+  moderate: '#B07D3A',
+  heavy:    '#A05A3A',
+  severe:   '#8A1F2E',
+  unknown:  '#4A5568',
+} as const
+
 const LEGEND = [
-  { color: '#27AE60', label: 'Livre' },
-  { color: '#F1C40F', label: 'Moderado' },
-  { color: '#E67E22', label: 'Congestionado' },
-  { color: '#E74C3C', label: 'Parado' },
+  { color: CONGESTION.low,      label: 'Livre' },
+  { color: CONGESTION.moderate, label: 'Moderado' },
+  { color: CONGESTION.heavy,    label: 'Congestionado' },
+  { color: CONGESTION.severe,   label: 'Parado' },
 ]
 
 export default function TrafficMap() {
@@ -61,11 +76,11 @@ export default function TrafficMap() {
             'line-width': ['interpolate', ['linear'], ['zoom'], 10, 1.5, 15, 4],
             'line-color': [
               'match', ['get', 'congestion'],
-              'low',      '#27AE60',
-              'moderate', '#F1C40F',
-              'heavy',    '#E67E22',
-              'severe',   '#E74C3C',
-              '#8899BB',
+              'low',      CONGESTION.low,
+              'moderate', CONGESTION.moderate,
+              'heavy',    CONGESTION.heavy,
+              'severe',   CONGESTION.severe,
+              CONGESTION.unknown,
             ],
             'line-opacity': 0.85,
           },
@@ -82,10 +97,10 @@ export default function TrafficMap() {
           filter: ['==', ['get', 'congestion'], 'severe'],
           paint: {
             'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 4, 15, 10],
-            'circle-color': '#E74C3C',
+            'circle-color': CONGESTION.severe,
             'circle-opacity': 0.9,
             'circle-stroke-width': 2,
-            'circle-stroke-color': 'rgba(231,76,60,0.3)',
+            'circle-stroke-color': 'rgba(138,31,46,0.35)',
           },
           layout: { visibility: 'none' },
         })
@@ -123,7 +138,7 @@ export default function TrafficMap() {
         subtitle="Fluxo de tráfego em Coimbra actualizado em tempo real via Mapbox Traffic."
       />
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 220px', gap: '1.5rem', alignItems: 'start' }}>
+      <div className="grid-map-side">
         {/* Map */}
         <div style={{ position: 'relative', borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--glass-border)', height: '480px' }}>
           {/* Layer controls */}
@@ -139,14 +154,14 @@ export default function TrafficMap() {
                   padding: '0.375rem 0.875rem',
                   borderRadius: '9999px',
                   fontSize: '11px',
-                  fontFamily: 'var(--font-dm-sans)',
+                  fontFamily: 'var(--font-ibm-plex)',
                   fontWeight: 600,
                   cursor: 'pointer',
                   border: '1px solid',
                   transition: 'all 0.2s',
-                  background: activeLayer === layer.id ? 'var(--accent-gold)' : 'rgba(7,11,20,0.85)',
-                  color: activeLayer === layer.id ? '#070B14' : 'var(--accent-gold)',
-                  borderColor: activeLayer === layer.id ? 'var(--accent-gold)' : 'rgba(201,168,76,0.3)',
+                  background: activeLayer === layer.id ? 'var(--accent)' : 'rgba(7,11,20,0.85)',
+                  color: activeLayer === layer.id ? 'var(--bg-primary)' : 'var(--accent)',
+                  borderColor: activeLayer === layer.id ? 'var(--accent)' : 'rgba(201,168,76,0.3)',
                   backdropFilter: 'blur(8px)',
                 }}
               >
@@ -164,7 +179,7 @@ export default function TrafficMap() {
           }}>
             {LEGEND.map((item) => (
               <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '4px' }}>
-                <div style={{ width: '24px', height: '3px', borderRadius: '2px', background: item.color, boxShadow: `0 0 4px ${item.color}80` }} />
+                <div style={{ width: '24px', height: '3px', borderRadius: '2px', background: item.color, boxShadow: `0 0 4px ${colorMix(item.color, 50)}` }} />
                 <span style={{ fontSize: '9px', color: 'var(--text-secondary)', letterSpacing: '0.08em' }}>{item.label}</span>
               </div>
             ))}
@@ -176,45 +191,17 @@ export default function TrafficMap() {
         {/* Side panel */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <GlassCard style={{ padding: '1.25rem' }}>
-            <span style={{ fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '1rem' }}>
-              ESTADO DO TRÂNSITO
-            </span>
-            {[
-              { road: 'IC2 / EN1', status: 'Livre', color: '#27AE60' },
-              { road: 'Av. Fernão Magalhães', status: 'Moderado', color: '#F1C40F' },
-              { road: 'Ponte de Santa Clara', status: 'Livre', color: '#27AE60' },
-              { road: 'N111 — Ceira', status: 'Livre', color: '#27AE60' },
-              { road: 'Anel Viário Sul', status: 'Moderado', color: '#F1C40F' },
-            ].map((r) => (
-              <div key={r.road} style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                paddingBottom: '0.5rem', marginBottom: '0.5rem',
-                borderBottom: '1px solid rgba(255,255,255,0.04)',
-              }}>
-                <span style={{ fontSize: '11px', color: 'var(--text-primary)', fontFamily: 'var(--font-dm-sans)' }}>{r.road}</span>
-                <span style={{
-                  fontSize: '9px', padding: '2px 7px', borderRadius: '4px',
-                  background: `${r.color}18`, color: r.color,
-                  border: `1px solid ${r.color}35`,
-                  whiteSpace: 'nowrap',
-                }}>
-                  {r.status}
-                </span>
-              </div>
-            ))}
-          </GlassCard>
-
-          <GlassCard style={{ padding: '1.25rem' }}>
             <span style={{ fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.875rem' }}>
               FONTE
             </span>
             <p style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
               Dados de tráfego em tempo real fornecidos pelo{' '}
-              <a href="https://www.mapbox.com/traffic-data" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-gold)', textDecoration: 'none' }}>
+              <a href="https://www.mapbox.com/traffic-data" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'none' }}>
                 Mapbox Traffic API
               </a>
               {' '}— actualização contínua via sondas GPS agregadas anonimamente.
             </p>
+            <DataSource meta={live('Mapbox Traffic')} />
           </GlassCard>
         </div>
       </div>

@@ -35,11 +35,29 @@
   --shadow-lg:   0 16px 40px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.5);
   --shadow-accent: 0 0 0 1px var(--border-strong), 0 8px 24px rgba(193,68,14,0.12);
 
-  /* Kept for backward compat — mapped to new system */
+  /* ── Paleta de dados ──────────────────────────────────
+     Séries categóricas. Deliberadamente separada do acento da marca:
+     o acento identifica o CoimbraLens, estes tons identificam variáveis. */
+  --tone-violet:  #7A5C8A;
+  --tone-clay:    #A05A3A;
+  --tone-slate:   #5C7A8C;
+  --tone-moss:    #5C9A5C;
+  --tone-crimson: #8A1F2E;
+  --tone-rose:    #A8617C;
+
+  /* ── Semântica de estado ──────────────────────────────
+     Bom → mau. Usada por índices e limiares, nunca como cor de marca. */
+  --state-good: var(--tone-teal);
+  --state-fair: var(--tone-moss);
+  --state-warn: var(--tone-amber);
+  --state-poor: var(--accent);
+  --state-bad:  var(--tone-crimson);
+
+  /* Aliases herdados — a remover quando nada os referenciar. */
   --accent-gold:  var(--tone-amber);
   --accent-blue:  var(--tone-blue);
   --accent-teal:  var(--tone-teal);
-  --accent-red:   #B03A2E;
+  --accent-red:   var(--tone-crimson);
   --glass-border: var(--border-panel);
   --glass-shadow: var(--shadow-md);
   --glass-blur:   blur(0px);
@@ -78,6 +96,12 @@ body {
 }
 @media (min-width: 1024px) {
   .page-section { padding: 7rem 6rem; }
+}
+
+/* O cabeçalho é fixo (36px de ticker + 52px de navegação). Sem esta margem,
+   qualquer link da navegação aterra com o título escondido por baixo dele. */
+.page-section[id] {
+  scroll-margin-top: 104px;
 }
 
 .section-container {
@@ -250,29 +274,160 @@ input[type='range']::-moz-range-thumb {
   background-clip: text;
 }
 
-/* ── Mobile ─────────────────────────────────────────────────────────────── */
-@media (max-width: 767px) {
-  section[style*="padding: 5rem 4rem"],
-  section[style*="padding:5rem 4rem"] {
-    padding: 3.5rem 1.25rem !important;
-  }
+/* ── Grelhas de layout ──────────────────────────────────────────────────── */
+/* Substituem os selectores por atributo ([style*="grid-template-columns…"]),
+   que faziam pattern matching em strings de estilos inline e falhavam em
+   silêncio sempre que um valor mudava. */
 
-  [style*="grid-template-columns: repeat(2"],
-  [style*="grid-template-columns: repeat(3"],
-  [style*="grid-template-columns: repeat(4"],
-  [style*="grid-template-columns: 1fr 1fr"],
-  [style*="grid-template-columns: 2fr 1fr"],
-  [style*="grid-template-columns: '1fr 1fr'"] {
-    grid-template-columns: 1fr !important;
-  }
+/* Quatro módulos de dados lado a lado — clima, ar, água, rio. */
+.grid-modules {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 640px)  { .grid-modules { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1120px) { .grid-modules { grid-template-columns: repeat(4, 1fr); } }
 
-  [style*="grid-template-columns: 2rem 1fr 10rem 7rem"] {
-    grid-template-columns: 1.5rem 1fr 5rem 4rem !important;
-    gap: 0.5rem !important;
-  }
+/* Dois painéis de igual peso. */
+.grid-split {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 900px) { .grid-split { grid-template-columns: 1fr 1fr; } }
 
-  nav[style*="top: 40px"] {
-    display: none !important;
-  }
+/* Cartões de indicador — nunca menos de dois por linha, nem em telemóvel. */
+.grid-stats {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, 1fr);
+}
+@media (min-width: 720px)  { .grid-stats { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1020px) { .grid-stats { grid-template-columns: repeat(4, 1fr); } }
+
+/* Lista de cartões em duas colunas a partir de tablet. */
+.grid-cards {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 760px) { .grid-cards { grid-template-columns: repeat(2, 1fr); } }
+
+/* Previsão: 7 dias não cabem num telemóvel — passam a 4 + 3. */
+.grid-forecast {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(4, 1fr);
+}
+@media (min-width: 600px) { .grid-forecast { grid-template-columns: repeat(7, 1fr); } }
+
+/* Mapa com painel lateral — o painel passa para baixo em ecrã estreito. */
+.grid-map-side {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: 1fr;
+  align-items: start;
+}
+@media (min-width: 1020px) { .grid-map-side { grid-template-columns: 1fr 240px; } }
+
+/* Três métricas académicas: donut + barras. */
+.grid-academic {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 900px) { .grid-academic { grid-template-columns: 1fr 2fr; } }
+
+/* Bandeiras de nacionalidade. */
+.grid-flags {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, 1fr);
+}
+@media (min-width: 700px) { .grid-flags { grid-template-columns: repeat(5, 1fr); } }
+
+/* Linha do ranking de freguesias — as colunas encolhem, não transbordam. */
+.rank-row {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: 1.75rem 1fr 5.5rem 3.5rem;
+  align-items: center;
+}
+@media (min-width: 768px) {
+  .rank-row { gap: 1rem; grid-template-columns: 2rem 1fr 10rem 7rem; }
 }
 
+/* ── Herói ──────────────────────────────────────────────────────────────── */
+.hero-content {
+  padding: 0 1.25rem 4rem;
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+}
+@media (min-width: 768px)  { .hero-content { padding: 0 2.5rem 5rem; } }
+@media (min-width: 1024px) { .hero-content { padding: 0 4rem 6rem; } }
+
+/* O indicador vertical é decorativo e partilha a coluna do título. Só
+   aparece quando há margem suficiente para ficar FORA do padding do
+   conteúdo (4rem a partir de 1024px) — abaixo disso, sobrepunha-se ao texto. */
+.hero-scroll { display: none; }
+@media (min-width: 1024px) {
+  .hero-scroll { display: flex; left: 1.5rem; }
+}
+
+/* O selo de conforto sai do caminho do título em ecrã estreito. */
+.city-score { right: 1.25rem; bottom: 1.5rem; }
+@media (min-width: 768px) { .city-score { right: 2rem; bottom: 2rem; } }
+
+/* ── Navegação ──────────────────────────────────────────────────────────── */
+.nav-panel {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-panel);
+  border-top: 2px solid var(--accent);
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+}
+@media (min-width: 768px) { .nav-panel { padding: 0 2rem; } }
+
+/* ── Acessibilidade ─────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 200;
+  background: var(--bg-raised);
+  color: var(--text-primary);
+  border: 1px solid var(--accent);
+  padding: 0.75rem 1.25rem;
+  font-family: var(--font-ibm-plex), sans-serif;
+  font-size: 0.875rem;
+  border-radius: 3px;
+}
+.skip-link:focus {
+  left: 1rem;
+  top: 1rem;
+}
+
+/* Movimento reduzido: o painel continua a funcionar, deixa é de se mexer.
+   O GSAP lê esta preferência em lib/gsap-config.ts; isto cobre o CSS. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

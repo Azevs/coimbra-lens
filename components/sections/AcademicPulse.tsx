@@ -28,10 +28,10 @@ const FACULTIES = [
   { name: 'Ciências', students: 4100, color: 'var(--accent-teal)' },
   { name: 'Medicina', students: 2800, color: 'var(--accent-red)' },
   { name: 'Direito', students: 2600, color: 'var(--accent-blue)' },
-  { name: 'Economia', students: 3400, color: '#8B5CF6' },
-  { name: 'Engenharia', students: 3800, color: '#F59E0B' },
-  { name: 'Psicologia', students: 1900, color: '#EC4899' },
-  { name: 'Farmácia', students: 2047, color: '#10B981' },
+  { name: 'Economia', students: 3400, color: 'var(--tone-violet)' },
+  { name: 'Engenharia', students: 3800, color: 'var(--tone-clay)' },
+  { name: 'Psicologia', students: 1900, color: 'var(--tone-rose)' },
+  { name: 'Farmácia', students: 2047, color: 'var(--tone-moss)' },
 ]
 
 export default function AcademicPulse() {
@@ -154,7 +154,7 @@ export default function AcademicPulse() {
             .attr('dominant-baseline', 'middle')
             .attr('fill', 'var(--accent-gold)')
             .attr('font-size', 11)
-            .attr('font-family', 'var(--font-dm-mono)')
+            .attr('font-family', 'var(--font-jetbrains)')
             .attr('opacity', 0)
             .text((d) => d.students.toLocaleString('pt-PT'))
             .transition()
@@ -180,7 +180,7 @@ export default function AcademicPulse() {
         subtitle="A mais antiga universidade de Portugal em números — dados de referência 2024."
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid-academic">
         {/* Key metrics */}
         <GlassCard className="flex flex-col items-center justify-center text-center">
           <div style={{ position: 'relative', width: '100%', maxWidth: '260px', margin: '0 auto' }}>
@@ -203,14 +203,14 @@ export default function AcademicPulse() {
         </GlassCard>
 
         {/* Faculty bars */}
-        <GlassCard className="lg:col-span-2">
+        <GlassCard>
           <span className="label-text text-[var(--text-secondary)] block mb-4">Estudantes por Faculdade</span>
           <svg ref={barsRef} className="w-full" style={{ maxHeight: 340 }} />
         </GlassCard>
       </div>
 
       {/* Top nationalities */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6">
+      <div className="grid-flags" style={{ marginTop: '1.5rem' }}>
         {UNIVERSITY_DATA.topNationalities.map((n) => (
           <GlassCard key={n.country} className="text-center py-4">
             <span className="text-3xl block mb-2">{n.flag}</span>
@@ -221,7 +221,7 @@ export default function AcademicPulse() {
       </div>
 
       {/* UC News */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginTop: '1.5rem' }}>
+      <div className="grid-split" style={{ marginTop: '1.5rem' }}>
         <UCNewsPanel />
         <GlassCard>
           <span style={{ fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '1rem' }}>
@@ -236,7 +236,7 @@ export default function AcademicPulse() {
             ].map((item) => (
               <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.75rem' }}>
                 <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>{item.label}</span>
-                <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '1.25rem', color: 'var(--accent-gold)' }}>
+                <span style={{ fontFamily: 'var(--font-jetbrains)', fontSize: '1.25rem', color: 'var(--accent-gold)' }}>
                   <AnimatedNumber value={item.value} />{item.suffix}
                 </span>
               </div>

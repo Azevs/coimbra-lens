@@ -123,7 +123,7 @@ export default function RealEstate() {
       .attr('text-anchor', 'middle')
       .attr('fill', (d) => (d.change >= 0 ? 'var(--accent-teal)' : 'var(--accent-red)'))
       .attr('font-size', 11)
-      .attr('font-family', 'var(--font-dm-mono)')
+      .attr('font-family', 'var(--font-jetbrains)')
       .text((d) => `${d.change >= 0 ? '+' : ''}${d.change}%`)
 
     // X axis labels
@@ -163,9 +163,9 @@ export default function RealEstate() {
             }}
           >
             <div style={{
-              background: 'var(--accent-gold)', color: '#070B14',
+              background: 'var(--accent-gold)', color: 'var(--bg-sunken)',
               borderRadius: '6px', padding: '2px 8px',
-              fontFamily: 'var(--font-playfair)', fontWeight: 700, fontSize: '1rem',
+              fontFamily: 'var(--font-fraunces)', fontWeight: 700, fontSize: '1rem',
               whiteSpace: 'nowrap',
             }}>
               {year}

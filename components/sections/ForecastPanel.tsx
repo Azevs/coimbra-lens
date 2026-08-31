@@ -2,6 +2,7 @@
 
 import { useForecast } from '@/hooks/useForecast'
 import GlassCard from '@/components/ui/GlassCard'
+import DataSource, { DataUnavailable } from '@/components/ui/DataSource'
 
 function getWeatherIcon(code: number): string {
   if (code === 0) return '☀️'
@@ -46,15 +47,15 @@ function HourlySparkline({ data }: { data: { hour: number; temp: number }[] }) {
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: '60px', display: 'block', marginTop: '0.25rem' }}>
         <defs>
           <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--accent-gold)" stopOpacity="0.3" />
-            <stop offset="100%" stopColor="var(--accent-gold)" stopOpacity="0" />
+            <stop offset="0%" stopColor="var(--tone-amber)" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="var(--tone-amber)" stopOpacity="0" />
           </linearGradient>
         </defs>
         <polygon points={fillPoints} fill="url(#sparkGrad)" />
-        <polyline points={points} fill="none" stroke="var(--accent-gold)" strokeWidth="1.5" strokeLinejoin="round" />
+        <polyline points={points} fill="none" stroke="var(--tone-amber)" strokeWidth="1.5" strokeLinejoin="round" />
         {/* Min/max labels */}
-        <text x={pad} y={H - 2} fontSize="9" fill="var(--text-secondary)" fontFamily="var(--font-dm-mono)">{min.toFixed(1)}°</text>
-        <text x={W - pad} y={H - 2} fontSize="9" fill="var(--text-secondary)" fontFamily="var(--font-dm-mono)" textAnchor="end">{max.toFixed(1)}°</text>
+        <text x={pad} y={H - 2} fontSize="9" fill="var(--text-secondary)" fontFamily="var(--font-jetbrains)">{min.toFixed(1)}°</text>
+        <text x={W - pad} y={H - 2} fontSize="9" fill="var(--text-secondary)" fontFamily="var(--font-jetbrains)" textAnchor="end">{max.toFixed(1)}°</text>
       </svg>
     </div>
   )
@@ -65,6 +66,19 @@ export default function ForecastPanel() {
 
   if (isLoading || !forecast) return null
 
+  // Sem previsão, o painel diz que não tem em vez de desaparecer sem explicação.
+  if (forecast.daily.length === 0) {
+    return (
+      <GlassCard>
+        <span style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.75rem' }}>
+          Previsão · 7 dias
+        </span>
+        <DataUnavailable meta={forecast.meta} />
+        <DataSource meta={forecast.meta} showNote={false} />
+      </GlassCard>
+    )
+  }
+
   return (
     <GlassCard>
       <HourlySparkline data={forecast.hourly} />
@@ -73,7 +87,7 @@ export default function ForecastPanel() {
         <span style={{ fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.75rem' }}>
           PREVISÃO · 7 DIAS
         </span>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem' }}>
+        <div className="grid-forecast">
           {forecast.daily.map((day, i) => (
             <div key={day.date} style={{ textAlign: 'center' }}>
               <span style={{ fontSize: '10px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
@@ -82,14 +96,14 @@ export default function ForecastPanel() {
               <span style={{ fontSize: '1.25rem', display: 'block', marginBottom: '4px' }}>
                 {getWeatherIcon(day.weatherCode)}
               </span>
-              <span style={{ fontSize: '11px', fontFamily: 'var(--font-dm-mono)', color: 'var(--accent-gold)', display: 'block' }}>
+              <span style={{ fontSize: '11px', fontFamily: 'var(--font-jetbrains)', color: 'var(--tone-amber)', display: 'block' }}>
                 {day.maxTemp.toFixed(0)}°
               </span>
-              <span style={{ fontSize: '10px', fontFamily: 'var(--font-dm-mono)', color: 'var(--text-secondary)', display: 'block' }}>
+              <span style={{ fontSize: '10px', fontFamily: 'var(--font-jetbrains)', color: 'var(--text-secondary)', display: 'block' }}>
                 {day.minTemp.toFixed(0)}°
               </span>
               {day.precip > 0 && (
-                <span style={{ fontSize: '9px', color: 'var(--accent-blue)', display: 'block' }}>
+                <span style={{ fontSize: '9px', color: 'var(--tone-blue)', display: 'block' }}>
                   {day.precip.toFixed(1)}mm
                 </span>
               )}
@@ -98,11 +112,7 @@ export default function ForecastPanel() {
         </div>
       </div>
 
-      {forecast.fallback && (
-        <p style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '0.75rem', opacity: 0.6 }}>
-          Dados de referência · Open-Meteo
-        </p>
-      )}
+      <DataSource meta={forecast.meta} />
     </GlassCard>
   )
 }

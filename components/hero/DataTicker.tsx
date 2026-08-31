@@ -6,7 +6,7 @@ import { useWeather } from '@/hooks/useWeather'
 import { useAirQuality } from '@/hooks/useAirQuality'
 import { useRiver } from '@/hooks/useRiver'
 
-const TREND_ICON = { rising: '↑', falling: '↓', stable: '→' }
+const TREND_ICON = { rising: '↑', falling: '↓', stable: '→' } as const
 
 export default function DataTicker() {
   const tickerRef = useRef<HTMLDivElement>(null)
@@ -15,17 +15,32 @@ export default function DataTicker() {
   const { data: air } = useAirQuality()
   const { data: river } = useRiver()
 
-  const riverAlert = river && river.level >= 2
-  const riverLabel = river
-    ? `${river.level.toFixed(2)} m ${TREND_ICON[river.trend]}${riverAlert ? ' ⚠️' : ''}`
-    : '—'
-
+  // Um traço quando não há leitura. O ticker nunca inventa um número.
   const allItems = [
-    { icon: '🌡️', label: 'Temperatura', value: weather ? `${weather.temperature.toFixed(1)}` : '—', unit: '°C' },
-    { icon: '💨', label: 'Qualidade do Ar', value: air ? `${air.aqi}` : '—', unit: 'AQI' },
-    { icon: '🌬️', label: 'Vento', value: weather ? `${weather.windSpeed.toFixed(0)}` : '—', unit: 'km/h' },
-    { icon: '🌊', label: 'Rio Mondego', value: riverLabel, unit: '' },
-    { icon: '🚗', label: 'Trânsito Coimbra', value: 'Em tempo real', unit: '' },
+    {
+      icon: '🌡️',
+      label: 'Temperatura',
+      value: weather?.temperature != null ? weather.temperature.toFixed(1) : '—',
+      unit: '°C',
+    },
+    {
+      icon: '💨',
+      label: 'Qualidade do Ar',
+      value: air?.aqi != null ? String(air.aqi) : '—',
+      unit: 'EAQI',
+    },
+    {
+      icon: '🌬️',
+      label: 'Vento',
+      value: weather?.windSpeed != null ? weather.windSpeed.toFixed(0) : '—',
+      unit: 'km/h',
+    },
+    {
+      icon: '🌊',
+      label: 'Mondego',
+      value: river?.discharge != null ? `${river.discharge.toFixed(1)} ${TREND_ICON[river.trend]}` : '—',
+      unit: 'm³/s',
+    },
   ]
 
   useEffect(() => {

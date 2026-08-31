@@ -6,6 +6,7 @@ import SectionReveal from '@/components/ui/SectionReveal'
 import SectionTitle from '@/components/ui/SectionTitle'
 import GlassCard from '@/components/ui/GlassCard'
 import { COIMBRA_PARISHES } from '@/lib/mapbox-config'
+import { colorMix } from '@/lib/color'
 
 type SortKey = 'name' | 'population' | 'income' | 'mobility'
 type SortDir = 'asc' | 'desc'
@@ -85,13 +86,13 @@ export default function ParishRanking() {
               padding: '0.4rem 1rem',
               borderRadius: '9999px',
               fontSize: '12px',
-              fontFamily: 'var(--font-dm-sans)',
+              fontFamily: 'var(--font-ibm-plex)',
               fontWeight: 600,
               cursor: 'pointer',
               border: '1px solid',
               transition: 'all 0.2s',
               background: sortKey === m.key ? 'var(--accent-gold)' : 'transparent',
-              color: sortKey === m.key ? '#070B14' : 'var(--accent-gold)',
+              color: sortKey === m.key ? 'var(--bg-sunken)' : 'var(--accent-gold)',
               borderColor: sortKey === m.key ? 'var(--accent-gold)' : 'var(--glass-border)',
             }}
           >
@@ -105,13 +106,7 @@ export default function ParishRanking() {
 
       <GlassCard style={{ padding: '0' }}>
         {/* Header */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '2rem 1fr 10rem 7rem',
-          gap: '1rem',
-          padding: '0.75rem 1.25rem',
-          borderBottom: '1px solid var(--glass-border)',
-        }}>
+        <div className="rank-row" style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid var(--border-panel)' }}>
           <span style={{ fontSize: '10px', color: 'var(--text-secondary)', letterSpacing: '0.1em' }}>#</span>
           <span style={{ fontSize: '10px', color: 'var(--text-secondary)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Freguesia</span>
           <span style={{ fontSize: '10px', color: 'var(--text-secondary)', letterSpacing: '0.1em', textTransform: 'uppercase', textAlign: 'right' }}>
@@ -136,13 +131,10 @@ export default function ParishRanking() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 10 }}
                 transition={{ duration: 0.25, delay: i * 0.02 }}
+                className="rank-row"
                 style={{
-                  display: 'grid',
-                  gridTemplateColumns: '2rem 1fr 10rem 7rem',
-                  gap: '1rem',
                   padding: '0.7rem 1.25rem',
-                  alignItems: 'center',
-                  borderBottom: i < rows.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                  borderBottom: i < rows.length - 1 ? '1px solid var(--border-subtle)' : 'none',
                   transition: 'background 0.2s',
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
@@ -151,7 +143,7 @@ export default function ParishRanking() {
                 {/* Rank */}
                 <span style={{
                   fontSize: '11px',
-                  fontFamily: 'var(--font-dm-mono)',
+                  fontFamily: 'var(--font-jetbrains)',
                   color: i < 3 ? 'var(--accent-gold)' : 'var(--text-secondary)',
                   fontWeight: i < 3 ? 700 : 400,
                 }}>
@@ -159,14 +151,14 @@ export default function ParishRanking() {
                 </span>
 
                 {/* Name */}
-                <span style={{ fontSize: '0.875rem', color: 'var(--text-primary)', fontFamily: 'var(--font-dm-sans)' }}>
+                <span style={{ fontSize: '0.875rem', color: 'var(--text-primary)', fontFamily: 'var(--font-ibm-plex)' }}>
                   {row.name}
                 </span>
 
                 {/* Value */}
                 <span style={{
                   fontSize: '0.875rem',
-                  fontFamily: 'var(--font-dm-mono)',
+                  fontFamily: 'var(--font-jetbrains)',
                   color: color,
                   textAlign: 'right',
                 }}>
@@ -184,7 +176,7 @@ export default function ParishRanking() {
                       height: '100%',
                       borderRadius: '3px',
                       background: color,
-                      boxShadow: `0 0 6px ${color}60`,
+                      boxShadow: `0 0 6px ${colorMix(color, 38)}`,
                     }}
                   />
                 </div>

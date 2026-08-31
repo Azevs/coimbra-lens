@@ -14,9 +14,9 @@ export default function ClimateSection() {
       <SectionTitle
         label="AMBIENTE"
         title="Clima & Qualidade do Ar"
-        subtitle="Dados meteorológicos e ambientais de Coimbra em tempo real."
+        subtitle="Clima e ar em directo. Água e caudal do rio a partir de fontes publicadas."
       />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem' }}>
+      <div className="grid-modules">
         <WeatherModule />
         <AirQualityModule />
         <WaterQualityModule />

@@ -1,24 +1,40 @@
-// ERSAR — Entidade Reguladora dos Serviços de Águas e Resíduos
-// Public water quality data for Coimbra (SIMARSUL / SMAS Coimbra)
-const ERSAR_URL =
-  'https://www.ersar.pt/pt/site-informacao/sistemas-abastecimento/qualidade-da-agua'
+import { estimate, type Sourced } from '@/lib/provenance'
 
-// Coimbra municipal water is managed by SMAS Coimbra
-// Real data published annually; we fetch and fallback gracefully
-const FALLBACK = {
-  ph: 7.2,
-  chlorine: 0.18,
-  turbidity: 0.4,
-  nitrates: 4.2,
-  conductivity: 285,
-  status: 'Própria',
-  source: 'Rio Mondego / Açude de Coimbra',
-  lastAnalysis: new Date().toISOString().slice(0, 10),
+// A ERSAR não expõe API — os dados de controlo da qualidade da água são
+// publicados no relatório anual RASARP, em tabelas HTML e PDF.
+//
+// Estes são valores típicos do sistema de abastecimento de Coimbra segundo
+// o último relatório publicado. NÃO são uma análise de hoje: a versão
+// anterior carimbava a data actual, o que sugeria uma medição diária que
+// não existe.
+const SOURCE = 'ERSAR · RASARP'
+const METHOD = 'Valores típicos do último relatório anual publicado. Não é uma análise diária.'
+
+/** Ano do relatório de onde vêm os valores abaixo. */
+const REPORT_YEAR = 2023
+
+export interface WaterQualityPayload {
+  ph: number
+  chlorine: number
+  turbidity: number
+  nitrates: number
+  conductivity: number
+  status: string
+  origin: string
+  reportYear: number
+  meta: Sourced
 }
 
 export async function GET() {
-  // ERSAR does not provide a public JSON API — data is in HTML tables.
-  // We serve the authoritative reference values from the last published
-  // annual report (RASARP 2023) and flag them clearly.
-  return Response.json({ ...FALLBACK, reference: true })
+  return Response.json({
+    ph: 7.2,
+    chlorine: 0.18,
+    turbidity: 0.4,
+    nitrates: 4.2,
+    conductivity: 285,
+    status: 'Própria para consumo',
+    origin: 'Rio Mondego · Açude-ponte de Coimbra',
+    reportYear: REPORT_YEAR,
+    meta: estimate(SOURCE, METHOD, `${REPORT_YEAR}-12-31T12:00:00`),
+  } satisfies WaterQualityPayload)
 }

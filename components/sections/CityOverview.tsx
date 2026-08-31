@@ -5,12 +5,13 @@ import { gsap } from '@/lib/gsap-config'
 import SectionReveal from '@/components/ui/SectionReveal'
 import SectionTitle from '@/components/ui/SectionTitle'
 import GlassCard from '@/components/ui/GlassCard'
+import { colorMix } from '@/lib/color'
 
 const STATS = [
   { label: 'População municipal', value: '143 396', unit: 'hab.', source: 'INE 2021', color: 'var(--accent-teal)' },
   { label: 'Área do município', value: '319.4', unit: 'km²', source: 'CAOP 2023', color: 'var(--accent-blue)' },
   { label: 'Densidade populacional', value: '449', unit: 'hab/km²', source: 'INE 2021', color: 'var(--accent-gold)' },
-  { label: 'Residentes estrangeiros', value: '14 200+', unit: 'pessoas', source: 'AIMA 2024', color: '#9B59B6' },
+  { label: 'Residentes estrangeiros', value: '14 200+', unit: 'pessoas', source: 'AIMA 2024', color: 'var(--tone-violet)' },
   { label: 'Estudantes universitários', value: '50 000+', unit: 'estudantes', source: 'UC / IPC 2024', color: 'var(--accent-gold)' },
   { label: 'Freguesias', value: '18', unit: 'freguesias', source: 'CAOP 2023', color: 'var(--accent-teal)' },
   { label: 'Taxa de desemprego', value: '6.2', unit: '%', source: 'INE 2023', color: 'var(--accent-red)' },
@@ -18,11 +19,11 @@ const STATS = [
 ]
 
 const NATIONALITIES = [
-  { country: 'Brasil', pct: 34, color: '#27AE60' },
-  { country: 'Nepal', pct: 18, color: '#E74C3C' },
-  { country: 'Índia', pct: 12, color: '#F39C12' },
-  { country: 'China', pct: 9, color: '#C0392B' },
-  { country: 'Outros', pct: 27, color: '#8899BB' },
+  { country: 'Brasil', pct: 34, color: 'var(--tone-moss)' },
+  { country: 'Nepal', pct: 18, color: 'var(--tone-crimson)' },
+  { country: 'Índia', pct: 12, color: 'var(--tone-clay)' },
+  { country: 'China', pct: 9, color: 'var(--tone-crimson)' },
+  { country: 'Outros', pct: 27, color: 'var(--tone-muted)' },
 ]
 
 function StatCard({ label, value, unit, source, color }: typeof STATS[0]) {
@@ -53,7 +54,7 @@ function StatCard({ label, value, unit, source, color }: typeof STATS[0]) {
         {label}
       </span>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.375rem' }}>
-        <span ref={numRef} style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '1.5rem', color, fontWeight: 700, lineHeight: 1 }}>
+        <span ref={numRef} style={{ fontFamily: 'var(--font-jetbrains)', fontSize: '1.5rem', color, fontWeight: 700, lineHeight: 1 }}>
           {value}
         </span>
         <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{unit}</span>
@@ -75,12 +76,12 @@ export default function CityOverview() {
       />
 
       {/* Main stats grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
+      <div className="grid-stats" style={{ marginBottom: '2rem' }}>
         {STATS.map((s) => <StatCard key={s.label} {...s} />)}
       </div>
 
       {/* Bottom row: nationalities + quick facts */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+      <div className="grid-split">
 
         {/* Nationality breakdown */}
         <GlassCard>
@@ -91,13 +92,13 @@ export default function CityOverview() {
             {NATIONALITIES.map((n) => (
               <div key={n.country}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
-                  <span style={{ fontSize: '11px', color: 'var(--text-primary)', fontFamily: 'var(--font-dm-sans)' }}>{n.country}</span>
-                  <span style={{ fontSize: '10px', fontFamily: 'var(--font-dm-mono)', color: n.color }}>{n.pct}%</span>
+                  <span style={{ fontSize: '11px', color: 'var(--text-primary)', fontFamily: 'var(--font-ibm-plex)' }}>{n.country}</span>
+                  <span style={{ fontSize: '10px', fontFamily: 'var(--font-jetbrains)', color: n.color }}>{n.pct}%</span>
                 </div>
                 <div style={{ height: '4px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px' }}>
                   <div style={{
                     height: '100%', width: `${n.pct}%`, borderRadius: '2px',
-                    background: n.color, boxShadow: `0 0 6px ${n.color}50`,
+                    background: n.color, boxShadow: `0 0 6px ${colorMix(n.color, 31)}`,
                     transition: 'width 1s ease',
                   }} />
                 </div>

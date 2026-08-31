@@ -2,21 +2,15 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { internalApi } from '@/lib/api-clients'
+import type { AirQualityPayload } from '@/app/api/air-quality/route'
 
-export interface AirQualityData {
-  aqi: number
-  pm25: number
-  pm10: number
-  no2: number
-  status: string
-  fallback?: boolean
-}
+export type { AirQualityPayload, Pollen, PollenLevel } from '@/app/api/air-quality/route'
 
 export function useAirQuality() {
-  return useQuery<AirQualityData>({
+  return useQuery<AirQualityPayload>({
     queryKey: ['airQuality', 'coimbra'],
     queryFn: () => internalApi.get('/air-quality').then((r) => r.data),
-    refetchInterval: 10 * 60 * 1000,
-    staleTime: 5 * 60 * 1000,
+    refetchInterval: 15 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
   })
 }

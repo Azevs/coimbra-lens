@@ -7,6 +7,10 @@ export const MAP_CONFIG = {
   antialias: true,
 }
 
+/**
+ * Cores de extrusão dos edifícios. Como o Mapbox as avalia fora do CSS,
+ * são literais — escolhidas para acompanhar --bg-secondary → --tone-slate.
+ */
 export const BUILDING_LAYER = {
   id: '3d-buildings',
   source: 'composite',
@@ -17,9 +21,9 @@ export const BUILDING_LAYER = {
   paint: {
     'fill-extrusion-color': [
       'interpolate', ['linear'], ['get', 'height'],
-      0, '#0D1525',
-      50, '#1A2A4A',
-      100, '#2E4A7A',
+      0, '#141920',
+      50, '#25313D',
+      100, '#3D4E5C',
     ],
     'fill-extrusion-height': ['get', 'height'],
     'fill-extrusion-base': ['get', 'min_height'],

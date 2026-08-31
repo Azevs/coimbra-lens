@@ -2,18 +2,12 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { internalApi } from '@/lib/api-clients'
+import type { WeatherPayload } from '@/app/api/weather/route'
 
-export interface WeatherData {
-  temperature: number
-  humidity: number
-  windSpeed: number
-  weatherCode: number
-  precipitation: number
-  fallback?: boolean
-}
+export type { WeatherPayload } from '@/app/api/weather/route'
 
 export function useWeather() {
-  return useQuery<WeatherData>({
+  return useQuery<WeatherPayload>({
     queryKey: ['weather', 'coimbra'],
     queryFn: () => internalApi.get('/weather').then((r) => r.data),
     refetchInterval: 5 * 60 * 1000,

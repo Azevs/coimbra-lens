@@ -1,15 +1,14 @@
 'use client'
 
 import { useEffect, useRef, type ReactNode } from 'react'
-import { gsap, ScrollTrigger } from '@/lib/gsap-config'
+import { gsap } from '@/lib/gsap-config'
+import { canAnimate } from '@/lib/motion'
 
 interface SectionRevealProps {
   children: ReactNode
   className?: string
   id?: string
 }
-
-let sectionIndex = 0
 
 export default function SectionReveal({ children, className = '', id }: SectionRevealProps) {
   const ref = useRef<HTMLElement>(null)
@@ -18,9 +17,13 @@ export default function SectionReveal({ children, className = '', id }: SectionR
     const el = ref.current
     if (!el) return
 
-    sectionIndex++
+    // O estado de repouso é visível. A animação só arranca quando é seguro
+    // executá-la: caso contrário o conteúdo ficaria preso em opacity 0 —
+    // é o que acontece num separador em segundo plano, onde o
+    // requestAnimationFrame do GSAP não corre e o `from` nunca avança.
+    if (!canAnimate()) return
 
-    gsap.fromTo(
+    const tween = gsap.fromTo(
       el,
       { opacity: 0, y: 32 },
       {
@@ -28,33 +31,22 @@ export default function SectionReveal({ children, className = '', id }: SectionR
         y: 0,
         duration: 0.9,
         ease: 'power2.out',
-        scrollTrigger: {
-          trigger: el,
-          start: 'top 90%',
-          end: 'top 60%',
-          scrub: false,
-          once: true,
-        },
+        scrollTrigger: { trigger: el, start: 'top 90%', once: true },
       }
     )
 
     return () => {
-      ScrollTrigger.getAll().forEach((t) => {
-        if (t.trigger === el) t.kill()
-      })
+      tween.scrollTrigger?.kill()
+      tween.kill()
+      // Devolver o elemento ao estado de repouso, para que desmontar a
+      // animação nunca deixe a secção invisível.
+      gsap.set(el, { clearProps: 'opacity,transform' })
     }
   }, [])
 
   return (
-    <section
-      ref={ref}
-      id={id}
-      className={className}
-      style={{ padding: '6rem 4rem' }}
-    >
-      <div style={{ maxWidth: '1280px', marginLeft: 'auto', marginRight: 'auto' }}>
-        {children}
-      </div>
+    <section ref={ref} id={id} className={`page-section ${className}`}>
+      <div className="section-container">{children}</div>
     </section>
   )
 }

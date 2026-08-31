@@ -23,10 +23,10 @@ export default function MapLayerControls() {
             onClick={() => setLayer(key)}
             className={`px-4 py-2 rounded-full text-xs font-semibold transition-colors ${
               isActive
-                ? 'bg-[var(--accent-gold)] text-[#070B14]'
+                ? 'bg-[var(--accent-gold)] text-[var(--bg-sunken)]'
                 : 'glass-card text-[var(--accent-gold)] border border-[var(--glass-border)]'
             }`}
-            style={{ fontFamily: 'var(--font-dm-sans)' }}
+            style={{ fontFamily: 'var(--font-ibm-plex)' }}
             whileTap={{ scale: 0.95 }}
           >
             {label}

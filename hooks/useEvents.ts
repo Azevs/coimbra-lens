@@ -1,26 +1,15 @@
+'use client'
+
 import { useQuery } from '@tanstack/react-query'
-import axios from 'axios'
+import { internalApi } from '@/lib/api-clients'
+import type { EventsPayload } from '@/app/api/events/route'
 
-export interface CityEvent {
-  id: string
-  title: string
-  date: string
-  venue: string
-  category: string
-  url: string
-  isFree: boolean
-}
-
-export interface EventsData {
-  events: CityEvent[]
-  fallback?: boolean
-}
+export type { EventsPayload, CityEvent } from '@/app/api/events/route'
 
 export function useEvents() {
-  return useQuery<EventsData>({
+  return useQuery<EventsPayload>({
     queryKey: ['events'],
-    queryFn: () => axios.get('/api/events').then((r) => r.data),
+    queryFn: () => internalApi.get('/events').then((r) => r.data),
     staleTime: 1000 * 60 * 60,
-    refetchInterval: 1000 * 60 * 60,
   })
 }

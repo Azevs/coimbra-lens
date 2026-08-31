@@ -4,13 +4,13 @@ import { useTransport } from '@/hooks/useTransport'
 import SectionReveal from '@/components/ui/SectionReveal'
 import SectionTitle from '@/components/ui/SectionTitle'
 import GlassCard from '@/components/ui/GlassCard'
+import DataSource, { DataUnavailable } from '@/components/ui/DataSource'
+import { estimate } from '@/lib/provenance'
 
-const STATUS_COLORS: Record<string, string> = {
-  'A caminho': 'var(--accent-teal)',
-  'No horário': 'var(--accent-blue)',
-  'Atrasado': 'var(--accent-red)',
-}
-
+/**
+ * Fluxos casa–trabalho estimados a partir da população residente por zona.
+ * Não são contagens — é um modelo, e está declarado como tal.
+ */
 const SANKEY_FLOWS = [
   { from: 'Olivais', to: 'Universidade', volume: 2400 },
   { from: 'Solum', to: 'Universidade', volume: 1800 },
@@ -22,50 +22,57 @@ const SANKEY_FLOWS = [
   { from: 'Cernache', to: 'Universidade', volume: 700 },
 ]
 
-function SankeySimple() {
+const FLOW_META = estimate(
+  'Modelo próprio · base INE 2021',
+  'Volumes estimados a partir da população residente por zona. Não são contagens de passageiros.',
+)
+
+const DEST_COLOR: Record<string, string> = {
+  Universidade: 'var(--tone-amber)',
+  Centro: 'var(--tone-teal)',
+  Hospital: 'var(--accent)',
+}
+
+function FlowChart() {
   const maxVol = Math.max(...SANKEY_FLOWS.map((f) => f.volume))
-  const origins = [...new Set(SANKEY_FLOWS.map((f) => f.from))]
   const destinations = [...new Set(SANKEY_FLOWS.map((f) => f.to))]
 
   return (
-    <div className="space-y-2">
-      <span className="label-text text-[var(--text-secondary)] block mb-3">
-        FLUXO MATINAL · ORIGENS → DESTINOS
+    <div>
+      <span style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.875rem' }}>
+        Fluxo matinal · origens → destinos
       </span>
-      {SANKEY_FLOWS.map((flow, i) => (
-        <div key={i} className="flex items-center gap-2 text-sm">
-          <span className="w-16 shrink-0 text-right text-[var(--text-secondary)] text-xs truncate">
-            {flow.from}
-          </span>
-          <div className="flex-1 min-w-0 h-4 rounded-full bg-[var(--bg-primary)] overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-1000"
-              style={{
-                width: `${(flow.volume / maxVol) * 100}%`,
-                background: `linear-gradient(90deg, var(--accent-blue), ${
-                  destinations.indexOf(flow.to) === 0
-                    ? 'var(--accent-gold)'
-                    : destinations.indexOf(flow.to) === 1
-                    ? 'var(--accent-teal)'
-                    : 'var(--accent-red)'
-                })`,
-              }}
-            />
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        {SANKEY_FLOWS.map((flow, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ width: '4.5rem', flexShrink: 0, textAlign: 'right', fontSize: '11px', color: 'var(--text-secondary)' }}>
+              {flow.from}
+            </span>
+            <div style={{ flex: 1, minWidth: 0, height: '14px', borderRadius: '2px', background: 'var(--bg-sunken)', overflow: 'hidden' }}>
+              <div
+                style={{
+                  height: '100%',
+                  width: `${(flow.volume / maxVol) * 100}%`,
+                  borderRadius: '2px',
+                  background: `linear-gradient(90deg, var(--tone-blue), ${DEST_COLOR[flow.to] ?? 'var(--tone-amber)'})`,
+                  transition: 'width 1s cubic-bezier(0.4,0,0.2,1)',
+                }}
+              />
+            </div>
+            <span style={{ width: '5.5rem', flexShrink: 0, fontSize: '11px', color: 'var(--text-secondary)' }}>{flow.to}</span>
+            <span style={{ width: '2.75rem', flexShrink: 0, textAlign: 'right', fontFamily: 'var(--font-jetbrains)', fontSize: '11px', color: 'var(--text-data)' }}>
+              {flow.volume}
+            </span>
           </div>
-          <span className="w-20 shrink-0 text-xs text-[var(--text-secondary)] truncate">{flow.to}</span>
-          <span className="font-data text-xs w-10 shrink-0 text-right">{flow.volume}</span>
-        </div>
-      ))}
-      <div className="flex gap-4 mt-4">
-        {destinations.map((d, i) => (
-          <div key={d} className="flex items-center gap-1">
-            <span
-              className="w-2 h-2 rounded-full"
-              style={{
-                background: i === 0 ? 'var(--accent-gold)' : i === 1 ? 'var(--accent-teal)' : 'var(--accent-red)',
-              }}
-            />
-            <span className="text-[10px] text-[var(--text-secondary)]">{d}</span>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+        {destinations.map((d) => (
+          <div key={d} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: DEST_COLOR[d] ?? 'var(--tone-amber)' }} />
+            <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{d}</span>
           </div>
         ))}
       </div>
@@ -75,66 +82,38 @@ function SankeySimple() {
 
 export default function MobilityFlow() {
   const { data: transport, isLoading } = useTransport()
-  const buses = transport?.buses || []
 
   return (
     <SectionReveal id="mobilidade">
       <SectionTitle
         label="MOBILIDADE URBANA"
         title="Fluxo & Transportes"
-        subtitle="Autocarros SMTUC em tempo real e padrões de mobilidade urbana."
+        subtitle="Padrões estimados de deslocação diária em Coimbra."
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Bus board */}
         <GlassCard>
-          <span className="label-text text-[var(--text-secondary)] block mb-4">
-            PRÓXIMAS PARTIDAS · PRAÇA DA REPÚBLICA
+          <span style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.875rem' }}>
+            Autocarros SMTUC · Praça da República
           </span>
-          <div className="overflow-hidden rounded-lg">
-            {/* Header */}
-            <div className="grid grid-cols-[60px_1fr_70px_80px] gap-2 px-3 py-2 text-[10px] label-text text-[var(--text-secondary)] bg-[var(--bg-primary)]">
-              <span>LINHA</span>
-              <span>DESTINO</span>
-              <span>CHEGADA</span>
-              <span>STATUS</span>
+
+          {isLoading || !transport ? (
+            <div className="animate-pulse space-y-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-8 bg-[var(--bg-sunken)] rounded" />
+              ))}
             </div>
-            {/* Rows */}
-            {isLoading ? (
-              <div className="p-4 text-center text-sm text-[var(--text-secondary)]">A carregar...</div>
-            ) : (
-              buses.map((bus, i) => (
-                <div
-                  key={`${bus.line}-${i}`}
-                  className="grid grid-cols-[60px_1fr_70px_80px] gap-2 px-3 py-2.5 border-b border-[var(--glass-border)] flip-in"
-                  style={{ animationDelay: `${i * 0.1}s` }}
-                >
-                  <span className="font-data text-sm">{bus.line}</span>
-                  <span className="text-xs text-[var(--text-primary)] truncate">{bus.destination}</span>
-                  <span className="font-data text-sm">{Math.max(1, bus.arrival)} min</span>
-                  <span
-                    className="text-xs font-semibold"
-                    style={{ color: STATUS_COLORS[bus.status] || 'var(--text-secondary)' }}
-                  >
-                    {bus.status}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
-          {transport?.fallback && (
-            <p className="text-[10px] text-[var(--text-secondary)] mt-2 opacity-60">
-              Dados de referência · Atualiza a cada 30s
-            </p>
+          ) : (
+            <>
+              <DataUnavailable meta={transport.meta} />
+              <DataSource meta={transport.meta} showNote={false} />
+            </>
           )}
         </GlassCard>
 
-        {/* Sankey-style flow */}
         <GlassCard>
-          <SankeySimple />
-          <p className="text-[10px] text-[var(--text-secondary)] mt-4 opacity-60">
-            Volume estimado de passageiros/dia · Dados de referência 2024
-          </p>
+          <FlowChart />
+          <DataSource meta={FLOW_META} />
         </GlassCard>
       </div>
     </SectionReveal>

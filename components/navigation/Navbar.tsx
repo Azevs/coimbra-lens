@@ -15,25 +15,12 @@ const NAV_LINKS = [
   { label: 'Freguesias', href: '#freguesias' },
 ]
 
-const navPanelStyle: React.CSSProperties = {
-  background: 'var(--bg-secondary)',
-  borderBottom: '1px solid var(--border-panel)',
-  borderTop: '2px solid var(--accent)',
-  maxWidth: '1280px',
-  margin: '0 auto',
-  padding: '0 2rem',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  height: '52px',
-}
-
 export default function Navbar() {
   const [open, setOpen] = useState(false)
 
   return (
     <nav style={{ position: 'fixed', top: '36px', left: 0, right: 0, zIndex: 50 }}>
-      <div style={navPanelStyle}>
+      <div className="nav-panel">
         {/* Wordmark */}
         <a
           href="#"

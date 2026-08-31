@@ -1,18 +1,15 @@
-import { useQuery } from '@tanstack/react-query'
-import axios from 'axios'
+'use client'
 
-export interface RiverData {
-  level: number
-  flow: number | null
-  trend: 'rising' | 'falling' | 'stable'
-  history: number[]
-  fallback?: boolean
-}
+import { useQuery } from '@tanstack/react-query'
+import { internalApi } from '@/lib/api-clients'
+import type { RiverPayload } from '@/app/api/river/route'
+
+export type { RiverPayload, RiverPoint, RiverTrend } from '@/app/api/river/route'
 
 export function useRiver() {
-  return useQuery<RiverData>({
+  return useQuery<RiverPayload>({
     queryKey: ['river'],
-    queryFn: () => axios.get('/api/river').then((r) => r.data),
+    queryFn: () => internalApi.get('/river').then((r) => r.data),
     staleTime: 1000 * 60 * 30,
     refetchInterval: 1000 * 60 * 30,
   })
