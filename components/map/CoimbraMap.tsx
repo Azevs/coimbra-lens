@@ -118,6 +118,8 @@ export default function CoimbraMap() {
 
     COIMBRA_PARISHES.forEach((parish) => {
       const color = getLayerColor(activeLayer, parish)
+      // Estimativa grosseira: 12 % da população residente. Não é uma contagem,
+      // e está identificada como estimativa na legenda e no cartão.
       const mobility = Math.round(parish.population * 0.12)
       const maxMobility = Math.round(maxPop * 0.12)
 
@@ -165,7 +167,7 @@ export default function CoimbraMap() {
             <span style="font-size:9px;font-family:monospace;color:var(--tone-amber)">€${parish.income}/mês</span>
           </div>
           <div style="height:3px;background:rgba(255,255,255,0.07);border-radius:2px">
-            <div style="height:100%;width:${incomePct}%;background:var(--tone-amber);border-radius:2px;box-shadow:0 0 4px var(--tone-amber)60"></div>
+            <div style="height:100%;width:${incomePct}%;background:var(--tone-amber);border-radius:2px;box-shadow:0 0 4px color-mix(in srgb, var(--tone-amber) 38%, transparent)"></div>
           </div>
         </div>
         <div style="margin-bottom:5px">
@@ -174,16 +176,16 @@ export default function CoimbraMap() {
             <span style="font-size:9px;font-family:monospace;color:var(--tone-teal)">${parish.population.toLocaleString('pt-PT')}</span>
           </div>
           <div style="height:3px;background:rgba(255,255,255,0.07);border-radius:2px">
-            <div style="height:100%;width:${popPct}%;background:var(--tone-teal);border-radius:2px;box-shadow:0 0 4px var(--tone-teal)60"></div>
+            <div style="height:100%;width:${popPct}%;background:var(--tone-teal);border-radius:2px;box-shadow:0 0 4px color-mix(in srgb, var(--tone-teal) 38%, transparent)"></div>
           </div>
         </div>
         <div>
           <div style="display:flex;justify-content:space-between;margin-bottom:2px">
-            <span style="font-size:9px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.08em">Mobilidade</span>
+            <span style="font-size:9px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.08em">Mobilidade est.</span>
             <span style="font-size:9px;font-family:monospace;color:var(--tone-blue)">${mobility.toLocaleString('pt-PT')}/dia</span>
           </div>
           <div style="height:3px;background:rgba(255,255,255,0.07);border-radius:2px">
-            <div style="height:100%;width:${mobPct}%;background:var(--tone-blue);border-radius:2px;box-shadow:0 0 4px var(--tone-blue)60"></div>
+            <div style="height:100%;width:${mobPct}%;background:var(--tone-blue);border-radius:2px;box-shadow:0 0 4px color-mix(in srgb, var(--tone-blue) 38%, transparent)"></div>
           </div>
         </div>
         <div style="font-size:8px;color:rgba(255,255,255,0.25);margin-top:7px;text-align:center">clique para detalhes</div>
@@ -237,7 +239,7 @@ export default function CoimbraMap() {
           </AnimatePresence>
         </div>
         <p className="text-[10px] text-[var(--text-secondary)] mt-2 opacity-60">
-          Dados de referência 2024 · Fonte: CAOP / INE
+          População e rendimento por freguesia · INE, Censos 2021
         </p>
       </div>
     </section>

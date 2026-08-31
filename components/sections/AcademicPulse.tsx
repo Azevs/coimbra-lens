@@ -7,13 +7,18 @@ import SectionTitle from '@/components/ui/SectionTitle'
 import GlassCard from '@/components/ui/GlassCard'
 import AnimatedNumber from '@/components/ui/AnimatedNumber'
 import UCNewsPanel from './UCNewsPanel'
+import DataSource from '@/components/ui/DataSource'
+import { UNIVERSITY } from '@/lib/reference-data'
+import { estimate } from '@/lib/provenance'
+
+const UNIVERSITY_META = estimate(
+  `${UNIVERSITY.source} · ${UNIVERSITY.asOf}`,
+  'Números publicados pela UC por ano lectivo.',
+  `${UNIVERSITY.asOf}-12-31T12:00:00`,
+)
 
 const UNIVERSITY_DATA = {
-  totalStudents: 23847,
-  international: 3421,
-  national: 20426,
-  faculties: 8,
-  researchers: 1200,
+  ...UNIVERSITY,
   topNationalities: [
     { country: 'Brasil', count: 1203, flag: '🇧🇷' },
     { country: 'Cabo Verde', count: 445, flag: '🇨🇻' },
@@ -177,7 +182,7 @@ export default function AcademicPulse() {
       <SectionTitle
         label="PULSO ACADÉMICO"
         title="Universidade de Coimbra"
-        subtitle="A mais antiga universidade de Portugal em números — dados de referência 2024."
+        subtitle="A mais antiga universidade de Portugal em números."
       />
 
       <div className="grid-academic">
@@ -242,6 +247,7 @@ export default function AcademicPulse() {
               </div>
             ))}
           </div>
+          <DataSource meta={UNIVERSITY_META} />
         </GlassCard>
       </div>
     </SectionReveal>

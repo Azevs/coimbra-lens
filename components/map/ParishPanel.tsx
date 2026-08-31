@@ -5,6 +5,20 @@ import { useMapLayers } from '@/hooks/useMapLayers'
 import { COIMBRA_PARISHES } from '@/lib/mapbox-config'
 import AnimatedNumber from '@/components/ui/AnimatedNumber'
 import GlassCard from '@/components/ui/GlassCard'
+import DataSource from '@/components/ui/DataSource'
+import { estimate } from '@/lib/provenance'
+
+/**
+ * O painel mostrava três barras — Comércio 72 %, Serviços 58 %, Educação
+ * 85 % — iguais para as dezoito freguesias, e uma densidade calculada com
+ * `população ÷ 3.2`, como se todas tivessem a mesma área. Ambos saíram:
+ * não temos esses dados por freguesia.
+ */
+const PARISH_META = estimate(
+  'INE · Censos 2021',
+  'População e rendimento por freguesia. Sem dados de área, não é possível calcular densidade.',
+  '2021-12-31T12:00:00',
+)
 
 export default function ParishPanel() {
   const { selectedParish, setParish } = useMapLayers()
@@ -23,69 +37,41 @@ export default function ParishPanel() {
       <GlassCard className="h-full">
         <button
           onClick={() => setParish(null)}
-          className="text-[var(--text-secondary)] hover:text-[var(--accent-gold)] transition-colors mb-4"
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: 'var(--text-secondary)',
+            fontSize: '12px',
+            fontFamily: 'var(--font-ibm-plex)',
+            marginBottom: '1rem',
+            padding: 0,
+          }}
+          aria-label="Fechar painel da freguesia"
         >
           ✕ Fechar
         </button>
 
-        <h3 className="font-display text-2xl text-[var(--text-primary)] mb-6">
+        <h3 className="font-display" style={{ fontSize: '1.5rem', color: 'var(--text-primary)', marginBottom: '1.5rem', lineHeight: 1.2 }}>
           {parish.name}
         </h3>
 
-        <div className="grid grid-cols-2 gap-4 mb-6">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
           <div>
-            <span className="label-text text-[var(--text-secondary)] block mb-1">População</span>
+            <span className="label-text" style={{ color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>
+              População
+            </span>
             <AnimatedNumber value={parish.population} className="text-2xl" />
           </div>
           <div>
-            <span className="label-text text-[var(--text-secondary)] block mb-1">Rendimento</span>
-            <AnimatedNumber value={parish.income} suffix="€" className="text-2xl" />
-          </div>
-          <div>
-            <span className="label-text text-[var(--text-secondary)] block mb-1">Densidade</span>
-            <AnimatedNumber
-              value={Math.round(parish.population / 3.2)}
-              suffix="/km²"
-              className="text-2xl"
-            />
-          </div>
-          <div>
-            <span className="label-text text-[var(--text-secondary)] block mb-1">Transportes</span>
-            <AnimatedNumber value={Math.round(parish.population * 0.12)} className="text-2xl" />
+            <span className="label-text" style={{ color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>
+              Rendimento
+            </span>
+            <AnimatedNumber value={parish.income} suffix=" €" className="text-2xl" />
           </div>
         </div>
 
-        {/* Mini bar chart */}
-        <div className="mb-4">
-          <span className="label-text text-[var(--text-secondary)] block mb-3">Indicadores</span>
-          {[
-            { label: 'Comércio', value: 72 },
-            { label: 'Serviços', value: 58 },
-            { label: 'Educação', value: 85 },
-          ].map((item) => (
-            <div key={item.label} className="mb-3">
-              <div className="flex justify-between text-xs mb-1">
-                <span className="text-[var(--text-secondary)]">{item.label}</span>
-                <span className="font-data text-xs">{item.value}%</span>
-              </div>
-              <div className="h-2 rounded-full bg-[var(--bg-primary)]">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${item.value}%` }}
-                  transition={{ duration: 1.2, ease: 'easeOut' }}
-                  className="h-full rounded-full"
-                  style={{
-                    background: `linear-gradient(90deg, var(--accent-blue), var(--accent-gold))`,
-                  }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <p className="text-[10px] text-[var(--text-secondary)] mt-4 opacity-60">
-          Dados de referência 2024
-        </p>
+        <DataSource meta={PARISH_META} />
       </GlassCard>
     </motion.div>
   )
