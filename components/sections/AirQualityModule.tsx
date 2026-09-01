@@ -36,7 +36,7 @@ function AqiArc({ value }: { value: number }) {
   return (
     <svg width="110" height="80" viewBox="0 0 110 80" role="img" aria-label={`Índice europeu de qualidade do ar: ${value}`}>
       <circle cx="55" cy="70" r={R} fill="none"
-        stroke="rgba(255,255,255,0.06)" strokeWidth="8" strokeLinecap="round"
+        stroke="rgba(20,23,28,0.10)" strokeWidth="8" strokeLinecap="round"
         strokeDasharray={`${circumference * 0.75} ${circumference}`}
         transform="rotate(135 55 70)"
       />
@@ -68,7 +68,7 @@ function PollutantRow({ label, value, max, color }: { label: string; value: numb
           {value === null ? '—' : value}
         </span>
       </div>
-      <div style={{ height: '3px', background: 'rgba(255,255,255,0.07)', borderRadius: '2px' }}>
+      <div style={{ height: '3px', background: 'rgba(20,23,28,0.10)', borderRadius: '2px' }}>
         <div style={{
           height: '100%', width: `${pct}%`,
           background: color, borderRadius: '2px',
@@ -107,7 +107,7 @@ function PollenSection({ pollen }: { pollen: Pollen[] }) {
                 {s.label} <span style={{ color: 'var(--text-tertiary)' }}>{p.value}</span>
               </span>
             </div>
-            <div style={{ height: '3px', background: 'rgba(255,255,255,0.07)', borderRadius: '2px' }}>
+            <div style={{ height: '3px', background: 'rgba(20,23,28,0.10)', borderRadius: '2px' }}>
               <div style={{ height: '100%', width: `${s.pct}%`, background: s.color, borderRadius: '2px', boxShadow: `0 0 4px ${colorMix(s.color, 31)}`, transition: 'width 1s ease' }} />
             </div>
           </div>

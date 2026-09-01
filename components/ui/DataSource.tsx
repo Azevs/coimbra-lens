@@ -31,7 +31,8 @@ export default function DataSource({
   showNote?: boolean
 }) {
   const color = PROVENANCE_COLOR[meta.provenance]
-  const label = PROVENANCE_LABEL[meta.provenance]
+  // O rótulo específico da fonte tem precedência sobre a palavra genérica.
+  const label = meta.label ?? PROVENANCE_LABEL[meta.provenance]
 
   return (
     <div

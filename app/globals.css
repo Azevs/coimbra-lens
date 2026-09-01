@@ -1,74 +1,73 @@
 @import "tailwindcss";
 
 :root {
-  /* ── Carta Náutica Palette ───────────────────────────── */
-  --bg-primary:    #0A0D12;   /* near-black ink */
-  --bg-secondary:  #0F1318;   /* panel background */
-  --bg-raised:     #141920;   /* elevated surface */
-  --bg-sunken:     #080B0F;   /* recessed / inset */
+  /* ── Paleta Gazeta ───────────────────────────────────
+     Papel e tinta, não ecrã escuro. Os quatro fundos vão do papel cru
+     (--bg-raised) ao papel recuado (--bg-sunken); é contra o mais escuro
+     dos quatro que o `npm run check:contrast` mede tudo o resto. */
+  --bg-primary:    #F2EEE6;   /* papel — fundo da página */
+  --bg-secondary:  #EDE8DE;   /* painel */
+  --bg-raised:     #F7F4ED;   /* superfície elevada */
+  --bg-sunken:     #E5DFD2;   /* recuado / encaixado */
 
-  /* Single dominant accent: terracotta / wax seal */
-  --accent:        #C1440E;   /* primary accent */
-  --accent-dim:    #8A3008;   /* muted / secondary accent */
-  --accent-glow:   rgba(193, 68, 14, 0.18);
+  /* Acento único: terracota de selo de lacre, escurecido para papel */
+  --accent:        #B03A0B;   /* acento primário */
+  --accent-dim:    #7E2A07;   /* acento secundário */
+  --accent-glow:   rgba(176, 58, 11, 0.14);
 
   /* ── Tons de dados: rampa de GRÁFICOS ────────────────
      Preenchimentos de barras, arcos, marcadores. O mínimo aqui é 3:1
      (contraste de elementos não textuais). Mantêm-se dessaturados — é
      esta rampa que dá o aspecto de carta náutica. */
-  --tone-blue:     #3D6E8C;   /* 3.6:1 */
-  --tone-teal:     #2E7D6E;   /* 4.0:1 */
-  --tone-amber:    #B07D3A;   /* 5.5:1 */
-  --tone-muted:    #63708A;   /* 4.0:1 — era #4A5568, a 2.6:1 */
+  --tone-blue:     #2F5A74;
+  --tone-teal:     #1F6B5C;
+  --tone-amber:    #8A6220;
+  --tone-muted:    #575D65;
 
   /* ── Texto ───────────────────────────────────────────
-     Rácios medidos sobre --bg-sunken (#080B0F), o fundo mais escuro do
-     painel, por `npm run check:contrast`. Os três níveis passam AA para
-     texto normal — o antigo --text-tertiary dava 2.97:1 e era usado nos
-     rótulos do ticker a 9px. */
-  --text-primary:   #E8EAF0;  /* 16.4:1 */
-  --text-secondary: #959EB0;  /*  7.3:1 */
-  --text-tertiary:  #7A8698;  /*  5.3:1 */
-  --text-data:      #D4884A;  /*  7.0:1 */
+     Rácios medidos sobre --bg-sunken (#E5DFD2), o papel mais escuro dos
+     quatro fundos, por `npm run check:contrast`. */
+  --text-primary:   #14171C;  /* tinta */
+  --text-secondary: #3E444C;
+  --text-tertiary:  #575D65;
+  --text-data:      #8A3008;  /* números em terracota escura */
 
-  /* Borders */
-  --border-strong:  rgba(193, 68, 14, 0.35);
-  --border-subtle:  rgba(255, 255, 255, 0.06);
-  --border-panel:   rgba(255, 255, 255, 0.08);
+  /* Filetes — a hierarquia da Gazeta faz-se com réguas, não com caixas */
+  --border-strong:  rgba(20, 23, 28, 0.30);
+  --border-subtle:  rgba(20, 23, 28, 0.10);
+  --border-panel:   rgba(20, 23, 28, 0.16);
 
-  /* Shadows — layered depth */
-  --shadow-sm:   0 1px 3px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.4);
-  --shadow-md:   0 4px 12px rgba(0,0,0,0.6), 0 2px 4px rgba(0,0,0,0.5);
-  --shadow-lg:   0 16px 40px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.5);
-  --shadow-accent: 0 0 0 1px var(--border-strong), 0 8px 24px rgba(193,68,14,0.12);
+  /* Sombras — em papel são quase nada; a profundidade vem do filete */
+  --shadow-sm:   none;
+  --shadow-md:   none;
+  --shadow-lg:   0 8px 28px rgba(20,23,28,0.10);
+  --shadow-accent: 0 0 0 1px var(--border-strong);
 
   /* ── Paleta de dados ──────────────────────────────────
      Séries categóricas. Deliberadamente separada do acento da marca:
      o acento identifica o CoimbraLens, estes tons identificam variáveis. */
-  --tone-violet:  #7A5C8A;   /* 3.5:1 */
-  --tone-clay:    #A05A3A;   /* 3.8:1 */
-  --tone-slate:   #5C7A8C;   /* 4.3:1 */
-  --tone-moss:    #5C9A5C;   /* 5.9:1 */
-  --tone-crimson: #B2404E;   /* 3.5:1 — era #8A1F2E, a 2.2:1 */
-  --tone-rose:    #A8617C;   /* 4.4:1 */
+  --tone-violet:  #5C3F72;
+  --tone-clay:    #A0522D;
+  --tone-slate:   #47607A;
+  --tone-moss:    #47723F;
+  --tone-crimson: #9B2F3C;
+  --tone-rose:    #8C4A63;
 
   /* ── Tons de dados: rampa de TEXTO ───────────────────
-     A mesma cor, clareada até passar AA (4.5:1), para quando o tom é
-     usado como número ou etiqueta e não como preenchimento. Separar as
-     duas rampas deixa os gráficos discretos sem tornar os valores
-     ilegíveis — que era o compromisso impossível de uma paleta só. */
-  --tone-blue-text:    #5590AF;  /* 5.6:1 */
-  --tone-teal-text:    #3E9C89;  /* 5.9:1 */
-  --tone-amber-text:   #B07D3A;  /* 5.5:1 — já passava */
-  --tone-violet-text:  #A17FB2;  /* 5.8:1 */
-  --tone-clay-text:    #C4764F;  /* 5.7:1 */
-  --tone-slate-text:   #7E9BAE;  /* 6.8:1 */
-  --tone-moss-text:    #5C9A5C;  /* 5.9:1 — já passava */
-  --tone-crimson-text: #CE6474;  /* 5.4:1 */
-  --tone-rose-text:    #C6849B;  /* 6.7:1 */
-  --accent-text:       #DB5E24;  /* 5.3:1 — o acento da marca dá 3.9:1,
-                                    suficiente para títulos grandes e
-                                    contornos, curto para texto pequeno */
+     A mesma cor, ESCURECIDA até passar AA (4.5:1) sobre papel — em fundo
+     claro a correcção é ao contrário da que o painel escuro exigia. */
+  --tone-blue-text:    #2F5A74;
+  --tone-teal-text:    #1A5A4D;
+  --tone-amber-text:   #6F4E19;
+  --tone-violet-text:  #5C3F72;
+  --tone-clay-text:    #83431F;
+  --tone-slate-text:   #47607A;
+  --tone-moss-text:    #385A31;
+  --tone-crimson-text: #9B2F3C;
+  --tone-rose-text:    #7A3F55;
+  --accent-text:       #8A3008;  /* o acento da marca a #B03A0B chega para
+                                    manchetes e filetes; texto pequeno usa
+                                    esta versão mais escura */
 
   /* ── Semântica de estado ──────────────────────────────
      Bom → mau. Usada por índices e limiares, nunca como cor de marca. */
@@ -108,8 +107,9 @@ body {
   font-size: 15px;
   line-height: 1.6;
   overflow-x: hidden;
-  /* Subtle paper/ink noise texture */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  /* Grão de papel — em fundo claro precisa de mais peso do que tinha em
+     fundo escuro para se ler como papel e não como ecrã branco. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
 }
 
 /* ── Layout ─────────────────────────────────────────────────────────────── */
@@ -123,10 +123,11 @@ body {
   .page-section { padding: 7rem 6rem; }
 }
 
-/* O cabeçalho é fixo (40px de ticker + 52px de navegação). Sem esta margem,
-   qualquer link da navegação aterra com o título escondido por baixo dele. */
+/* O cabeçalho é fixo: 40px de tira de edição + 56px de áreas + 40px de
+   secções. Sem esta margem, qualquer link da navegação aterra com o título
+   escondido por baixo dele. */
 .page-section[id] {
-  scroll-margin-top: 108px;
+  scroll-margin-top: 140px;
 }
 
 .section-container {
@@ -135,32 +136,35 @@ body {
   margin-right: auto;
 }
 
-/* ── Panel / Card System ────────────────────────────────────────────────── */
-/* Replaces glassmorphism — solid, engraved, layered */
+/* ── Sistema de blocos ──────────────────────────────────────────────────
+   Na Gazeta um bloco não é uma caixa: é uma coluna de jornal aberta por um
+   filete em cima. Sem fundo próprio, sem cantos redondos, sem sombra — o
+   que separa os blocos é a régua e o ar entre eles. */
 .glass-card {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-panel);
-  border-radius: 4px;
-  box-shadow: var(--shadow-md);
-  padding: 1.5rem;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--border-panel);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 1.25rem 0 0;
   position: relative;
 }
 
-/* Accent-left variant — used for key stat cards */
+/* Variante de destaque — o filete de cima passa a tinta cheia */
 .panel-accent {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-panel);
-  border-left: 2px solid var(--accent);
-  border-radius: 4px;
-  box-shadow: var(--shadow-md);
-  padding: 1.5rem;
+  background: transparent;
+  border: 0;
+  border-top: 3px solid var(--accent);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 1.25rem 0 0;
 }
 
-/* Inset / recessed panel */
+/* Encaixe — o único bloco com fundo próprio, para tabelas e legendas */
 .panel-inset {
   background: var(--bg-sunken);
   border: 1px solid var(--border-subtle);
-  border-radius: 3px;
+  border-radius: 0;
   padding: 1rem;
 }
 
@@ -382,42 +386,139 @@ input[type='range']::-moz-range-thumb {
   .rank-row { gap: 1rem; grid-template-columns: 2rem 1fr 10rem 7rem; }
 }
 
-/* ── Herói ──────────────────────────────────────────────────────────────── */
+/* ── Herói — primeira página ───────────────────────────────────────────── */
+/* O cabeçalho fixo ocupa 136px (40 de tira + 56 de áreas + 40 de secções);
+   sem este padding-top a manchete nasce por baixo dele. */
 .hero-content {
-  padding: 0 1.25rem 4rem;
+  padding: calc(136px + 2.5rem) 1.25rem 3.5rem;
   max-width: 1280px;
   width: 100%;
   margin: 0 auto;
 }
-@media (min-width: 768px)  { .hero-content { padding: 0 2.5rem 5rem; } }
-@media (min-width: 1024px) { .hero-content { padding: 0 4rem 6rem; } }
+@media (min-width: 768px)  { .hero-content { padding: calc(136px + 3rem) 2.5rem 4.5rem; } }
+@media (min-width: 1024px) { .hero-content { padding: calc(136px + 3rem) 4rem 5rem; } }
 
-/* O indicador vertical é decorativo e partilha a coluna do título. Só
-   aparece quando há margem suficiente para ficar FORA do padding do
-   conteúdo (4rem a partir de 1024px) — abaixo disso, sobrepunha-se ao texto. */
-.hero-scroll { display: none; }
-@media (min-width: 1024px) {
-  .hero-scroll { display: flex; left: 1.5rem; }
+/* Manchete de primeira página: a caixa alta é da Gazeta, e o tamanho é o
+   maior que cabe numa linha aos 1280px do contentor. */
+.hero-headline {
+  font-family: var(--font-fraunces), 'Fraunces', Georgia, serif;
+  font-weight: 900;
+  /* Dimensionada para caber numa linha nos 1152px úteis do contentor —
+     a 12.6vw partia "Lens" para a linha de baixo. */
+  font-size: clamp(2.625rem, 10.3vw, 9.25rem);
+  line-height: 0.84;
+  letter-spacing: -0.05em;
+  text-align: center;
+  padding: 1.625rem 0 0.625rem;
+  margin: 0;
 }
 
-/* O selo de conforto sai do caminho do título em ecrã estreito. */
-.city-score { right: 1.25rem; bottom: 1.5rem; }
-@media (min-width: 768px) { .city-score { right: 2rem; bottom: 2rem; } }
+.hero-columns {
+  display: grid;
+  gap: 2.125rem;
+  grid-template-columns: 1fr;
+  border-top: 1px solid var(--border-panel);
+  padding-top: 1.875rem;
+}
+@media (min-width: 1024px) { .hero-columns { grid-template-columns: 1fr 23.25rem; } }
+
+/* A manchete do dia ocupa a largura toda que sobra do boletim. */
+.hero-lead {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.hero-lead-line {
+  margin: 0;
+  font-size: clamp(1.75rem, 3.6vw, 3.25rem);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+  text-wrap: pretty;
+}
+
+.hero-lead-support {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.625rem;
+  border-top: 1px solid var(--border-panel);
+  padding-top: 1.125rem;
+}
+
+/* O boletim é a coluna da direita — separada por filete a partir do ponto
+   em que fica mesmo ao lado das outras. */
+@media (min-width: 1180px) {
+  .hero-bulletin {
+    border-left: 1px solid var(--border-panel);
+    padding-left: 1.625rem;
+  }
+}
+
+/* O selo de conforto deixou de flutuar sobre o vídeo: mora no fim do
+   boletim, como o remate da coluna. */
+.city-score {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border-top: 1px solid var(--border-panel);
+  padding-top: 1.125rem;
+  margin-top: 0.25rem;
+  flex-wrap: wrap;
+}
+.city-score svg { flex-shrink: 0; }
 
 /* ── Navegação ──────────────────────────────────────────────────────────── */
+/* Barra de dois andares: em cima as áreas do site (Dados, Visitar…), em
+   baixo as secções da área activa. Os nove links planos que aqui estavam
+   deixaram de escalar quando o site passou a ter mais do que dados. */
 .nav-panel {
-  background: var(--bg-secondary);
+  background: var(--bg-primary);
   border-bottom: 1px solid var(--border-panel);
-  border-top: 2px solid var(--accent);
   max-width: 1280px;
   margin: 0 auto;
   padding: 0 1.25rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 52px;
+  height: 56px;
 }
 @media (min-width: 768px) { .nav-panel { padding: 0 2rem; } }
+
+.nav-sub {
+  /* Sem `display` aqui: quem o decide é o `hidden md:flex` no elemento —
+     declará-lo na classe vencia o utilitário e a fila de secções aparecia
+     no telemóvel por baixo do menu que já as lista. */
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-panel);
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+  align-items: center;
+  gap: 1.625rem;
+  height: 40px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.nav-sub::-webkit-scrollbar { display: none; }
+@media (min-width: 768px) { .nav-sub { padding: 0 2rem; } }
+
+/* Entrada de área — Fraunces, com o filete terracota na activa */
+.nav-area {
+  font-family: var(--font-fraunces), 'Fraunces', Georgia, serif;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-tertiary);
+  padding-bottom: 3px;
+  border-bottom: 3px solid transparent;
+  white-space: nowrap;
+}
+.nav-area[aria-current='page'] {
+  color: var(--text-primary);
+  border-bottom-color: var(--accent);
+}
 
 /* ── Acessibilidade ─────────────────────────────────────────────────────── */
 /* Visível para leitores de ecrã, ausente do ecrã. Usado no estado das
@@ -470,3 +571,4 @@ input[type='range']::-moz-range-thumb {
     scroll-behavior: auto !important;
   }
 }
+

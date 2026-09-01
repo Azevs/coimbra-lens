@@ -1,4 +1,4 @@
-import { estimate, unavailable, type Sourced } from '@/lib/provenance'
+import { published, unavailable, type Sourced } from '@/lib/provenance'
 
 // PORDATA — Retrato do Município (Fundação Francisco Manuel dos Santos).
 //
@@ -14,7 +14,7 @@ const PAGE = (tema: string) => `https://retratos.pordata.pt/${tema}/coimbra`
 
 const SOURCE = 'PORDATA · Retrato do Município'
 const METHOD =
-  'Lido do Retrato do Município da PORDATA, que compila do INE. Cada valor mostra o seu ano de referência.'
+  'Retrato do Município da PORDATA, que compila do INE e publica mais cedo. Cada valor mostra o ano de referência que a fonte indica.'
 
 export interface PordataValue {
   value: number | null
@@ -175,7 +175,7 @@ export async function GET() {
         : null,
       year: hab ? first(hab, /foi, em (\d{4}), de/) : null,
     },
-    meta: estimate(SOURCE, METHOD, popYear ? `${popYear}-12-31T12:00:00` : null),
+    meta: published(SOURCE, 'PORDATA', METHOD, popYear ? `${popYear}-12-31T12:00:00` : null),
   }
 
   if (population === null) {

@@ -4,12 +4,12 @@ import { useEffect, useRef } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { AnimatePresence } from 'framer-motion'
-import { MAP_CONFIG, BUILDING_LAYER, COIMBRA_PARISHES, PARISH_CENSUS_YEAR } from '@/lib/mapbox-config'
+import { MAP_CONFIG, BUILDING_LAYER, COIMBRA_PARISHES, PARISH_CENSUS_YEAR, NEXT_CENSUS } from '@/lib/mapbox-config'
 import { useMapLayers } from '@/hooks/useMapLayers'
 import ParishPanel from './ParishPanel'
 import SectionTitle from '@/components/ui/SectionTitle'
 import DataSource from '@/components/ui/DataSource'
-import { estimate } from '@/lib/provenance'
+import { published } from '@/lib/provenance'
 import { colorMix } from '@/lib/color'
 
 /**
@@ -17,9 +17,10 @@ import { colorMix } from '@/lib/color'
  * assentava em dados reais: o rendimento por freguesia não é publicado e a
  * "mobilidade" era população × 0.12. Restou a população, dos Censos.
  */
-const PARISH_META = estimate(
+const PARISH_META = published(
   `INE · Censos ${PARISH_CENSUS_YEAR}`,
-  'População residente por freguesia. Os marcadores assinalam um ponto central aproximado, não a fronteira.',
+  `Censos ${PARISH_CENSUS_YEAR}`,
+  `Última desagregação por freguesia disponível em Portugal. Os Censos são decenais — o próximo é em ${NEXT_CENSUS}.`,
   `${PARISH_CENSUS_YEAR}-12-31T12:00:00`,
 )
 
@@ -75,7 +76,7 @@ function Legend() {
                 height: `${popRadius(v)}px`,
                 borderRadius: '50%',
                 background: popColor(v),
-                border: '1px solid rgba(255,255,255,0.35)',
+                border: '1px solid rgba(20,23,28,0.35)',
                 display: 'block',
               }}
             />
@@ -132,7 +133,7 @@ export default function CoimbraMap() {
       )
       el.style.cssText = `
         width:${size}px; height:${size}px; border-radius:50%; cursor:pointer;
-        background:${color}; border:2px solid rgba(255,255,255,0.5); padding:0;
+        background:${color}; border:2px solid rgba(242,238,230,0.85); padding:0;
         box-shadow:0 0 8px ${colorMix(color, 50)};
         transition:transform .2s ease;
       `

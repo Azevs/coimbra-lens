@@ -3,7 +3,6 @@
 import { useEffect, useRef } from 'react'
 import { useWeather } from '@/hooks/useWeather'
 import { useAirQuality } from '@/hooks/useAirQuality'
-import { colorMix } from '@/lib/color'
 
 /**
  * Conforto atmosférico — NÃO é um índice geral da cidade.
@@ -71,14 +70,13 @@ export default function CityScore() {
     <div
       title={FORMULA}
       className="city-score"
-      style={{ position: 'absolute', zIndex: 20, display: 'flex', flexDirection: 'column', alignItems: 'center' }}
     >
       <svg width="130" height="130" viewBox="0 0 130 130">
         {/* Track */}
         <circle
           cx="65" cy="65" r={R}
           fill="none"
-          stroke="rgba(255,255,255,0.08)"
+          stroke="rgba(20,23,28,0.10)"
           strokeWidth="7"
           strokeLinecap="round"
         />
@@ -93,14 +91,13 @@ export default function CityScore() {
           strokeDasharray={`${initialDash} ${circumference}`}
           strokeDashoffset="0"
           transform="rotate(-90 65 65)"
-          style={{ filter: `drop-shadow(0 0 8px ${colorMix(color, 50)})` }}
         />
         {/* Score number */}
         <text
           x="65" y="60"
           textAnchor="middle"
           dominantBaseline="middle"
-          fill="white"
+          style={{ fill: 'var(--text-primary)' }}
           fontSize="26"
           fontWeight="700"
           fontFamily="var(--font-jetbrains)"
@@ -110,7 +107,7 @@ export default function CityScore() {
         <text
           x="65" y="80"
           textAnchor="middle"
-          fill="rgba(255,255,255,0.5)"
+          style={{ fill: 'var(--text-tertiary)' }}
           fontSize="9"
           fontFamily="var(--font-ibm-plex)"
           letterSpacing="2"
@@ -118,12 +115,17 @@ export default function CityScore() {
           /100
         </text>
       </svg>
-      <span style={{ fontSize: '9px', letterSpacing: '0.2em', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', marginTop: '-4px' }}>
-        CONFORTO ATMOSFÉRICO
-      </span>
-      <span style={{ fontSize: '12px', color, fontWeight: 600, fontFamily: 'var(--font-ibm-plex)', marginTop: '2px' }}>
-        {label}
-      </span>
+      <div>
+        <div style={{ fontSize: '9px', letterSpacing: '0.2em', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
+          CONFORTO ATMOSFÉRICO
+        </div>
+        <div style={{ fontSize: '15px', color, fontWeight: 600, fontFamily: 'var(--font-ibm-plex)', marginTop: '4px' }}>
+          {label}
+        </div>
+        <div style={{ fontSize: '9px', fontFamily: 'var(--font-jetbrains)', color: 'var(--text-tertiary)', marginTop: '6px' }}>
+          ar 50 · temperatura 30 · vento 20
+        </div>
+      </div>
     </div>
   )
 }

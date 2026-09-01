@@ -47,7 +47,7 @@ function StatRow({ icon, label, value, unit, pct, color }: {
           {value}<span style={{ fontSize: '10px', color: 'var(--text-secondary)', marginLeft: '2px' }}>{unit}</span>
         </span>
       </div>
-      <div style={{ height: '4px', background: 'rgba(255,255,255,0.07)', borderRadius: '2px', overflow: 'hidden' }}>
+      <div style={{ height: '4px', background: 'rgba(20,23,28,0.10)', borderRadius: '2px', overflow: 'hidden' }}>
         <div style={{
           height: '100%', width: `${Math.min(100, pct)}%`,
           background: color, borderRadius: '2px',

@@ -1,5 +1,6 @@
 export const MAP_CONFIG = {
-  style: 'mapbox://styles/mapbox/dark-v11',
+  // Gazeta: carta clara. O estilo escuro deixou de fazer par com o papel.
+  style: 'mapbox://styles/mapbox/light-v11',
   center: [-8.4195, 40.2033] as [number, number],
   zoom: 13,
   pitch: 45,
@@ -9,7 +10,8 @@ export const MAP_CONFIG = {
 
 /**
  * Cores de extrusão dos edifícios. Como o Mapbox as avalia fora do CSS,
- * são literais — escolhidas para acompanhar --bg-secondary → --tone-slate.
+ * são literais — em papel vão do tom recuado ao cinza-tinta, para os
+ * volumes se lerem sobre a carta clara sem a escurecerem.
  */
 export const BUILDING_LAYER = {
   id: '3d-buildings',
@@ -21,9 +23,9 @@ export const BUILDING_LAYER = {
   paint: {
     'fill-extrusion-color': [
       'interpolate', ['linear'], ['get', 'height'],
-      0, '#141920',
-      50, '#25313D',
-      100, '#3D4E5C',
+      0, '#D8D1C2',
+      50, '#B9B2A4',
+      100, '#8E887C',
     ],
     'fill-extrusion-height': ['get', 'height'],
     'fill-extrusion-base': ['get', 'min_height'],
@@ -56,6 +58,12 @@ export interface Parish {
 
 /** Ano dos Censos a que a população se refere. */
 export const PARISH_CENSUS_YEAR = '2021'
+
+/**
+ * Os Censos são decenais. Dizer isto ao leitor distingue "o site está
+ * desactualizado" de "é este o detalhe que existe publicado em Portugal".
+ */
+export const NEXT_CENSUS = '2031'
 
 export const COIMBRA_PARISHES: Parish[] = [
   { code: '060318', name: 'Santo António dos Olivais', short: 'Santo António dos Olivais', center: [-8.4050, 40.2150], population: 41150 },

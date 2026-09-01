@@ -99,13 +99,13 @@ function CountdownBadge({ days, color }: { days: number; color: string }) {
     </span>
   )
   if (days <= 30) return (
-    <span style={{ fontSize: '9px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(255,255,255,0.07)', color: 'var(--text-secondary)', border: '1px solid rgba(255,255,255,0.1)' }}>
+    <span style={{ fontSize: '9px', padding: '2px 8px', borderRadius: '4px', background: 'var(--bg-sunken)', color: 'var(--text-secondary)', border: '1px solid var(--border-panel)' }}>
       {days}d
     </span>
   )
   const months = Math.floor(days / 30)
   return (
-    <span style={{ fontSize: '9px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)', border: '1px solid rgba(255,255,255,0.07)' }}>
+    <span style={{ fontSize: '9px', padding: '2px 8px', borderRadius: '4px', background: 'var(--bg-sunken)', color: 'var(--text-secondary)', border: '1px solid var(--border-subtle)' }}>
       ~{months} {months === 1 ? 'mês' : 'meses'}
     </span>
   )
@@ -190,15 +190,15 @@ export default function CultureSection() {
             >
               <div style={{
                 padding: '1rem',
-                background: isNext ? `${colorMix(event.color, 6)}` : 'rgba(13,21,37,0.5)',
-                border: `1px solid ${isNext ? `${colorMix(event.color, 19)}` : 'rgba(255,255,255,0.06)'}`,
+                background: isNext ? `${colorMix(event.color, 6)}` : 'transparent',
+                border: `1px solid ${isNext ? `${colorMix(event.color, 19)}` : 'var(--border-subtle)'}`,
                 borderRadius: '12px',
                 display: 'flex', gap: '0.875rem', alignItems: 'flex-start',
                 transition: 'background 0.2s, border-color 0.2s',
                 cursor: 'pointer',
               }}
               onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = `${colorMix(event.color, 7)}`; (e.currentTarget as HTMLDivElement).style.borderColor = `${colorMix(event.color, 25)}` }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = isNext ? `${colorMix(event.color, 6)}` : 'rgba(13,21,37,0.5)'; (e.currentTarget as HTMLDivElement).style.borderColor = isNext ? `${colorMix(event.color, 19)}` : 'rgba(255,255,255,0.06)' }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = isNext ? `${colorMix(event.color, 6)}` : 'transparent'; (e.currentTarget as HTMLDivElement).style.borderColor = isNext ? `${colorMix(event.color, 19)}` : 'var(--border-subtle)' }}
               >
                 <div style={{
                   width: '36px', height: '36px', borderRadius: '8px', flexShrink: 0,

@@ -1,27 +1,37 @@
-import { unavailable, type Sourced } from '@/lib/provenance'
+import { published, type Sourced } from '@/lib/provenance'
 
-// A ERSAR não expõe API: os dados de controlo da qualidade da água são
-// publicados no relatório anual RASARP, em tabelas HTML e PDF.
+// A pergunta que as pessoas fazem sobre a água da torneira é "posso beber?".
+// Isso responde-se com o que está publicado, sem precisar de um número.
 //
-// Esta rota servia pH 7.2, cloro 0.18, turvação 0.4 e nitratos 4.2 como
-// "valores típicos do último relatório". Nunca foram confirmados contra o
-// relatório — vieram do código original e foram sendo passados adiante.
-// Valores plausíveis sem confirmação não são melhores do que inventados.
+// Esta rota já serviu pH 7.2, cloro 0.18, turvação 0.4 e nitratos 4.2 como
+// "valores típicos do último relatório". Nunca foram confirmados — vieram do
+// código original e foram sendo passados adiante. Ficaram a null e assim
+// continuam: as Águas de Coimbra publicam-nos em PDF trimestral por zona de
+// abastecimento, e enquanto não forem lidos daí não entram aqui.
 //
-// Caminho para dados reais: extrair as tabelas do RASARP da ERSAR, ou o
-// controlo de qualidade que as Águas de Coimbra publicam por zona.
+// O que entra é o estado, que é verificável e estável: a rede é controlada
+// pelas Águas de Coimbra ao abrigo do PCQA aprovado pela ERSAR, que lhe
+// atribuiu o selo de qualidade exemplar da água para consumo humano.
 
-const SOURCE = 'ERSAR · RASARP'
+const SOURCE = 'Águas de Coimbra · ERSAR'
+const LABEL = 'ERSAR · 2025'
 const NOTE =
-  'A ERSAR publica a qualidade da água em relatório anual, sem API. Os valores anteriores não estavam confirmados contra a fonte e foram retirados.'
+  'Estado do controlo de qualidade da rede pública, não uma medição instantânea. Os valores por parâmetro saem em boletim trimestral por zona de abastecimento.'
+
+/** Boletins trimestrais por zona — Boavista, Olhos de Fervença, Quinta das Cunhas. */
+export const BULLETINS_URL = 'https://www.aguasdecoimbra.pt/qualidade-agua/'
 
 export interface WaterQualityPayload {
   ph: number | null
   chlorine: number | null
   turbidity: number | null
   nitrates: number | null
+  /** Resposta directa à pergunta do leitor. */
   status: string | null
+  /** Uma frase que diz porquê, sem jargão. */
+  detail: string
   origin: string
+  bulletinsUrl: string
   meta: Sourced
 }
 
@@ -31,9 +41,12 @@ export async function GET() {
     chlorine: null,
     turbidity: null,
     nitrates: null,
-    status: null,
+    status: 'Própria para consumo',
+    detail:
+      'A rede pública é controlada ao abrigo do programa aprovado pelo regulador, com o selo de qualidade exemplar atribuído às Águas de Coimbra.',
     // A origem da água não é uma medição — é um facto geográfico estável.
     origin: 'Rio Mondego · Açude-ponte de Coimbra',
-    meta: unavailable(SOURCE, NOTE),
+    bulletinsUrl: BULLETINS_URL,
+    meta: published(SOURCE, LABEL, NOTE, null),
   } satisfies WaterQualityPayload)
 }

@@ -7,8 +7,8 @@ import SectionTitle from '@/components/ui/SectionTitle'
 import GlassCard from '@/components/ui/GlassCard'
 import RankedBars from '@/components/charts/RankedBars'
 import DataSource from '@/components/ui/DataSource'
-import { COIMBRA_PARISHES, PARISH_CENSUS_YEAR } from '@/lib/mapbox-config'
-import { estimate } from '@/lib/provenance'
+import { COIMBRA_PARISHES, PARISH_CENSUS_YEAR, NEXT_CENSUS } from '@/lib/mapbox-config'
+import { published } from '@/lib/provenance'
 
 /**
  * O ranking tinha três métricas: população, rendimento e "fluxo diário".
@@ -16,9 +16,10 @@ import { estimate } from '@/lib/provenance'
  * fluxo era população × 0.12. Resta a população, dos Censos, e a ordenação
  * passa a ser só ascendente ou descendente.
  */
-const PARISH_META = estimate(
+const PARISH_META = published(
   `INE · Censos ${PARISH_CENSUS_YEAR}`,
-  'População residente por freguesia. A soma das 18 dá a população do município.',
+  `Censos ${PARISH_CENSUS_YEAR}`,
+  `Última desagregação por freguesia disponível em Portugal. Os Censos são decenais — o próximo é em ${NEXT_CENSUS}.`,
   `${PARISH_CENSUS_YEAR}-12-31T12:00:00`,
 )
 

@@ -21,7 +21,7 @@ export default function OpengraphImage() {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'flex-end',
-          background: '#0A0D12',
+          background: '#F2EEE6',
           padding: '72px',
           position: 'relative',
         }}
@@ -33,7 +33,7 @@ export default function OpengraphImage() {
             style={{
               fontSize: 20,
               letterSpacing: 6,
-              color: '#C1440E',
+              color: '#B03A0B',
               fontWeight: 700,
             }}
           >
@@ -42,24 +42,24 @@ export default function OpengraphImage() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 18 }}>
-          <div style={{ fontSize: 132, fontWeight: 800, color: '#E8EAF0', letterSpacing: -5, lineHeight: 1 }}>
+          <div style={{ fontSize: 132, fontWeight: 800, color: '#14171C', letterSpacing: -5, lineHeight: 1 }}>
             Coimbra
           </div>
-          <div style={{ fontSize: 132, fontWeight: 300, color: '#C1440E', letterSpacing: -5, lineHeight: 1, fontStyle: 'italic' }}>
+          <div style={{ fontSize: 132, fontWeight: 300, color: '#B03A0B', letterSpacing: -5, lineHeight: 1, fontStyle: 'italic' }}>
             Lens
           </div>
         </div>
 
-        <div style={{ fontSize: 34, color: '#8C95A8', marginTop: 28, maxWidth: 820, lineHeight: 1.35 }}>
+        <div style={{ fontSize: 34, color: '#575D65', marginTop: 28, maxWidth: 820, lineHeight: 1.35 }}>
           Clima e ar em directo, caudal do Mondego, trânsito e as 18 freguesias.
         </div>
 
         {/* Barra de proveniência — o que distingue este painel */}
         <div style={{ display: 'flex', gap: 14, marginTop: 44 }}>
           {[
-            { label: 'EM DIRECTO', color: '#2E7D6E' },
-            { label: 'ESTIMATIVA', color: '#B07D3A' },
-            { label: 'INDISPONÍVEL', color: '#8C95A8' },
+            { label: 'EM DIRECTO', color: '#1F6B5C' },
+            { label: 'ESTIMATIVA', color: '#8A6220' },
+            { label: 'INDISPONÍVEL', color: '#575D65' },
           ].map((s) => (
             <div
               key={s.label}

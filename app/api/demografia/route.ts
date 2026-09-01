@@ -1,30 +1,47 @@
-import { estimate, type Sourced } from '@/lib/provenance'
+import { published, unavailable, type Sourced } from '@/lib/provenance'
+import { MUNICIPIO } from '@/lib/municipio'
 
-// Indicadores municipais do INE, obtidos em directo.
-//
-// O que aqui está deixou de ser fixo: quando o INE publicar um período novo,
-// o site muda sozinho. Substitui valores que estavam escritos à mão e já
-// tinham anos — a população dos Censos 2021, o ganho médio de 2022, e uma
-// distribuição de nacionalidades que não correspondia a Coimbra.
-const INE = (varcd: string) =>
-  `https://www.ine.pt/ine/json_indicador/pindica.jsp?op=2&varcd=${varcd}&lang=PT`
+/**
+ * Indicadores municipais do INE, pela API REST de indicadores.
+ *
+ * A forma do pedido importa. A versão anterior pedia o indicador inteiro e
+ * filtrava em memória — 4 MB por chamada para ler uma linha. Isso é lento,
+ * e o INE responde a esse padrão fechando a porta: passou a recusar
+ * ligações a meio do trabalho.
+ *
+ * A API aceita `Dim1` (período) e `Dim2` (geografia). Com as duas, a
+ * resposta traz só as linhas de Coimbra, na ordem dos kilobytes:
+ *
+ *   pindica.jsp?op=2&varcd={cod}&Dim1={periodo}&Dim2={geo}&lang=PT
+ *
+ * O período não é assumido: vem do `UltimoPeriodo` dos metadados, que é
+ * barato de obter. Nunca se presume "ano actual".
+ */
+const INE_DATA = 'https://www.ine.pt/ine/json_indicador/pindica.jsp'
+const INE_META = 'https://www.ine.pt/ine/json_indicador/pindicaMeta.jsp'
 
-/** População residente — estimativas anuais de base administrativa. */
-const VAR_POPULACAO = '0008273'
-/** População estrangeira com estatuto legal de residente, por nacionalidade. */
-const VAR_ESTRANGEIROS = '0013219'
-/** Ganho médio mensal (MTSSS/GEP), na geografia NUTS-2024. */
-const VAR_GANHO = '0012656'
-
-/** Coimbra na geografia NUTS-2013 usada pelo indicador de população. */
-const GEO_2013 = '16E0603'
-/** Coimbra nas geografias mais recentes. */
-const GEO_2024 = '1920603'
-
-/** Área do município em km² — DGT, Carta Administrativa Oficial de Portugal. */
-const AREA_KM2 = 319.4
+/**
+ * Indicadores confirmados a desagregar até ao município.
+ *
+ * Ficaram de fora por não existirem a este nível:
+ *   · taxa de desemprego anual — o INE publica-a por NUTS, e a série do
+ *     IEFP (0014470) é nacional. Por município, só nos Censos.
+ *   · densidade populacional — calcula-se da população e da área.
+ */
+const INDICATORS = {
+  populacao: { varcd: '0008273', geo: '16E0603', dimPrefix: 'S7A' },
+  estrangeiros: { varcd: '0013219', geo: '1920603', dimPrefix: 'S7A' },
+  ganho: { varcd: '0012656', geo: '1920603', dimPrefix: 'S7A' },
+} as const
 
 const SOURCE = 'INE'
+
+/**
+ * Cada indicador faz duas chamadas em série (metadados, depois dados), e os
+ * três correm em paralelo. Com o limite a 12s, uma fonte em silêncio deixava
+ * o cartão em espera 24 segundos. Seis chegam para uma resposta boa.
+ */
+const TIMEOUT_MS = 6_000
 
 export interface Nationality {
   country: string
@@ -34,7 +51,7 @@ export interface Nationality {
 
 export interface IndicatorValue<T> {
   value: T | null
-  /** Período a que o valor se refere, tal como o INE o devolve. */
+  /** Período tal como o INE o devolve. Nunca inferido. */
   year: string | null
 }
 
@@ -42,10 +59,9 @@ export interface DemografiaPayload {
   population: IndicatorValue<number>
   density: IndicatorValue<number>
   areaKm2: number
+  areaYear: string
   foreigners: IndicatorValue<number>
-  /** Nacionalidades ordenadas por dimensão, sem a linha de total. */
   nationalities: Nationality[]
-  /** Ganho médio mensal em euros. */
   income: IndicatorValue<number>
   meta: Sourced
 }
@@ -58,57 +74,47 @@ interface IneRow {
   valor?: string
 }
 
-const EMPTY = { value: null, year: null }
+const NONE: IndicatorValue<number> = { value: null, year: null }
 
-/**
- * Última leitura confirmada do INE, verificada a 01/09/2026.
- *
- * Serve de rede de segurança: se o INE não responder e a cache estiver
- * fria, mostrar isto é melhor do que mostrar traços — são valores reais,
- * do INE, com o período correcto. O que muda é a proveniência, que passa
- * a dizer que vêm de uma cópia local e de quando.
- *
- * Não é um valor inventado nem arredondado: é exactamente o que a fonte
- * devolveu. Actualiza-se sozinho assim que o INE voltar a responder.
- */
-const SNAPSHOT = {
-  verifiedOn: '2026-09-01',
-  population: { value: 154224, year: '2023' },
-  foreigners: { value: 13702, year: '2023' },
-  income: { value: 1528.3, year: '2024' },
-  nationalities: [
-    { country: 'Brasil', count: 6578, pct: 48 },
-    { country: 'Outros países', count: 4103, pct: 29.9 },
-    { country: 'Angola', count: 1005, pct: 7.3 },
-    { country: 'Cabo Verde', count: 576, pct: 4.2 },
-    { country: 'Guiné Bissau', count: 396, pct: 2.9 },
-    { country: 'China', count: 327, pct: 2.4 },
-  ] as Nationality[],
+async function getJson(url: string): Promise<unknown | null> {
+  try {
+    const res = await fetch(url, {
+      next: { revalidate: 86400 },
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    })
+    if (!res.ok) return null
+    return await res.json()
+  } catch {
+    return null
+  }
 }
 
-/**
- * O indicador de população ronda os 4 MB e o INE é lento a servi-lo — e,
- * quando limita pedidos, deixa a ligação pendurada até estourar. Oito
- * segundos chegam para uma resposta boa e são o tempo máximo que vale a
- * pena esperar antes de servir a cópia local.
- */
-const TIMEOUT_MS = 8_000
+/** Último período publicado, segundo a própria fonte. */
+async function latestPeriod(varcd: string): Promise<string | null> {
+  const meta = await getJson(`${INE_META}?varcd=${varcd}&lang=PT`)
+  return (meta as { UltimoPeriodo?: string }[] | null)?.[0]?.UltimoPeriodo ?? null
+}
 
-/** Devolve as linhas do período mais recente, com o rótulo desse período. */
-async function fetchIndicator(varcd: string): Promise<{ year: string; rows: IneRow[] } | null> {
-  const res = await fetch(INE(varcd), {
-    next: { revalidate: 86400 },
-    signal: AbortSignal.timeout(TIMEOUT_MS),
-  })
-  if (!res.ok) return null
+/** Linhas de um indicador, já restritas ao período e à geografia pedidos. */
+async function fetchRows(
+  key: keyof typeof INDICATORS,
+): Promise<{ year: string; rows: IneRow[] } | null> {
+  const { varcd, geo, dimPrefix } = INDICATORS[key]
 
-  const json = await res.json()
-  const dados = json?.[0]?.Dados
+  const year = await latestPeriod(varcd)
+  if (!year) return null
+
+  const url = `${INE_DATA}?op=2&varcd=${varcd}&Dim1=${dimPrefix}${year}&Dim2=${geo}&lang=PT`
+
+  const json = await getJson(url)
+  const dados = (json as { Dados?: Record<string, IneRow[]> }[] | null)?.[0]?.Dados
   if (!dados) return null
 
-  // O INE devolve os períodos por ordem decrescente.
-  const year = Object.keys(dados)[0]
-  return { year, rows: dados[year] ?? [] }
+  const period = Object.keys(dados)[0] ?? year
+  // Mesmo com Dim2, confirmar a geografia: um filtro ignorado passaria
+  // valores de outro município sem dar sinal nenhum.
+  const rows = (dados[period] ?? []).filter((r) => r.geocod === geo)
+  return rows.length ? { year: period, rows } : null
 }
 
 function toNumber(v: string | undefined): number | null {
@@ -118,12 +124,10 @@ function toNumber(v: string | undefined): number | null {
 }
 
 async function getPopulation(): Promise<IndicatorValue<number>> {
-  const d = await fetchIndicator(VAR_POPULACAO)
-  if (!d) return EMPTY
-  // A série inclui os próprios totais; somar as faixas etárias duplicaria.
-  const row = d.rows.find(
-    (r) => r.geocod === GEO_2013 && r.dim_3_t === 'HM' && r.dim_4_t === 'Total',
-  )
+  const d = await fetchRows('populacao')
+  if (!d) return NONE
+  // A série traz os próprios totais; somar as faixas etárias duplicaria.
+  const row = d.rows.find((r) => r.dim_3_t === 'HM' && r.dim_4_t === 'Total')
   return { value: toNumber(row?.valor), year: d.year }
 }
 
@@ -131,13 +135,12 @@ async function getForeigners(): Promise<{
   total: IndicatorValue<number>
   nationalities: Nationality[]
 }> {
-  const d = await fetchIndicator(VAR_ESTRANGEIROS)
-  if (!d) return { total: EMPTY, nationalities: [] }
+  const d = await fetchRows('estrangeiros')
+  if (!d) return { total: NONE, nationalities: [] }
 
-  const rows = d.rows.filter((r) => r.geocod === GEO_2024)
-  const total = toNumber(rows.find((r) => r.dim_3 === 'T')?.valor)
+  const total = toNumber(d.rows.find((r) => r.dim_3 === 'T')?.valor)
 
-  const nationalities: Nationality[] = rows
+  const nationalities: Nationality[] = d.rows
     .filter((r) => r.dim_3 !== 'T' && r.dim_3_t)
     .map((r) => ({ country: r.dim_3_t as string, count: toNumber(r.valor) ?? 0, pct: 0 }))
     .filter((n) => n.count > 0)
@@ -151,74 +154,53 @@ async function getForeigners(): Promise<{
 }
 
 async function getIncome(): Promise<IndicatorValue<number>> {
-  const d = await fetchIndicator(VAR_GANHO)
-  if (!d) return EMPTY
-  const row = d.rows.find((r) => r.geocod === GEO_2024)
-  return { value: toNumber(row?.valor), year: d.year }
+  const d = await fetchRows('ganho')
+  if (!d) return NONE
+  return { value: toNumber(d.rows[0]?.valor), year: d.year }
+}
+
+function empty(note: string): DemografiaPayload {
+  return {
+    population: NONE,
+    density: NONE,
+    areaKm2: MUNICIPIO.areaKm2,
+    areaYear: MUNICIPIO.areaYear,
+    foreigners: NONE,
+    nationalities: [],
+    income: NONE,
+    meta: unavailable(SOURCE, note),
+  }
 }
 
 export async function GET() {
-  try {
-    // Uma falha isolada não deve levar o resto do painel atrás.
-    const [population, foreigners, income] = await Promise.all([
-      getPopulation().catch(() => EMPTY),
-      getForeigners().catch(() => ({ total: EMPTY, nationalities: [] })),
-      getIncome().catch(() => EMPTY),
-    ])
+  const [population, foreigners, income] = await Promise.all([
+    getPopulation().catch(() => NONE),
+    getForeigners().catch(() => ({ total: NONE, nationalities: [] })),
+    getIncome().catch(() => NONE),
+  ])
 
-    const anyValue = population.value ?? foreigners.total.value ?? income.value
-    if (anyValue === null) return Response.json(fromSnapshot())
-
-    const density: IndicatorValue<number> =
-      population.value === null
-        ? EMPTY
-        : { value: Math.round(population.value / AREA_KM2), year: population.year }
-
-    // O período mais recente entre os indicadores obtidos data o conjunto.
-    const newest = [population.year, foreigners.total.year, income.year]
-      .filter((y): y is string => Boolean(y))
-      .sort()
-      .pop()
-
-    return Response.json({
-      population,
-      density,
-      areaKm2: AREA_KM2,
-      foreigners: foreigners.total,
-      nationalities: foreigners.nationalities,
-      income,
-      meta: estimate(
-        SOURCE,
-        'Indicadores municipais obtidos do INE a cada actualização. Cada valor mostra o período a que se refere.',
-        newest ? `${newest}-12-31T12:00:00` : null,
-      ),
-    } satisfies DemografiaPayload)
-  } catch {
-    return Response.json(fromSnapshot())
+  if (population.value === null && foreigners.total.value === null && income.value === null) {
+    return Response.json(empty('O INE não respondeu.'))
   }
-}
 
-/** Resposta a partir da cópia local, com a proveniência a dizê-lo. */
-function fromSnapshot(): DemografiaPayload {
-  return {
-    population: SNAPSHOT.population,
-    density: {
-      value: Math.round(SNAPSHOT.population.value / AREA_KM2),
-      year: SNAPSHOT.population.year,
-    },
-    areaKm2: AREA_KM2,
-    foreigners: SNAPSHOT.foreigners,
-    nationalities: SNAPSHOT.nationalities,
-    income: SNAPSHOT.income,
-    meta: estimate(
-      `${SOURCE} · cópia local`,
-      `O INE não respondeu. Estes valores são a última leitura confirmada da fonte, ` +
-        `verificada a ${new Date(SNAPSHOT.verifiedOn).toLocaleDateString('pt-PT', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-        })}.`,
-      `${SNAPSHOT.population.year}-12-31T12:00:00`,
+  const density: IndicatorValue<number> =
+    population.value === null
+      ? NONE
+      : { value: Math.round(population.value / MUNICIPIO.areaKm2), year: population.year }
+
+  return Response.json({
+    population,
+    density,
+    areaKm2: MUNICIPIO.areaKm2,
+    areaYear: MUNICIPIO.areaYear,
+    foreigners: foreigners.total,
+    nationalities: foreigners.nationalities,
+    income,
+    meta: published(
+      SOURCE,
+      'INE',
+      'API de indicadores do INE. Cada valor mostra o período que a fonte devolve.',
+      population.year ? `${population.year}-12-31T12:00:00` : null,
     ),
-  }
+  } satisfies DemografiaPayload)
 }

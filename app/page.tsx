@@ -9,7 +9,6 @@ import AcademicPulse from '@/components/sections/AcademicPulse'
 import RealEstate from '@/components/sections/RealEstate'
 import ParishRanking from '@/components/sections/ParishRanking'
 import SiteFooter from '@/components/navigation/SiteFooter'
-import SourceStatus from '@/components/status/SourceStatus'
 // Os dois mapas ficam fora do servidor; tudo o resto é renderizado nele.
 import { CoimbraMap, TrafficMap } from '@/components/map/LazyMaps'
 
@@ -23,7 +22,6 @@ export default function Home() {
       <Navbar />
       <main id="conteudo" className="min-h-screen bg-[var(--bg-primary)] overflow-x-hidden">
         <HeroSection />
-        <SourceStatus />
         <ClimateSection />
         <TrafficMap />
         <CityOverview />

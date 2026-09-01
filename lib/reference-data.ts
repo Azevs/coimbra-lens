@@ -124,6 +124,16 @@ export const TRACKED: TrackedDatum[] = [
     usedIn: 'lib/mapbox-config',
   },
   {
+    id: 'agua-qualidade',
+    label: 'Estado da qualidade da água da rede',
+    asOf: '2025',
+    source: 'ERSAR · Águas de Coimbra',
+    // O selo do regulador é anual; os boletins da entidade gestora são
+    // trimestrais. Rever uma vez por ano chega para o estado.
+    refreshEvery: 12,
+    usedIn: 'app/api/water-quality',
+  },
+  {
     id: 'agenda-cultural',
     label: 'Datas dos eventos anuais',
     asOf: '2025',

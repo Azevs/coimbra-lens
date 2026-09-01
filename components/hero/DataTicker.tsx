@@ -18,25 +18,21 @@ export default function DataTicker() {
   // Um traço quando não há leitura. O ticker nunca inventa um número.
   const allItems = [
     {
-      icon: '🌡️',
       label: 'Temperatura',
       value: weather?.temperature != null ? weather.temperature.toFixed(1) : '—',
       unit: '°C',
     },
     {
-      icon: '💨',
       label: 'Qualidade do Ar',
       value: air?.aqi != null ? String(air.aqi) : '—',
       unit: 'EAQI',
     },
     {
-      icon: '🌬️',
       label: 'Vento',
       value: weather?.windSpeed != null ? weather.windSpeed.toFixed(0) : '—',
       unit: 'km/h',
     },
     {
-      icon: '🌊',
       label: 'Mondego',
       value: river?.discharge != null ? `${river.discharge.toFixed(1)} ${TREND_ICON[river.trend]}` : '—',
       unit: 'm³/s',
@@ -65,8 +61,8 @@ export default function DataTicker() {
       ref={tickerRef}
       className="fixed top-0 left-0 right-0 z-[60] overflow-hidden"
       style={{
-        background: 'var(--bg-sunken)',
-        borderBottom: '1px solid var(--border-panel)',
+        background: 'var(--text-primary)',
+        borderBottom: '1px solid var(--text-primary)',
         height: '40px',
       }}
     >
@@ -78,17 +74,17 @@ export default function DataTicker() {
               fontSize: '11px',
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
-              color: 'var(--text-secondary)',
+              color: 'rgba(242,238,230,0.62)',
               marginRight: '7px',
               marginLeft: '20px',
             }}>
-              {item.icon} {item.label}
+              {item.label}
             </span>
             <span style={{
               fontFamily: 'var(--font-jetbrains)',
               fontSize: '12px',
               fontWeight: 600,
-              color: 'var(--text-data)',
+              color: 'var(--bg-primary)',
               fontFeatureSettings: "'tnum' 1",
             }}>
               {item.value}
@@ -97,14 +93,14 @@ export default function DataTicker() {
               <span style={{
                 fontFamily: 'var(--font-jetbrains)',
                 fontSize: '10px',
-                color: 'var(--text-secondary)',
+                color: 'rgba(242,238,230,0.62)',
                 marginLeft: '3px',
               }}>
                 {item.unit}
               </span>
             )}
             <span style={{
-              color: 'var(--accent-text)',
+              color: '#D9762F',
               margin: '0 4px 0 20px',
               fontSize: '6px',
               opacity: 0.7,

@@ -2,15 +2,16 @@
 
 import { motion } from 'framer-motion'
 import { useMapLayers } from '@/hooks/useMapLayers'
-import { COIMBRA_PARISHES, PARISH_CENSUS_YEAR } from '@/lib/mapbox-config'
+import { COIMBRA_PARISHES, PARISH_CENSUS_YEAR, NEXT_CENSUS } from '@/lib/mapbox-config'
 import AnimatedNumber from '@/components/ui/AnimatedNumber'
 import GlassCard from '@/components/ui/GlassCard'
 import DataSource from '@/components/ui/DataSource'
-import { estimate } from '@/lib/provenance'
+import { published } from '@/lib/provenance'
 
-const PARISH_META = estimate(
+const PARISH_META = published(
   `INE · Censos ${PARISH_CENSUS_YEAR}`,
-  'População residente por freguesia. O rendimento por freguesia não é publicado.',
+  `Censos ${PARISH_CENSUS_YEAR}`,
+  `Última desagregação por freguesia disponível em Portugal. Os Censos são decenais — o próximo é em ${NEXT_CENSUS}.`,
   `${PARISH_CENSUS_YEAR}-12-31T12:00:00`,
 )
 

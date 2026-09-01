@@ -1,9 +1,22 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 
-const NAV_LINKS = [
+/**
+ * Barra de dois andares.
+ *
+ * Em cima, as ÁREAS do site; em baixo, as secções da área activa. A barra
+ * de um andar que aqui estava punha nove links planos em fila e não tinha
+ * para onde crescer quando o site deixou de ser só dados.
+ *
+ * Uma área só entra nesta lista quando a página existe — um link para uma
+ * página por construir é a versão de navegação de um número inventado.
+ */
+const AREAS = [{ label: 'Dados', href: '/' }]
+
+const SECTIONS = [
   { label: 'Clima', href: '#clima' },
   { label: 'Trânsito', href: '#transito' },
   { label: 'Cidade', href: '#cidade' },
@@ -15,73 +28,57 @@ const NAV_LINKS = [
   { label: 'Freguesias', href: '#freguesias' },
 ]
 
+const subLinkStyle = {
+  fontFamily: 'var(--font-jetbrains)',
+  fontSize: '10px',
+  fontWeight: 500,
+  letterSpacing: '0.18em',
+  textTransform: 'uppercase' as const,
+  color: 'var(--text-secondary)',
+  textDecoration: 'none',
+  whiteSpace: 'nowrap' as const,
+}
+
 export default function Navbar() {
   const [open, setOpen] = useState(false)
 
   return (
     <nav style={{ position: 'fixed', top: '40px', left: 0, right: 0, zIndex: 50 }}>
       <div className="nav-panel">
-        {/* Wordmark */}
-        <a
-          href="#"
+        <Link
+          href="/"
           style={{
             fontFamily: 'var(--font-fraunces)',
-            fontWeight: 700,
-            fontSize: '1.125rem',
-            letterSpacing: '-0.03em',
+            fontWeight: 900,
+            fontSize: '1.1875rem',
+            letterSpacing: '-0.02em',
             color: 'var(--text-primary)',
             textDecoration: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '2px',
           }}
         >
-          Coimbra
-          <span style={{ color: 'var(--accent-text)', fontStyle: 'italic', fontWeight: 300 }}>Lens</span>
-        </a>
+          CoimbraLens
+        </Link>
 
-        {/* Desktop links */}
-        <div className="hidden md:flex items-center" style={{ gap: '0' }}>
-          {NAV_LINKS.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              style={{
-                fontFamily: 'var(--font-ibm-plex)',
-                fontSize: '10px',
-                fontWeight: 500,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                color: 'var(--text-secondary)',
-                textDecoration: 'none',
-                padding: '0 0.875rem',
-                height: '52px',
-                display: 'flex',
-                alignItems: 'center',
-                borderRight: '1px solid var(--border-subtle)',
-                transition: 'color 0.15s, background 0.15s',
-              }}
-              onMouseEnter={(e) => {
-                const el = e.currentTarget as HTMLAnchorElement
-                el.style.color = 'var(--text-primary)'
-                el.style.background = 'rgba(255,255,255,0.03)'
-              }}
-              onMouseLeave={(e) => {
-                const el = e.currentTarget as HTMLAnchorElement
-                el.style.color = 'var(--text-secondary)'
-                el.style.background = 'transparent'
-              }}
+        {/* Áreas — Fraunces, com o filete terracota na activa */}
+        <div className="hidden md:flex items-center" style={{ gap: '1.875rem' }}>
+          {AREAS.map((area) => (
+            <Link
+              key={area.href}
+              href={area.href}
+              className="nav-area"
+              aria-current={area.href === '/' ? 'page' : undefined}
+              style={{ textDecoration: 'none' }}
             >
-              {link.label}
-            </a>
+              {area.label}
+            </Link>
           ))}
         </div>
 
-        {/* Mobile hamburger */}
         <button
           className="md:hidden"
           onClick={() => setOpen(!open)}
           aria-label="Menu"
+          aria-expanded={open}
           style={{ color: 'var(--text-primary)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -90,7 +87,15 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* Mobile dropdown */}
+      {/* Secções da área activa */}
+      <div className="nav-sub hidden md:flex">
+        {SECTIONS.map((link) => (
+          <a key={link.href} href={link.href} style={subLinkStyle}>
+            {link.label}
+          </a>
+        ))}
+      </div>
+
       <AnimatePresence>
         {open && (
           <motion.div
@@ -99,7 +104,7 @@ export default function Navbar() {
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.15 }}
             style={{
-              background: 'var(--bg-secondary)',
+              background: 'var(--bg-primary)',
               borderBottom: '1px solid var(--border-panel)',
               maxWidth: '1280px',
               margin: '0 auto',
@@ -107,21 +112,15 @@ export default function Navbar() {
             }}
             className="md:hidden"
           >
-            {NAV_LINKS.map((link) => (
+            {SECTIONS.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
                 onClick={() => setOpen(false)}
                 style={{
+                  ...subLinkStyle,
                   display: 'block',
                   padding: '0.75rem 2rem',
-                  fontFamily: 'var(--font-ibm-plex)',
-                  fontSize: '10px',
-                  fontWeight: 500,
-                  letterSpacing: '0.12em',
-                  textTransform: 'uppercase',
-                  color: 'var(--text-secondary)',
-                  textDecoration: 'none',
                   borderBottom: '1px solid var(--border-subtle)',
                 }}
               >

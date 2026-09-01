@@ -6,6 +6,7 @@ import GlassCard from '@/components/ui/GlassCard'
 import DataSource from '@/components/ui/DataSource'
 import { useDemografia } from '@/hooks/useDemografia'
 import { usePordata } from '@/hooks/usePordata'
+import { MUNICIPIO } from '@/lib/municipio'
 import { CITY_FACTS, CITY_STATS, type ReferenceValue } from '@/lib/reference-data'
 
 /**
@@ -112,7 +113,15 @@ function LiveIndicators() {
   const density = pd?.density.value != null ? pd.density : ine?.density
   const income = ine?.income.value != null ? ine.income : pd?.income
 
-  const cards = [
+  const cards: {
+    label: string
+    value: string | undefined
+    unit: string
+    source: string
+    year: string | null | undefined
+    fallbackNote?: string
+    tone: string
+  }[] = [
     {
       label: 'População residente',
       value: population?.value?.toLocaleString('pt-PT'),
@@ -123,10 +132,10 @@ function LiveIndicators() {
     },
     {
       label: 'Área do município',
-      value: (319.4).toLocaleString('pt-PT'),
+      value: MUNICIPIO.areaKm2.toLocaleString('pt-PT'),
       unit: 'km²',
-      source: 'DGT · CAOP',
-      year: '2024',
+      source: MUNICIPIO.areaSource,
+      year: MUNICIPIO.areaYear,
       tone: 'var(--tone-blue)',
     },
     {
@@ -143,6 +152,8 @@ function LiveIndicators() {
       unit: 'pessoas',
       source: 'INE',
       year: ine?.foreigners.year,
+      // Só o INE desagrega estrangeiros por município; a PORDATA não o traz.
+      fallbackNote: ine ? 'fonte sem resposta' : undefined,
       tone: 'var(--tone-violet)',
     },
     {
@@ -188,7 +199,7 @@ function LiveIndicators() {
           value={c.value ?? '—'}
           unit={c.unit}
           source={c.source}
-          asOf={c.year ?? 'a obter'}
+          asOf={c.year ?? c.fallbackNote ?? 'a obter'}
           tone={c.tone}
         />
       ))}
