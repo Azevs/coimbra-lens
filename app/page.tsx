@@ -3,15 +3,15 @@ import HeroSection from '@/components/hero/HeroSection'
 import ClimateSection from '@/components/sections/ClimateSection'
 import CityOverview from '@/components/sections/CityOverview'
 import EventsSection from '@/components/sections/EventsSection'
-import CultureSection from '@/components/sections/CultureSection'
 import MobilityFlow from '@/components/sections/MobilityFlow'
 import AcademicPulse from '@/components/sections/AcademicPulse'
 import RealEstate from '@/components/sections/RealEstate'
-import ParishRanking from '@/components/sections/ParishRanking'
 import SiteFooter from '@/components/navigation/SiteFooter'
-// Os dois mapas ficam fora do servidor; tudo o resto é renderizado nele.
-import { CoimbraMap, TrafficMap } from '@/components/map/LazyMaps'
-
+// O mapa de trânsito fica fora do servidor; tudo o resto é renderizado nele.
+// O mapa das freguesias e o ranking mudaram-se para /territorio, e a agenda
+// cultural para /agenda — cada área tem página própria desde que o site
+// deixou de ser só dados.
+import { TrafficMap } from '@/components/map/LazyMaps'
 
 export default function Home() {
   return (
@@ -26,12 +26,9 @@ export default function Home() {
         <TrafficMap />
         <CityOverview />
         <EventsSection />
-        <CultureSection />
         <MobilityFlow />
-        <CoimbraMap />
         <AcademicPulse />
         <RealEstate />
-        <ParishRanking />
       </main>
       <SiteFooter />
     </>

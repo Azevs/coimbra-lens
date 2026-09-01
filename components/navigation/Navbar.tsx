@@ -2,31 +2,55 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 
 /**
  * Barra de dois andares.
  *
- * Em cima, as ÁREAS do site; em baixo, as secções da área activa. A barra
- * de um andar que aqui estava punha nove links planos em fila e não tinha
- * para onde crescer quando o site deixou de ser só dados.
+ * Em cima, as ÁREAS do site; em baixo, as secções da área activa. A barra de
+ * um andar que aqui estava punha nove links planos em fila e não tinha para
+ * onde crescer quando o site deixou de ser só dados.
  *
  * Uma área só entra nesta lista quando a página existe — um link para uma
  * página por construir é a versão de navegação de um número inventado.
  */
-const AREAS = [{ label: 'Dados', href: '/' }]
-
-const SECTIONS = [
-  { label: 'Clima', href: '#clima' },
-  { label: 'Trânsito', href: '#transito' },
-  { label: 'Cidade', href: '#cidade' },
-  { label: 'Cultura', href: '#cultura' },
-  { label: 'Mobilidade', href: '#mobilidade' },
-  { label: 'Mapa', href: '#mapa' },
-  { label: 'Universidade', href: '#academico' },
-  { label: 'Imobiliário', href: '#imobiliario' },
-  { label: 'Freguesias', href: '#freguesias' },
+const AREAS = [
+  { label: 'Dados', href: '/' },
+  { label: 'Visitar', href: '/visitar' },
+  { label: 'Agenda', href: '/agenda' },
+  { label: 'Território', href: '/territorio' },
+  { label: 'Sobre', href: '/sobre' },
 ]
+
+/** As secções de cada área, na ordem em que aparecem na página. */
+const SECTIONS: Record<string, { label: string; href: string }[]> = {
+  '/': [
+    { label: 'Clima', href: '#clima' },
+    { label: 'Trânsito', href: '#transito' },
+    { label: 'Cidade', href: '#cidade-overview' },
+    { label: 'Eventos & obras', href: '#cidade' },
+    { label: 'Mobilidade', href: '#mobilidade' },
+    { label: 'Universidade', href: '#academico' },
+    { label: 'Imobiliário', href: '#imobiliario' },
+  ],
+  '/visitar': [
+    { label: 'Roteiro a pé', href: '#roteiro' },
+    { label: 'Atracções', href: '#atraccoes' },
+  ],
+  '/agenda': [
+    { label: 'Este mês', href: '#este-mes' },
+    { label: 'Todos os anos', href: '#cultura' },
+  ],
+  '/territorio': [
+    { label: 'Mapa', href: '#mapa' },
+    { label: 'Freguesias', href: '#freguesias' },
+  ],
+  '/sobre': [
+    { label: 'O projecto', href: '#projecto' },
+    { label: 'Como é feito', href: '#metodo' },
+  ],
+}
 
 const subLinkStyle = {
   fontFamily: 'var(--font-jetbrains)',
@@ -41,6 +65,9 @@ const subLinkStyle = {
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
+  const pathname = usePathname() ?? '/'
+  const area = AREAS.find((a) => a.href !== '/' && pathname.startsWith(a.href))?.href ?? '/'
+  const sections = SECTIONS[area] ?? []
 
   return (
     <nav style={{ position: 'fixed', top: '40px', left: 0, right: 0, zIndex: 50 }}>
@@ -61,15 +88,15 @@ export default function Navbar() {
 
         {/* Áreas — Fraunces, com o filete terracota na activa */}
         <div className="hidden md:flex items-center" style={{ gap: '1.875rem' }}>
-          {AREAS.map((area) => (
+          {AREAS.map((a) => (
             <Link
-              key={area.href}
-              href={area.href}
+              key={a.href}
+              href={a.href}
               className="nav-area"
-              aria-current={area.href === '/' ? 'page' : undefined}
+              aria-current={a.href === area ? 'page' : undefined}
               style={{ textDecoration: 'none' }}
             >
-              {area.label}
+              {a.label}
             </Link>
           ))}
         </div>
@@ -88,13 +115,15 @@ export default function Navbar() {
       </div>
 
       {/* Secções da área activa */}
-      <div className="nav-sub hidden md:flex">
-        {SECTIONS.map((link) => (
-          <a key={link.href} href={link.href} style={subLinkStyle}>
-            {link.label}
-          </a>
-        ))}
-      </div>
+      {sections.length > 0 && (
+        <div className="nav-sub hidden md:flex">
+          {sections.map((link) => (
+            <a key={link.href} href={link.href} style={subLinkStyle}>
+              {link.label}
+            </a>
+          ))}
+        </div>
+      )}
 
       <AnimatePresence>
         {open && (
@@ -112,17 +141,31 @@ export default function Navbar() {
             }}
             className="md:hidden"
           >
-            {SECTIONS.map((link) => (
+            {AREAS.map((a) => (
+              <Link
+                key={a.href}
+                href={a.href}
+                onClick={() => setOpen(false)}
+                style={{
+                  display: 'block',
+                  padding: '0.75rem 2rem',
+                  fontFamily: 'var(--font-fraunces)',
+                  fontWeight: 700,
+                  fontSize: '1.0625rem',
+                  color: a.href === area ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                  textDecoration: 'none',
+                  borderBottom: '1px solid var(--border-subtle)',
+                }}
+              >
+                {a.label}
+              </Link>
+            ))}
+            {sections.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
                 onClick={() => setOpen(false)}
-                style={{
-                  ...subLinkStyle,
-                  display: 'block',
-                  padding: '0.75rem 2rem',
-                  borderBottom: '1px solid var(--border-subtle)',
-                }}
+                style={{ ...subLinkStyle, display: 'block', padding: '0.625rem 2rem' }}
               >
                 {link.label}
               </a>

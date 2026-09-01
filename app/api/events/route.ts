@@ -120,8 +120,10 @@ export async function GET() {
           category: CATEGORIES[e.categories?.[0] ?? ''] ?? '',
           organiser: (e.source ?? '').trim(),
           url: EVENT_URL(e.key),
-          // Campo vazio significa "não diz", não "entrada livre".
-          price: preco ? preco : null,
+          // O campo é texto livre: às vezes é "Entrada livre", às vezes um
+          // parágrafo sobre inscrições. Só entra quando cabe numa etiqueta;
+          // e vazio significa "não diz", não "entrada livre".
+          price: preco && preco.length <= 24 ? preco : null,
         }
       })
       .filter((e): e is CityEvent => e !== null)

@@ -469,6 +469,100 @@ input[type='range']::-moz-range-thumb {
 }
 .city-score svg { flex-shrink: 0; }
 
+/* ── Páginas sem herói ──────────────────────────────────────────────────
+   O cabeçalho fixo ocupa 136px; estas páginas começam por baixo dele. */
+.page-top {
+  padding-top: calc(136px + 2.5rem);
+  min-height: 100vh;
+}
+@media (min-width: 768px) { .page-top { padding-top: calc(136px + 3rem); } }
+
+.visitar-headline {
+  font-family: var(--font-fraunces), 'Fraunces', Georgia, serif;
+  font-weight: 900;
+  font-size: clamp(2.75rem, 8vw, 7rem);
+  line-height: 0.9;
+  letter-spacing: -0.045em;
+  margin: 0;
+  padding: 1.5rem 0 1.75rem;
+}
+
+/* Roteiro — a ordem das paragens, numerada */
+.roteiro-lista {
+  list-style: none;
+  display: grid;
+  gap: 0;
+  grid-template-columns: 1fr;
+  margin: 0;
+  padding: 0;
+}
+@media (min-width: 900px) { .roteiro-lista { grid-template-columns: 1fr 1fr; column-gap: 2.5rem; } }
+
+.roteiro-item {
+  display: grid;
+  grid-template-columns: 2.25rem 1fr;
+  gap: 0.75rem;
+  align-items: baseline;
+  border-top: 1px solid var(--border-subtle);
+  padding: 0.875rem 0;
+}
+
+.roteiro-numero {
+  font-family: var(--font-jetbrains);
+  font-size: 12px;
+  color: var(--accent-text);
+}
+
+.roteiro-nome {
+  font-size: 1.25rem;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+.roteiro-nome:hover { color: var(--accent); }
+
+/* Agenda — dia a dia */
+.agenda-dia {
+  font-family: var(--font-jetbrains);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  border-bottom: 1px solid var(--border-panel);
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.agenda-linha {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  gap: 0.75rem;
+  align-items: baseline;
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 0.75rem 0;
+  text-decoration: none;
+  color: inherit;
+}
+@media (min-width: 720px) { .agenda-linha { grid-template-columns: 6.5rem 1fr auto; } }
+.agenda-linha:hover .font-display { color: var(--accent); }
+
+.agenda-hora {
+  font-family: var(--font-jetbrains);
+  font-size: 12px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+/* Prosa corrida — Sobre e textos editoriais */
+.prosa p {
+  font-size: 1.0625rem;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  font-weight: 300;
+  margin-bottom: 1.5rem;
+  text-wrap: pretty;
+}
+.prosa strong { color: var(--text-primary); font-weight: 600; }
+
 /* ── Navegação ──────────────────────────────────────────────────────────── */
 /* Barra de dois andares: em cima as áreas do site (Dados, Visitar…), em
    baixo as secções da área activa. Os nove links planos que aqui estavam
@@ -554,7 +648,10 @@ input[type='range']::-moz-range-thumb {
   font-size: 0.875rem;
   border-radius: 3px;
 }
-.skip-link:focus {
+/* `:focus-visible`, não `:focus`: ao mudar de página o Next põe o foco no
+   topo do documento, e com `:focus` o atalho aparecia a cada entrada mesmo
+   a quem navega com o rato. Com foco de teclado continua a aparecer. */
+.skip-link:focus-visible {
   left: 1rem;
   top: 1rem;
 }
@@ -571,4 +668,6 @@ input[type='range']::-moz-range-thumb {
     scroll-behavior: auto !important;
   }
 }
+
+
 
