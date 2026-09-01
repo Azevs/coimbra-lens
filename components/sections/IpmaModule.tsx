@@ -6,10 +6,10 @@ import DataSource, { DataUnavailable } from '@/components/ui/DataSource'
 import { colorMix } from '@/lib/color'
 
 const LEVEL_STYLE: Record<WarningLevel, { label: string; color: string }> = {
-  green: { label: 'Sem avisos', color: 'var(--tone-teal)' },
-  yellow: { label: 'Aviso amarelo', color: 'var(--tone-amber)' },
-  orange: { label: 'Aviso laranja', color: 'var(--tone-clay)' },
-  red: { label: 'Aviso vermelho', color: 'var(--tone-crimson)' },
+  green: { label: 'Sem avisos', color: 'var(--tone-teal-text)' },
+  yellow: { label: 'Aviso amarelo', color: 'var(--tone-amber-text)' },
+  orange: { label: 'Aviso laranja', color: 'var(--tone-clay-text)' },
+  red: { label: 'Aviso vermelho', color: 'var(--tone-crimson-text)' },
 }
 
 /** A escala do IPMA vai de 1 a 5; a cor acompanha a gravidade. */

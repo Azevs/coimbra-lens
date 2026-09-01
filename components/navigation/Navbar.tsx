@@ -19,7 +19,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false)
 
   return (
-    <nav style={{ position: 'fixed', top: '36px', left: 0, right: 0, zIndex: 50 }}>
+    <nav style={{ position: 'fixed', top: '40px', left: 0, right: 0, zIndex: 50 }}>
       <div className="nav-panel">
         {/* Wordmark */}
         <a
@@ -37,7 +37,7 @@ export default function Navbar() {
           }}
         >
           Coimbra
-          <span style={{ color: 'var(--accent)', fontStyle: 'italic', fontWeight: 300 }}>Lens</span>
+          <span style={{ color: 'var(--accent-text)', fontStyle: 'italic', fontWeight: 300 }}>Lens</span>
         </a>
 
         {/* Desktop links */}

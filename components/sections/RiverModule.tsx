@@ -100,14 +100,14 @@ export default function RiverModule() {
         <div style={{
           padding: '7px 10px', borderRadius: '3px', marginBottom: '0.75rem',
           background: 'rgba(176,125,58,0.15)', border: '1px solid rgba(176,125,58,0.45)',
-          fontSize: '11px', color: 'var(--tone-amber)', fontFamily: 'var(--font-ibm-plex)', fontWeight: 600, lineHeight: 1.45,
+          fontSize: '11px', color: 'var(--tone-amber-text)', fontFamily: 'var(--font-ibm-plex)', fontWeight: 600, lineHeight: 1.45,
         }}>
           Subida prevista até {river.forecastPeak?.toFixed(0)} m³/s nos próximos dias.
         </div>
       )}
 
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.75rem', marginBottom: '0.35rem' }}>
-        <span style={{ fontFamily: 'var(--font-jetbrains)', fontSize: '2.25rem', fontWeight: 600, color: 'var(--tone-blue)', lineHeight: 1 }}>
+        <span style={{ fontFamily: 'var(--font-jetbrains)', fontSize: '2.25rem', fontWeight: 600, color: 'var(--tone-blue-text)', lineHeight: 1 }}>
           {river.discharge.toFixed(1)}
           <span style={{ fontSize: '0.9rem', marginLeft: '5px', color: 'var(--text-secondary)' }}>m³/s</span>
         </span>

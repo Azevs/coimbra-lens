@@ -16,7 +16,7 @@ export default function SectionTitle({ label, title, subtitle }: SectionTitlePro
 
       <span
         className="label-text"
-        style={{ color: 'var(--accent)', display: 'block', marginBottom: '0.875rem' }}
+        style={{ color: 'var(--accent-text)', display: 'block', marginBottom: '0.875rem' }}
       >
         {label}
       </span>

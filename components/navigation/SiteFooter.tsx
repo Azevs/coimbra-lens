@@ -33,7 +33,7 @@ export default function SiteFooter() {
             }}
           >
             Coimbra
-            <span style={{ color: 'var(--accent)', fontStyle: 'italic', fontWeight: 300 }}>Lens</span>
+            <span style={{ color: 'var(--accent-text)', fontStyle: 'italic', fontWeight: 300 }}>Lens</span>
           </p>
           <p style={{ fontFamily: 'var(--font-ibm-plex)', fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 300 }}>
             A cidade em dados
@@ -57,7 +57,7 @@ export default function SiteFooter() {
           <p style={{ fontFamily: 'var(--font-ibm-plex)', fontSize: '0.8125rem', lineHeight: 1.8, color: 'var(--text-secondary)' }}>
             {SOURCES.map((s, i) => (
               <span key={s.href}>
-                <a href={s.href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'none' }}>
+                <a href={s.href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-text)', textDecoration: 'none' }}>
                   {s.label}
                 </a>
                 {i < SOURCES.length - 1 && <span style={{ color: 'var(--text-tertiary)' }}> · </span>}

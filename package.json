@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "postinstall": "node -e \"try{require('fs').rmSync('node_modules/@types/mapbox__point-geometry',{recursive:true,force:true})}catch(e){}\"",
-    "check:data": "node --experimental-strip-types --no-warnings scripts/check-data.mjs"
+    "check:data": "node --experimental-strip-types --no-warnings scripts/check-data.mjs",
+    "check:contrast": "node scripts/check-contrast.mjs",
+    "check": "npm run check:contrast && npm run check:data"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

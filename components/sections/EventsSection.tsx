@@ -26,7 +26,7 @@ function Elsewhere({ links }: { links: { label: string; href: string }[] }) {
             rel="noopener noreferrer"
             style={{
               fontSize: '12px',
-              color: 'var(--accent)',
+              color: 'var(--accent-text)',
               textDecoration: 'none',
               fontFamily: 'var(--font-ibm-plex)',
               display: 'inline-flex',

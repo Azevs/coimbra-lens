@@ -15,11 +15,18 @@
  * Regra: nenhum número fixo entra num componente sem passar por aqui.
  *
  * ── Nota sobre os valores abaixo ────────────────────────────────────────
- * A população e a densidade saíram daqui: passaram a ser obtidas em directo
- * do INE em /api/demografia. Os que ficaram mantêm o valor e o período que
- * já tinham — não foram substituídos por estimativas inventadas. Vários
- * estão fora de prazo de revisão, e é isso que o `npm run check:data`
- * assinala.
+ * Este ficheiro só contém valores confirmados contra a fonte. Tudo o que
+ * era plausível mas não confirmado — rendimento por freguesia, estudantes
+ * por faculdade, nacionalidades da UC, taxa de desemprego, parâmetros da
+ * água, preços por zona — foi retirado do site, não reetiquetado.
+ *
+ * População, densidade, residentes estrangeiros, nacionalidades e ganho
+ * médio mensal saíram daqui: passam a ser obtidos em directo do INE em
+ * /api/demografia, e actualizam-se sozinhos quando o INE publica.
+ *
+ * Os que ficaram mantêm o valor e o período que já tinham — não foram
+ * substituídos por estimativas inventadas. O `npm run check:data` assinala
+ * os que estão fora de prazo.
  */
 
 export interface ReferenceValue {
@@ -51,50 +58,6 @@ export const CITY_STATS: ReferenceValue[] = [
     refreshEvery: 240,
     tone: 'var(--tone-teal)',
   },
-  {
-    id: 'desemprego',
-    label: 'Taxa de desemprego',
-    value: '6.2',
-    unit: '%',
-    asOf: '2023',
-    source: 'INE',
-    sourceUrl: 'https://www.ine.pt',
-    refreshEvery: 12,
-    tone: 'var(--tone-crimson)',
-  },
-  {
-    id: 'rendimento',
-    label: 'Rendimento médio líquido',
-    value: '1 142',
-    unit: '€/mês',
-    asOf: '2022',
-    source: 'INE',
-    sourceUrl: 'https://www.ine.pt',
-    refreshEvery: 12,
-    tone: 'var(--tone-blue)',
-  },
-  {
-    id: 'estrangeiros',
-    label: 'Residentes estrangeiros',
-    value: '14 200+',
-    unit: 'pessoas',
-    asOf: '2024',
-    source: 'AIMA',
-    sourceUrl: 'https://aima.gov.pt',
-    refreshEvery: 12,
-    tone: 'var(--tone-violet)',
-  },
-  {
-    id: 'estudantes',
-    label: 'Estudantes universitários',
-    value: '50 000+',
-    unit: 'estudantes',
-    asOf: '2024',
-    source: 'UC / IPC',
-    sourceUrl: 'https://www.uc.pt',
-    refreshEvery: 12,
-    tone: 'var(--tone-amber)',
-  },
 ]
 
 /**
@@ -121,35 +84,6 @@ export const CITY_FACTS: CityFact[] = [
     text: 'Concorreu a Capital Europeia da Cultura 2027 — o título ficou para Évora',
   },
 ]
-
-/** Nacionalidades dos residentes estrangeiros, em percentagem. */
-export const NATIONALITIES = {
-  asOf: '2024',
-  source: 'AIMA',
-  sourceUrl: 'https://aima.gov.pt',
-  refreshEvery: 12,
-  rows: [
-    { country: 'Brasil', pct: 34, color: 'var(--tone-moss)' },
-    { country: 'Nepal', pct: 18, color: 'var(--tone-crimson)' },
-    { country: 'Índia', pct: 12, color: 'var(--tone-amber)' },
-    { country: 'China', pct: 9, color: 'var(--tone-clay)' },
-    { country: 'Outros', pct: 27, color: 'var(--tone-muted)' },
-  ],
-}
-
-/** Universidade de Coimbra, por ano lectivo. */
-export const UNIVERSITY = {
-  asOf: '2024',
-  source: 'Universidade de Coimbra',
-  sourceUrl: 'https://www.uc.pt',
-  refreshEvery: 12,
-  totalStudents: 23847,
-  international: 3421,
-  national: 20426,
-  faculties: 8,
-  researchers: 1200,
-  countries: 68,
-}
 
 /** Entrada do manifesto de frescura. */
 export interface TrackedDatum {
@@ -181,50 +115,11 @@ export const TRACKED: TrackedDatum[] = [
     usedIn: 'CityOverview',
   })),
   {
-    id: 'nacionalidades',
-    label: 'Nacionalidades dos estrangeiros',
-    asOf: NATIONALITIES.asOf,
-    source: NATIONALITIES.source,
-    refreshEvery: NATIONALITIES.refreshEvery,
-    usedIn: 'CityOverview',
-  },
-  {
-    id: 'universidade',
-    label: 'Números da Universidade',
-    asOf: UNIVERSITY.asOf,
-    source: UNIVERSITY.source,
-    refreshEvery: UNIVERSITY.refreshEvery,
-    usedIn: 'AcademicPulse',
-  },
-  {
-    id: 'agua',
-    label: 'Qualidade da água da torneira',
-    asOf: '2023',
-    source: 'ERSAR · RASARP',
-    refreshEvery: 12,
-    usedIn: 'app/api/water-quality',
-  },
-  {
-    id: 'imobiliario',
-    label: 'Preços por m² (modelo)',
-    asOf: '2024',
-    source: 'Modelo próprio · base INE',
-    refreshEvery: 12,
-    usedIn: 'RealEstate',
-  },
-  {
-    id: 'mobilidade',
-    label: 'Fluxos casa–trabalho (modelo)',
-    asOf: '2021',
-    source: 'Modelo próprio · base INE',
-    refreshEvery: 60,
-    usedIn: 'MobilityFlow',
-  },
-  {
     id: 'freguesias-dados',
-    label: 'População e rendimento por freguesia',
+    label: 'População por freguesia',
     asOf: '2021',
     source: 'INE · Censos',
+    // Os Censos são decenais; os próximos são em 2031.
     refreshEvery: 120,
     usedIn: 'lib/mapbox-config',
   },
@@ -237,15 +132,41 @@ export const TRACKED: TrackedDatum[] = [
     refreshEvery: 12,
     usedIn: 'CultureSection',
   },
+  // Vigiados mesmo sendo obtidos em directo: assinalam quando o INE publica
+  // um período novo, para se saber que o número no site mudou sozinho.
   {
-    // Vigiado mesmo sendo obtido em directo: assinala quando o INE publica
-    // um ano novo, para se saber que o número no site mudou.
+    id: 'pordata',
+    label: 'Retrato do Município (directo)',
+    asOf: '2025',
+    source: 'PORDATA',
+    refreshEvery: 12,
+    usedIn: 'app/api/pordata',
+  },
+  {
     id: 'populacao-ine',
-    label: 'População residente (em directo)',
+    label: 'População residente (directo)',
     asOf: '2023',
     source: 'INE · Estimativas anuais',
     refreshEvery: 12,
     ineVarcd: '0008273',
+    usedIn: 'app/api/demografia',
+  },
+  {
+    id: 'estrangeiros-ine',
+    label: 'Estrangeiros e nacionalidades (directo)',
+    asOf: '2023',
+    source: 'INE',
+    refreshEvery: 12,
+    ineVarcd: '0013219',
+    usedIn: 'app/api/demografia',
+  },
+  {
+    id: 'ganho-ine',
+    label: 'Ganho médio mensal (directo)',
+    asOf: '2024',
+    source: 'INE · MTSSS/GEP',
+    refreshEvery: 12,
+    ineVarcd: '0012656',
     usedIn: 'app/api/demografia',
   },
 ]

@@ -12,17 +12,24 @@
   --accent-dim:    #8A3008;   /* muted / secondary accent */
   --accent-glow:   rgba(193, 68, 14, 0.18);
 
-  /* Supporting palette — muted, desaturated */
-  --tone-blue:     #3D6E8C;   /* data blue */
-  --tone-teal:     #2E7D6E;   /* secondary data */
-  --tone-amber:    #B07D3A;   /* warm data */
-  --tone-muted:    #4A5568;   /* disabled / tertiary */
+  /* ── Tons de dados: rampa de GRÁFICOS ────────────────
+     Preenchimentos de barras, arcos, marcadores. O mínimo aqui é 3:1
+     (contraste de elementos não textuais). Mantêm-se dessaturados — é
+     esta rampa que dá o aspecto de carta náutica. */
+  --tone-blue:     #3D6E8C;   /* 3.6:1 */
+  --tone-teal:     #2E7D6E;   /* 4.0:1 */
+  --tone-amber:    #B07D3A;   /* 5.5:1 */
+  --tone-muted:    #63708A;   /* 4.0:1 — era #4A5568, a 2.6:1 */
 
-  /* Text — high contrast, WCAG AA guaranteed */
-  --text-primary:   #E8EAF0;  /* 14:1 on bg-primary */
-  --text-secondary: #8C95A8;  /* 5.2:1 on bg-primary */
-  --text-tertiary:  #535D6E;  /* decorative only */
-  --text-data:      #D4884A;  /* data readouts */
+  /* ── Texto ───────────────────────────────────────────
+     Rácios medidos sobre --bg-sunken (#080B0F), o fundo mais escuro do
+     painel, por `npm run check:contrast`. Os três níveis passam AA para
+     texto normal — o antigo --text-tertiary dava 2.97:1 e era usado nos
+     rótulos do ticker a 9px. */
+  --text-primary:   #E8EAF0;  /* 16.4:1 */
+  --text-secondary: #959EB0;  /*  7.3:1 */
+  --text-tertiary:  #7A8698;  /*  5.3:1 */
+  --text-data:      #D4884A;  /*  7.0:1 */
 
   /* Borders */
   --border-strong:  rgba(193, 68, 14, 0.35);
@@ -38,12 +45,30 @@
   /* ── Paleta de dados ──────────────────────────────────
      Séries categóricas. Deliberadamente separada do acento da marca:
      o acento identifica o CoimbraLens, estes tons identificam variáveis. */
-  --tone-violet:  #7A5C8A;
-  --tone-clay:    #A05A3A;
-  --tone-slate:   #5C7A8C;
-  --tone-moss:    #5C9A5C;
-  --tone-crimson: #8A1F2E;
-  --tone-rose:    #A8617C;
+  --tone-violet:  #7A5C8A;   /* 3.5:1 */
+  --tone-clay:    #A05A3A;   /* 3.8:1 */
+  --tone-slate:   #5C7A8C;   /* 4.3:1 */
+  --tone-moss:    #5C9A5C;   /* 5.9:1 */
+  --tone-crimson: #B2404E;   /* 3.5:1 — era #8A1F2E, a 2.2:1 */
+  --tone-rose:    #A8617C;   /* 4.4:1 */
+
+  /* ── Tons de dados: rampa de TEXTO ───────────────────
+     A mesma cor, clareada até passar AA (4.5:1), para quando o tom é
+     usado como número ou etiqueta e não como preenchimento. Separar as
+     duas rampas deixa os gráficos discretos sem tornar os valores
+     ilegíveis — que era o compromisso impossível de uma paleta só. */
+  --tone-blue-text:    #5590AF;  /* 5.6:1 */
+  --tone-teal-text:    #3E9C89;  /* 5.9:1 */
+  --tone-amber-text:   #B07D3A;  /* 5.5:1 — já passava */
+  --tone-violet-text:  #A17FB2;  /* 5.8:1 */
+  --tone-clay-text:    #C4764F;  /* 5.7:1 */
+  --tone-slate-text:   #7E9BAE;  /* 6.8:1 */
+  --tone-moss-text:    #5C9A5C;  /* 5.9:1 — já passava */
+  --tone-crimson-text: #CE6474;  /* 5.4:1 */
+  --tone-rose-text:    #C6849B;  /* 6.7:1 */
+  --accent-text:       #DB5E24;  /* 5.3:1 — o acento da marca dá 3.9:1,
+                                    suficiente para títulos grandes e
+                                    contornos, curto para texto pequeno */
 
   /* ── Semântica de estado ──────────────────────────────
      Bom → mau. Usada por índices e limiares, nunca como cor de marca. */
@@ -98,10 +123,10 @@ body {
   .page-section { padding: 7rem 6rem; }
 }
 
-/* O cabeçalho é fixo (36px de ticker + 52px de navegação). Sem esta margem,
+/* O cabeçalho é fixo (40px de ticker + 52px de navegação). Sem esta margem,
    qualquer link da navegação aterra com o título escondido por baixo dele. */
 .page-section[id] {
-  scroll-margin-top: 104px;
+  scroll-margin-top: 108px;
 }
 
 .section-container {
@@ -395,6 +420,20 @@ input[type='range']::-moz-range-thumb {
 @media (min-width: 768px) { .nav-panel { padding: 0 2rem; } }
 
 /* ── Acessibilidade ─────────────────────────────────────────────────────── */
+/* Visível para leitores de ecrã, ausente do ecrã. Usado no estado das
+   fontes, onde o ponto colorido não pode ser a única informação. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;

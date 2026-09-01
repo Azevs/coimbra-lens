@@ -53,7 +53,7 @@ export default function UCNewsPanel() {
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
               <span style={{
                 fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase',
-                color: 'var(--accent)', flexShrink: 0, marginTop: '2px',
+                color: 'var(--accent-text)', flexShrink: 0, marginTop: '2px',
                 fontFamily: 'var(--font-ibm-plex)',
               }}>
                 {item.category}

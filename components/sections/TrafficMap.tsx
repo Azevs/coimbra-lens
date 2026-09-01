@@ -196,7 +196,7 @@ export default function TrafficMap() {
             </span>
             <p style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
               Dados de tráfego em tempo real fornecidos pelo{' '}
-              <a href="https://www.mapbox.com/traffic-data" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'none' }}>
+              <a href="https://www.mapbox.com/traffic-data" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-text)', textDecoration: 'none' }}>
                 Mapbox Traffic API
               </a>
               {' '}— actualização contínua via sondas GPS agregadas anonimamente.

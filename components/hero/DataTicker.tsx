@@ -66,8 +66,8 @@ export default function DataTicker() {
       className="fixed top-0 left-0 right-0 z-[60] overflow-hidden"
       style={{
         background: 'var(--bg-sunken)',
-        borderBottom: '1px solid var(--border-subtle)',
-        height: '36px',
+        borderBottom: '1px solid var(--border-panel)',
+        height: '40px',
       }}
     >
       <div ref={innerRef} className="flex items-center h-full whitespace-nowrap">
@@ -75,19 +75,19 @@ export default function DataTicker() {
           <span key={i} className="flex items-center shrink-0">
             <span style={{
               fontFamily: 'var(--font-jetbrains)',
-              fontSize: '9px',
-              letterSpacing: '0.12em',
+              fontSize: '11px',
+              letterSpacing: '0.1em',
               textTransform: 'uppercase',
-              color: 'var(--text-tertiary)',
-              marginRight: '6px',
-              marginLeft: '18px',
+              color: 'var(--text-secondary)',
+              marginRight: '7px',
+              marginLeft: '20px',
             }}>
               {item.icon} {item.label}
             </span>
             <span style={{
               fontFamily: 'var(--font-jetbrains)',
-              fontSize: '11px',
-              fontWeight: 500,
+              fontSize: '12px',
+              fontWeight: 600,
               color: 'var(--text-data)',
               fontFeatureSettings: "'tnum' 1",
             }}>
@@ -96,18 +96,18 @@ export default function DataTicker() {
             {item.unit && (
               <span style={{
                 fontFamily: 'var(--font-jetbrains)',
-                fontSize: '9px',
-                color: 'var(--text-tertiary)',
+                fontSize: '10px',
+                color: 'var(--text-secondary)',
                 marginLeft: '3px',
               }}>
                 {item.unit}
               </span>
             )}
             <span style={{
-              color: 'var(--accent)',
-              margin: '0 4px 0 18px',
+              color: 'var(--accent-text)',
+              margin: '0 4px 0 20px',
               fontSize: '6px',
-              opacity: 0.5,
+              opacity: 0.7,
               flexShrink: 0,
             }}>◆</span>
           </span>

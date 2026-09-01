@@ -1,40 +1,39 @@
-import { estimate, type Sourced } from '@/lib/provenance'
+import { unavailable, type Sourced } from '@/lib/provenance'
 
-// A ERSAR não expõe API — os dados de controlo da qualidade da água são
+// A ERSAR não expõe API: os dados de controlo da qualidade da água são
 // publicados no relatório anual RASARP, em tabelas HTML e PDF.
 //
-// Estes são valores típicos do sistema de abastecimento de Coimbra segundo
-// o último relatório publicado. NÃO são uma análise de hoje: a versão
-// anterior carimbava a data actual, o que sugeria uma medição diária que
-// não existe.
-const SOURCE = 'ERSAR · RASARP'
-const METHOD = 'Valores típicos do último relatório anual publicado. Não é uma análise diária.'
+// Esta rota servia pH 7.2, cloro 0.18, turvação 0.4 e nitratos 4.2 como
+// "valores típicos do último relatório". Nunca foram confirmados contra o
+// relatório — vieram do código original e foram sendo passados adiante.
+// Valores plausíveis sem confirmação não são melhores do que inventados.
+//
+// Caminho para dados reais: extrair as tabelas do RASARP da ERSAR, ou o
+// controlo de qualidade que as Águas de Coimbra publicam por zona.
 
-/** Ano do relatório de onde vêm os valores abaixo. */
-const REPORT_YEAR = 2023
+const SOURCE = 'ERSAR · RASARP'
+const NOTE =
+  'A ERSAR publica a qualidade da água em relatório anual, sem API. Os valores anteriores não estavam confirmados contra a fonte e foram retirados.'
 
 export interface WaterQualityPayload {
-  ph: number
-  chlorine: number
-  turbidity: number
-  nitrates: number
-  conductivity: number
-  status: string
+  ph: number | null
+  chlorine: number | null
+  turbidity: number | null
+  nitrates: number | null
+  status: string | null
   origin: string
-  reportYear: number
   meta: Sourced
 }
 
 export async function GET() {
   return Response.json({
-    ph: 7.2,
-    chlorine: 0.18,
-    turbidity: 0.4,
-    nitrates: 4.2,
-    conductivity: 285,
-    status: 'Própria para consumo',
+    ph: null,
+    chlorine: null,
+    turbidity: null,
+    nitrates: null,
+    status: null,
+    // A origem da água não é uma medição — é um facto geográfico estável.
     origin: 'Rio Mondego · Açude-ponte de Coimbra',
-    reportYear: REPORT_YEAR,
-    meta: estimate(SOURCE, METHOD, `${REPORT_YEAR}-12-31T12:00:00`),
+    meta: unavailable(SOURCE, NOTE),
   } satisfies WaterQualityPayload)
 }

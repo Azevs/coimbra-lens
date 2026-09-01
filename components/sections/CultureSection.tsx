@@ -22,56 +22,56 @@ const EVENTS: CulturalEvent[] = [
     name: 'Queima das Fitas',
     description: 'A maior festa académica do país. Uma semana de cortejo, serenatas e concertos na Alta e Baixa de Coimbra.',
     month: 5, day: 10,
-    color: 'var(--tone-amber)', icon: '🎓', category: 'Academia',
+    color: 'var(--tone-amber-text)', icon: '🎓', category: 'Academia',
     url: 'https://queima.academica.pt',
   },
   {
     name: 'Jazz ao Centro',
     description: 'Festival de jazz internacional no coração de Coimbra, com concertos em espaços históricos da cidade.',
     month: 6, day: 15,
-    color: 'var(--tone-blue)', icon: '🎷', category: 'Música',
+    color: 'var(--tone-blue-text)', icon: '🎷', category: 'Música',
     url: 'https://jazzaocentro.pt',
   },
   {
     name: 'Festa da Cidade',
     description: 'Celebração do Dia de Coimbra com espectáculos, exposições e animação de rua em toda a cidade.',
     month: 6, day: 4,
-    color: 'var(--tone-teal)', icon: '🏛️', category: 'Cultura',
+    color: 'var(--tone-teal-text)', icon: '🏛️', category: 'Cultura',
     url: 'https://www.cm-coimbra.pt',
   },
   {
     name: 'BTT Mondego',
     description: 'Prova de bicicleta de montanha ao longo do vale do Mondego. Um dos maiores eventos de BTT do país.',
     month: 10, day: 12,
-    color: 'var(--tone-moss)', icon: '🚵', category: 'Desporto',
+    color: 'var(--tone-moss-text)', icon: '🚵', category: 'Desporto',
     url: 'https://www.bttmondego.com',
   },
   {
     name: 'Semana Académica',
     description: 'Semana cultural da Associação Académica com debates, exposições, workshops e serenatas.',
     month: 3, day: 20,
-    color: 'var(--tone-violet)', icon: '📚', category: 'Academia',
+    color: 'var(--tone-violet-text)', icon: '📚', category: 'Academia',
     url: 'https://www.academica.pt',
   },
   {
     name: 'Festival das Artes',
     description: 'Programação multidisciplinar de artes performativas, instalações e cinema no Centro de Portugal.',
     month: 7, day: 1,
-    color: 'var(--tone-crimson)', icon: '🎭', category: 'Arte',
+    color: 'var(--tone-crimson-text)', icon: '🎭', category: 'Arte',
     url: 'https://www.festivalartes.pt',
   },
   {
     name: 'Magusto de Coimbra',
     description: 'Celebração de São Martinho com castanhas, jeropiga e animação popular nas ruas da Baixa.',
     month: 11, day: 11,
-    color: 'var(--tone-clay)', icon: '🌰', category: 'Tradição',
+    color: 'var(--tone-clay-text)', icon: '🌰', category: 'Tradição',
     url: 'https://www.cm-coimbra.pt',
   },
   {
     name: 'Mercado de Natal',
     description: 'Mercado natalício na Praça 8 de Maio com artesanato, gastronomia e espectáculos ao vivo.',
     month: 12, day: 1,
-    color: 'var(--tone-blue)', icon: '🎄', category: 'Tradição',
+    color: 'var(--tone-blue-text)', icon: '🎄', category: 'Tradição',
     url: 'https://www.cm-coimbra.pt',
   },
 ]
@@ -215,7 +215,7 @@ export default function CultureSection() {
                     {now && <CountdownBadge days={days} color={event.color} />}
                   </div>
                   <span style={{ fontSize: '9px', color: event.color, letterSpacing: '0.1em', textTransform: 'uppercase', display: 'block', marginBottom: '2px' }}>
-                    {event.category} · {event.nextDate.toLocaleDateString('pt-PT', { day: 'numeric', month: 'long' })}
+                    {event.category} · {event.nextDate.toLocaleDateString('pt-PT', { month: 'long' })}
                   </span>
                   <p style={{ fontSize: '10px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                     {event.description}
@@ -228,7 +228,7 @@ export default function CultureSection() {
       </div>
 
       <p style={{ fontSize: '9px', color: 'var(--text-secondary)', opacity: 0.4, marginTop: '1rem', textAlign: 'right' }}>
-        Datas aproximadas · Sujeito a alterações
+        Meses habituais. As datas exactas mudam todos os anos e são confirmadas pelos organizadores — siga a ligação de cada evento.
       </p>
     </SectionReveal>
   )

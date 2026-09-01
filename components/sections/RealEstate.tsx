@@ -1,224 +1,170 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
-import * as d3 from 'd3'
-import { gsap } from '@/lib/gsap-config'
 import SectionReveal from '@/components/ui/SectionReveal'
 import SectionTitle from '@/components/ui/SectionTitle'
 import GlassCard from '@/components/ui/GlassCard'
+import DataSource, { DataUnavailable } from '@/components/ui/DataSource'
+import { usePordata } from '@/hooks/usePordata'
 
-const ZONES = [
-  { name: 'Baixa', base: 1450, growth: 0.08 },
-  { name: 'Alta (UC)', base: 1200, growth: 0.07 },
-  { name: 'Olivais', base: 980, growth: 0.065 },
-  { name: 'Solum', base: 1050, growth: 0.075 },
-  { name: 'Pedrulha', base: 780, growth: 0.055 },
-  { name: 'Cernache', base: 620, growth: 0.04 },
-]
+/**
+ * Esta secção mostrava seis zonas de Coimbra com preços por m² e um cursor
+ * de 2014 a 2024. Nada disso era medido: os preços saíam de um modelo de
+ * juro composto a partir de bases inventadas, e as zonas não correspondem
+ * a nenhuma unidade estatística publicada.
+ *
+ * A PORDATA publica o preço mediano de venda e o valor mediano de
+ * avaliação bancária do município. É menos granular — não há quebra por
+ * zona — mas é medido.
+ */
 
-function getPriceForYear(base: number, growth: number, year: number): number {
-  const years = year - 2014
-  return Math.round(base * Math.pow(1 + growth, years))
-}
+function PriceCard({
+  label,
+  value,
+  year,
+  note,
+  tone,
+  emphasis = false,
+}: {
+  label: string
+  value: number | null | undefined
+  year: string | null | undefined
+  note: string
+  tone: string
+  emphasis?: boolean
+}) {
+  return (
+    <div
+      style={{
+        background: 'var(--bg-secondary)',
+        border: '1px solid var(--border-panel)',
+        borderLeft: emphasis ? `2px solid ${tone}` : '1px solid var(--border-panel)',
+        borderRadius: '4px',
+        padding: '1.5rem',
+      }}
+    >
+      <span
+        style={{
+          fontSize: '10px',
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          color: 'var(--text-secondary)',
+          display: 'block',
+          marginBottom: '0.75rem',
+        }}
+      >
+        {label}
+      </span>
 
-function getChangePercent(base: number, growth: number, year: number): number {
-  if (year <= 2014) return 0
-  const curr = getPriceForYear(base, growth, year)
-  const prev = getPriceForYear(base, growth, year - 1)
-  return +((curr - prev) / prev * 100).toFixed(1)
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.375rem' }}>
+        <span
+          style={{
+            fontFamily: 'var(--font-jetbrains)',
+            fontSize: emphasis ? '2.5rem' : '1.75rem',
+            fontWeight: 700,
+            lineHeight: 1,
+            color: tone,
+            fontVariantNumeric: 'tabular-nums',
+          }}
+        >
+          {value != null ? value.toLocaleString('pt-PT') : '—'}
+        </span>
+        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>€/m²</span>
+      </div>
+
+      <p style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '0.625rem', lineHeight: 1.55 }}>
+        {note}
+      </p>
+
+      <span
+        style={{
+          fontSize: '10px',
+          color: 'var(--text-tertiary)',
+          fontFamily: 'var(--font-jetbrains)',
+          marginTop: '0.5rem',
+          display: 'block',
+        }}
+      >
+        PORDATA · {year ?? 'a obter'}
+      </span>
+    </div>
+  )
 }
 
 export default function RealEstate() {
-  const [year, setYear] = useState(2024)
-  const chartRef = useRef<SVGSVGElement>(null)
-  const labelsRef = useRef<Map<string, HTMLSpanElement>>(new Map())
-
-  const setLabelRef = useCallback((name: string) => (el: HTMLSpanElement | null) => {
-    if (el) labelsRef.current.set(name, el)
-  }, [])
-
-  // Animate number labels on year change
-  useEffect(() => {
-    ZONES.forEach((zone) => {
-      const el = labelsRef.current.get(zone.name)
-      if (!el) return
-      const target = getPriceForYear(zone.base, zone.growth, year)
-      const obj = { v: parseFloat(el.textContent?.replace(/\s/g, '') || '0') }
-      gsap.to(obj, {
-        v: target,
-        duration: 0.6,
-        ease: 'power2.out',
-        onUpdate: () => {
-          el.textContent = Math.round(obj.v).toLocaleString('pt-PT')
-        },
-      })
-    })
-  }, [year])
-
-  // Draw bar chart
-  useEffect(() => {
-    if (!chartRef.current) return
-
-    const svg = d3.select(chartRef.current)
-    svg.selectAll('*').remove()
-
-    const margin = { top: 20, right: 20, bottom: 40, left: 20 }
-    const width = 600
-    const height = 300
-    const innerW = width - margin.left - margin.right
-    const innerH = height - margin.top - margin.bottom
-
-    const g = svg
-      .attr('viewBox', `0 0 ${width} ${height}`)
-      .append('g')
-      .attr('transform', `translate(${margin.left},${margin.top})`)
-
-    const data = ZONES.map((z) => ({
-      name: z.name,
-      price: getPriceForYear(z.base, z.growth, year),
-      change: getChangePercent(z.base, z.growth, year),
-    }))
-
-    const x = d3.scaleBand().domain(data.map((d) => d.name)).range([0, innerW]).padding(0.3)
-    const y = d3.scaleLinear().domain([0, d3.max(data, (d) => d.price)! * 1.15]).range([innerH, 0])
-
-    // Gradient defs
-    const defs = svg.append('defs')
-    defs.append('linearGradient')
-      .attr('id', 'barGrad')
-      .attr('x1', '0').attr('y1', '1').attr('x2', '0').attr('y2', '0')
-      .selectAll('stop')
-      .data([
-        { offset: '0%', color: 'var(--accent-blue)' },
-        { offset: '100%', color: 'var(--accent-gold)' },
-      ])
-      .enter().append('stop')
-      .attr('offset', (d) => d.offset)
-      .attr('stop-color', (d) => d.color)
-
-    // Bars
-    g.selectAll('.bar')
-      .data(data)
-      .enter()
-      .append('rect')
-      .attr('x', (d) => x(d.name) || 0)
-      .attr('width', x.bandwidth())
-      .attr('rx', 6)
-      .attr('fill', 'url(#barGrad)')
-      .attr('y', innerH)
-      .attr('height', 0)
-      .transition()
-      .duration(1000)
-      .delay((_, i) => i * 100)
-      .attr('y', (d) => y(d.price))
-      .attr('height', (d) => innerH - y(d.price))
-
-    // Change badges
-    g.selectAll('.badge')
-      .data(data)
-      .enter()
-      .append('text')
-      .attr('x', (d) => (x(d.name) || 0) + x.bandwidth() / 2)
-      .attr('y', (d) => y(d.price) - 8)
-      .attr('text-anchor', 'middle')
-      .attr('fill', (d) => (d.change >= 0 ? 'var(--accent-teal)' : 'var(--accent-red)'))
-      .attr('font-size', 11)
-      .attr('font-family', 'var(--font-jetbrains)')
-      .text((d) => `${d.change >= 0 ? '+' : ''}${d.change}%`)
-
-    // X axis labels
-    g.selectAll('.xLabel')
-      .data(data)
-      .enter()
-      .append('text')
-      .attr('x', (d) => (x(d.name) || 0) + x.bandwidth() / 2)
-      .attr('y', innerH + 24)
-      .attr('text-anchor', 'middle')
-      .attr('fill', 'var(--text-secondary)')
-      .attr('font-size', 11)
-      .text((d) => d.name)
-  }, [year])
+  const { data, isLoading } = usePordata()
 
   return (
     <SectionReveal id="imobiliario">
       <SectionTitle
         label="MERCADO IMOBILIÁRIO"
-        title="Preços por Zona"
-        subtitle="Evolução do preço médio por m² nas principais zonas de Coimbra."
+        title="Preços da Habitação"
+        subtitle="Valores medianos do município. Não há quebra por zona publicada — o que existe é o concelho inteiro."
       />
 
-      {/* Timeline slider */}
-      <GlassCard className="mb-8">
-        <span className="label-text text-[var(--text-secondary)] block mb-4">LINHA TEMPORAL</span>
-        <div style={{ position: 'relative', paddingBottom: '1.5rem' }}>
-          {/* Sliding year tooltip */}
-          <div
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              left: `calc(${((year - 2014) / 10) * 100}% - ${((year - 2014) / 10) * 48}px)`,
-              transform: 'translateX(-50%)',
-              transition: 'left 0.1s ease',
-              pointerEvents: 'none',
-            }}
-          >
-            <div style={{
-              background: 'var(--accent-gold)', color: 'var(--bg-sunken)',
-              borderRadius: '6px', padding: '2px 8px',
-              fontFamily: 'var(--font-fraunces)', fontWeight: 700, fontSize: '1rem',
-              whiteSpace: 'nowrap',
-            }}>
-              {year}
-            </div>
-            <div style={{ width: 0, height: 0, borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderTop: '5px solid var(--accent-gold)', margin: '0 auto' }} />
-          </div>
+      {isLoading || !data ? (
+        <div className="grid-stats">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="animate-pulse" style={{ height: '160px', background: 'var(--bg-sunken)', borderRadius: '4px' }} />
+          ))}
         </div>
-        <input
-          type="range"
-          min={2014}
-          max={2024}
-          value={year}
-          onChange={(e) => setYear(Number(e.target.value))}
-          className="w-full h-2 rounded-full appearance-none cursor-pointer"
-          style={{
-            background: `linear-gradient(to right, var(--accent-gold) ${((year - 2014) / 10) * 100}%, var(--bg-primary) ${((year - 2014) / 10) * 100}%)`,
-          }}
-        />
-        <div className="flex justify-between mt-2">
-          <span className="text-xs text-[var(--text-secondary)]">2014</span>
-          <span className="text-xs text-[var(--text-secondary)]">2024</span>
-        </div>
-      </GlassCard>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Chart */}
-        <GlassCard className="lg:col-span-2">
-          <svg ref={chartRef} className="w-full" style={{ maxHeight: 300 }} />
-        </GlassCard>
-
-        {/* Zone prices */}
+      ) : data.saleExisting.value === null && data.bankValuation.value === null ? (
         <GlassCard>
-          <span className="label-text text-[var(--text-secondary)] block mb-4">€/m² POR ZONA</span>
-          <div className="space-y-3">
-            {ZONES.map((zone) => (
-              <div key={zone.name} className="flex items-center justify-between gap-2">
-                <span className="text-sm text-[var(--text-primary)] shrink-0">{zone.name}</span>
-                <span className="flex-1 border-b border-dotted border-[var(--glass-border)]" />
-                <span className="flex items-baseline gap-1 shrink-0">
-                  <span ref={setLabelRef(zone.name)} className="font-data text-sm">
-                    {getPriceForYear(zone.base, zone.growth, year).toLocaleString('pt-PT')}
-                  </span>
-                  <span className="text-xs text-[var(--text-secondary)]">€/m²</span>
-                </span>
-              </div>
-            ))}
-          </div>
+          <DataUnavailable meta={data.meta} />
+          <DataSource meta={data.meta} showNote={false} />
         </GlassCard>
-      </div>
+      ) : (
+        <>
+          <div className="grid-cards" style={{ marginBottom: '1rem' }}>
+            <PriceCard
+              label="Casas usadas"
+              value={data.saleExisting.value}
+              year={data.saleExisting.year}
+              note="Preço mediano de venda de habitação familiar já existente."
+              tone="var(--tone-amber-text)"
+              emphasis
+            />
+            <PriceCard
+              label="Casas novas"
+              value={data.saleNew.value}
+              year={data.saleNew.year}
+              note="Preço mediano de venda de habitação familiar nova."
+              tone="var(--tone-clay-text)"
+              emphasis
+            />
+          </div>
 
-      <p className="text-[10px] text-[var(--text-secondary)] mt-2 opacity-60">
-        Modelo baseado em tendências históricas INE / Idealista 2014–2024 · Dados de 2025 não disponíveis publicamente · Valores estimados para fins ilustrativos
-      </p>
+          <div className="grid-cards">
+            <PriceCard
+              label="Avaliação bancária"
+              value={data.bankValuation.value}
+              year={data.bankValuation.year}
+              note="Valor mediano de avaliação bancária. É o que os bancos consideram, não o que se paga."
+              tone="var(--tone-blue-text)"
+            />
+            <GlassCard>
+              <span
+                style={{
+                  fontSize: '10px',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: 'var(--text-secondary)',
+                  display: 'block',
+                  marginBottom: '0.75rem',
+                }}
+              >
+                Como ler estes números
+              </span>
+              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.65 }}>
+                São medianas do concelho de Coimbra: metade das transacções ficou acima, metade
+                abaixo. A Baixa e a Alta não aparecem separadas porque não existe estatística
+                pública de preço por zona da cidade — só por município.
+              </p>
+            </GlassCard>
+          </div>
+
+          <DataSource meta={data.meta} />
+        </>
+      )}
     </SectionReveal>
   )
 }

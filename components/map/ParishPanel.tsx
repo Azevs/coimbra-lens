@@ -2,22 +2,16 @@
 
 import { motion } from 'framer-motion'
 import { useMapLayers } from '@/hooks/useMapLayers'
-import { COIMBRA_PARISHES } from '@/lib/mapbox-config'
+import { COIMBRA_PARISHES, PARISH_CENSUS_YEAR } from '@/lib/mapbox-config'
 import AnimatedNumber from '@/components/ui/AnimatedNumber'
 import GlassCard from '@/components/ui/GlassCard'
 import DataSource from '@/components/ui/DataSource'
 import { estimate } from '@/lib/provenance'
 
-/**
- * O painel mostrava três barras — Comércio 72 %, Serviços 58 %, Educação
- * 85 % — iguais para as dezoito freguesias, e uma densidade calculada com
- * `população ÷ 3.2`, como se todas tivessem a mesma área. Ambos saíram:
- * não temos esses dados por freguesia.
- */
 const PARISH_META = estimate(
-  'INE · Censos 2021',
-  'População e rendimento por freguesia. Sem dados de área, não é possível calcular densidade.',
-  '2021-12-31T12:00:00',
+  `INE · Censos ${PARISH_CENSUS_YEAR}`,
+  'População residente por freguesia. O rendimento por freguesia não é publicado.',
+  `${PARISH_CENSUS_YEAR}-12-31T12:00:00`,
 )
 
 export default function ParishPanel() {
@@ -25,6 +19,9 @@ export default function ParishPanel() {
 
   const parish = COIMBRA_PARISHES.find((p) => p.name === selectedParish)
   if (!parish) return null
+
+  const total = COIMBRA_PARISHES.reduce((sum, p) => sum + p.population, 0)
+  const share = ((parish.population / total) * 100).toFixed(1)
 
   return (
     <motion.div
@@ -52,24 +49,21 @@ export default function ParishPanel() {
           ✕ Fechar
         </button>
 
-        <h3 className="font-display" style={{ fontSize: '1.5rem', color: 'var(--text-primary)', marginBottom: '1.5rem', lineHeight: 1.2 }}>
+        <h3
+          className="font-display"
+          style={{ fontSize: '1.25rem', color: 'var(--text-primary)', marginBottom: '1.5rem', lineHeight: 1.25 }}
+        >
           {parish.name}
         </h3>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
-          <div>
-            <span className="label-text" style={{ color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>
-              População
-            </span>
-            <AnimatedNumber value={parish.population} className="text-2xl" />
-          </div>
-          <div>
-            <span className="label-text" style={{ color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>
-              Rendimento
-            </span>
-            <AnimatedNumber value={parish.income} suffix=" €" className="text-2xl" />
-          </div>
-        </div>
+        <span className="label-text" style={{ color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>
+          População residente
+        </span>
+        <AnimatedNumber value={parish.population} className="text-3xl" />
+
+        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '0.75rem', lineHeight: 1.6 }}>
+          {share}% da população do município.
+        </p>
 
         <DataSource meta={PARISH_META} />
       </GlassCard>

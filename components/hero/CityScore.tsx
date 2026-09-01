@@ -26,11 +26,11 @@ function computeScore(eaqi: number, temp: number, windSpeed: number): number {
 const FORMULA = 'Ar (50) + temperatura (30) + vento (20). Não inclui trânsito, ruído nem serviços.'
 
 function getScoreLabel(score: number): { label: string; color: string } {
-  if (score >= 80) return { label: 'Excelente', color: 'var(--tone-teal)' }
-  if (score >= 65) return { label: 'Muito bom', color: 'var(--tone-moss)' }
-  if (score >= 50) return { label: 'Bom', color: 'var(--tone-amber)' }
-  if (score >= 35) return { label: 'Razoável', color: 'var(--accent)' }
-  return { label: 'Atenção', color: 'var(--tone-crimson)' }
+  if (score >= 80) return { label: 'Excelente', color: 'var(--tone-teal-text)' }
+  if (score >= 65) return { label: 'Muito bom', color: 'var(--tone-moss-text)' }
+  if (score >= 50) return { label: 'Bom', color: 'var(--tone-amber-text)' }
+  if (score >= 35) return { label: 'Razoável', color: 'var(--accent-text)' }
+  return { label: 'Atenção', color: 'var(--tone-crimson-text)' }
 }
 
 export default function CityScore() {

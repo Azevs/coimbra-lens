@@ -105,7 +105,7 @@ export default function HeroSection() {
               fontFamily: 'var(--font-jetbrains)',
               fontSize: '10px',
               letterSpacing: '0.2em',
-              color: 'var(--accent)',
+              color: 'var(--accent-text)',
               marginBottom: '1.5rem',
               display: 'flex',
               alignItems: 'center',
@@ -140,6 +140,7 @@ export default function HeroSection() {
                 fontStyle: 'italic',
                 fontSize: 'clamp(4rem, 11vw, 8.5rem)',
                 letterSpacing: '-0.04em',
+                // Texto grande: 3:1 basta, por isso mantém-se o acento da marca.
                 color: 'var(--accent)',
                 lineHeight: 0.9,
                 display: 'block',

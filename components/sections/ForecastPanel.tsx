@@ -96,14 +96,14 @@ export default function ForecastPanel() {
               <span style={{ fontSize: '1.25rem', display: 'block', marginBottom: '4px' }}>
                 {getWeatherIcon(day.weatherCode)}
               </span>
-              <span style={{ fontSize: '11px', fontFamily: 'var(--font-jetbrains)', color: 'var(--tone-amber)', display: 'block' }}>
+              <span style={{ fontSize: '11px', fontFamily: 'var(--font-jetbrains)', color: 'var(--tone-amber-text)', display: 'block' }}>
                 {day.maxTemp.toFixed(0)}°
               </span>
               <span style={{ fontSize: '10px', fontFamily: 'var(--font-jetbrains)', color: 'var(--text-secondary)', display: 'block' }}>
                 {day.minTemp.toFixed(0)}°
               </span>
               {day.precip > 0 && (
-                <span style={{ fontSize: '9px', color: 'var(--tone-blue)', display: 'block' }}>
+                <span style={{ fontSize: '9px', color: 'var(--tone-blue-text)', display: 'block' }}>
                   {day.precip.toFixed(1)}mm
                 </span>
               )}

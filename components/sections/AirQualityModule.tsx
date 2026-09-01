@@ -81,10 +81,10 @@ function PollutantRow({ label, value, max, color }: { label: string; value: numb
 }
 
 const POLLEN_STYLE: Record<PollenLevel, { label: string; color: string; pct: number }> = {
-  'baixo':      { label: 'Baixo',      color: 'var(--tone-teal)', pct: 18 },
-  'moderado':   { label: 'Moderado',   color: 'var(--tone-amber)', pct: 45 },
-  'alto':       { label: 'Alto',       color: 'var(--accent)', pct: 72 },
-  'muito-alto': { label: 'Muito alto', color: 'var(--tone-crimson)', pct: 100 },
+  'baixo':      { label: 'Baixo',      color: 'var(--tone-teal-text)', pct: 18 },
+  'moderado':   { label: 'Moderado',   color: 'var(--tone-amber-text)', pct: 45 },
+  'alto':       { label: 'Alto',       color: 'var(--accent-text)', pct: 72 },
+  'muito-alto': { label: 'Muito alto', color: 'var(--tone-crimson-text)', pct: 100 },
 }
 
 function PollenSection({ pollen }: { pollen: Pollen[] }) {
