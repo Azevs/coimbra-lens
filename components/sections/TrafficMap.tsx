@@ -6,25 +6,27 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import SectionReveal from '@/components/ui/SectionReveal'
 import SectionTitle from '@/components/ui/SectionTitle'
 import GlassCard from '@/components/ui/GlassCard'
+import Label from '@/components/ui/Label'
 import DataSource from '@/components/ui/DataSource'
-import { live } from '@/lib/provenance'
-import { colorMix } from '@/lib/color'
+import { live, unavailable, type Sourced } from '@/lib/provenance'
 
 const TRAFFIC_LAYERS = [
-  { id: 'flow', label: 'Fluxo', icon: '🚗' },
-  { id: 'incidents', label: 'Incidentes', icon: '⚠️' },
-]
+  { id: 'flow', label: 'Fluxo' },
+  { id: 'severe', label: 'Só parado' },
+] as const
+
+type LayerId = (typeof TRAFFIC_LAYERS)[number]['id']
 
 /**
  * O Mapbox avalia estas cores fora do CSS, por isso são hexadecimais
  * literais e não tokens. Correspondem a --state-fair / warn / poor / bad.
  */
 const CONGESTION = {
-  low:      '#5C9A5C',
-  moderate: '#B07D3A',
-  heavy:    '#A05A3A',
-  severe:   '#8A1F2E',
-  unknown:  '#4A5568',
+  low:      '#47723F',
+  moderate: '#8A6220',
+  heavy:    '#B03A0B',
+  severe:   '#9B2F3C',
+  unknown:  '#575D65',
 } as const
 
 const LEGEND = [
@@ -34,21 +36,38 @@ const LEGEND = [
   { color: CONGESTION.severe,   label: 'Parado' },
 ]
 
+const SOURCE = 'Mapbox Traffic'
+
+/**
+ * O mapa de trânsito tinha ficado no tema escuro antigo: estilo nocturno,
+ * botões em azul-noite, filete dourado e cantos de 16px sobre o papel da
+ * Gazeta. Passa a carta clara, tokens do papel e cantos de 4px como o
+ * mapa das freguesias.
+ *
+ * A camada "Incidentes" era só o congestionamento severo com outro nome;
+ * passa a chamar-se o que é.
+ */
 export default function TrafficMap() {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
-  const [activeLayer, setActiveLayer] = useState<'flow' | 'incidents'>('flow')
+  const [activeLayer, setActiveLayer] = useState<LayerId>('flow')
   const [mapLoaded, setMapLoaded] = useState(false)
+  // O selo só diz "em directo" quando a camada de tráfego chegou mesmo.
+  // Sem chave, o estado inicial já é o de falha e o efeito não corre.
+  const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || ''
+  const [meta, setMeta] = useState<Sourced>(() =>
+    token
+      ? unavailable(SOURCE, 'A carregar a carta de tráfego.')
+      : unavailable(SOURCE, 'Sem chave do Mapbox configurada; o mapa não pode carregar.'),
+  )
 
   useEffect(() => {
-    if (!containerRef.current) return
-
-    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || ''
+    if (!containerRef.current || !token) return
+    mapboxgl.accessToken = token
 
     const map = new mapboxgl.Map({
       container: containerRef.current,
-      // Mapbox traffic style includes real-time flow colours for free
-      style: 'mapbox://styles/mapbox/navigation-night-v1',
+      style: 'mapbox://styles/mapbox/light-v11',
       center: [-8.4195, 40.2033] as [number, number],
       zoom: 13,
       pitch: 30,
@@ -57,6 +76,10 @@ export default function TrafficMap() {
     })
 
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right')
+
+    map.on('error', (e) => {
+      setMeta(unavailable(SOURCE, e.error?.message ? `O Mapbox respondeu: ${e.error.message}` : 'O Mapbox não respondeu.'))
+    })
 
     map.on('load', () => {
       if (!map.getSource('mapbox-traffic')) {
@@ -82,31 +105,30 @@ export default function TrafficMap() {
               'severe',   CONGESTION.severe,
               CONGESTION.unknown,
             ],
-            'line-opacity': 0.85,
+            'line-opacity': 0.9,
           },
           layout: { 'line-join': 'round', 'line-cap': 'round' },
         })
       }
 
-      if (!map.getLayer('traffic-incidents')) {
+      if (!map.getLayer('traffic-severe')) {
         map.addLayer({
-          id: 'traffic-incidents',
-          type: 'circle',
+          id: 'traffic-severe',
+          type: 'line',
           source: 'mapbox-traffic',
           'source-layer': 'traffic',
           filter: ['==', ['get', 'congestion'], 'severe'],
           paint: {
-            'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 4, 15, 10],
-            'circle-color': CONGESTION.severe,
-            'circle-opacity': 0.9,
-            'circle-stroke-width': 2,
-            'circle-stroke-color': 'rgba(138,31,46,0.35)',
+            'line-width': ['interpolate', ['linear'], ['zoom'], 10, 2.5, 15, 6],
+            'line-color': CONGESTION.severe,
+            'line-opacity': 0.95,
           },
-          layout: { visibility: 'none' },
+          layout: { 'line-join': 'round', 'line-cap': 'round', visibility: 'none' },
         })
       }
 
       setMapLoaded(true)
+      setMeta(live(SOURCE))
     })
 
     mapRef.current = map
@@ -115,19 +137,13 @@ export default function TrafficMap() {
       map.remove()
       mapRef.current = null
     }
-  }, [])
+  }, [token])
 
   useEffect(() => {
     const map = mapRef.current
     if (!map || !mapLoaded) return
-
-    if (activeLayer === 'flow') {
-      map.setLayoutProperty('traffic-flow', 'visibility', 'visible')
-      map.setLayoutProperty('traffic-incidents', 'visibility', 'none')
-    } else {
-      map.setLayoutProperty('traffic-flow', 'visibility', 'none')
-      map.setLayoutProperty('traffic-incidents', 'visibility', 'visible')
-    }
+    map.setLayoutProperty('traffic-flow', 'visibility', activeLayer === 'flow' ? 'visible' : 'none')
+    map.setLayoutProperty('traffic-severe', 'visibility', activeLayer === 'severe' ? 'visible' : 'none')
   }, [activeLayer, mapLoaded])
 
   return (
@@ -135,73 +151,78 @@ export default function TrafficMap() {
       <SectionTitle
         label="MOBILIDADE URBANA"
         title="Trânsito em Tempo Real"
-        subtitle="Fluxo de tráfego em Coimbra actualizado em tempo real via Mapbox Traffic."
+        subtitle="Fluxo de tráfego nas ruas de Coimbra, actualizado continuamente."
       />
 
       <div className="grid-map-side">
-        {/* Map */}
-        <div style={{ position: 'relative', borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--glass-border)', height: '480px' }}>
-          {/* Layer controls */}
-          <div style={{
-            position: 'absolute', top: '1rem', left: '1rem', zIndex: 10,
-            display: 'flex', gap: '0.5rem',
-          }}>
-            {TRAFFIC_LAYERS.map((layer) => (
-              <button
-                key={layer.id}
-                onClick={() => setActiveLayer(layer.id as 'flow' | 'incidents')}
-                style={{
-                  padding: '0.375rem 0.875rem',
-                  borderRadius: '9999px',
-                  fontSize: '11px',
-                  fontFamily: 'var(--font-ibm-plex)',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  border: '1px solid',
-                  transition: 'all 0.2s',
-                  background: activeLayer === layer.id ? 'var(--accent)' : 'rgba(7,11,20,0.85)',
-                  color: activeLayer === layer.id ? 'var(--bg-primary)' : 'var(--accent)',
-                  borderColor: activeLayer === layer.id ? 'var(--accent)' : 'rgba(201,168,76,0.3)',
-                  backdropFilter: 'blur(8px)',
-                }}
-              >
-                {layer.icon} {layer.label}
-              </button>
-            ))}
+        <div style={{ position: 'relative', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--border-panel)', height: '480px' }}>
+          {/* Camadas */}
+          <div
+            role="group"
+            aria-label="Camada do mapa"
+            style={{ position: 'absolute', top: '1rem', left: '1rem', zIndex: 10, display: 'flex', gap: '0.375rem' }}
+          >
+            {TRAFFIC_LAYERS.map((layer) => {
+              const on = activeLayer === layer.id
+              return (
+                <button
+                  key={layer.id}
+                  onClick={() => setActiveLayer(layer.id)}
+                  aria-pressed={on}
+                  style={{
+                    padding: '0 0.875rem',
+                    height: '32px',
+                    borderRadius: '3px',
+                    fontSize: '11px',
+                    fontFamily: 'var(--font-ibm-plex)',
+                    fontWeight: 600,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    cursor: 'pointer',
+                    border: `1px solid ${on ? 'var(--accent)' : 'var(--border-strong)'}`,
+                    background: on ? 'var(--accent)' : 'var(--bg-raised)',
+                    color: on ? 'var(--bg-primary)' : 'var(--text-secondary)',
+                    transition: 'background 0.15s, color 0.15s',
+                  }}
+                >
+                  {layer.label}
+                </button>
+              )
+            })}
           </div>
 
-          {/* Legend */}
-          <div style={{
-            position: 'absolute', bottom: '2.5rem', left: '1rem', zIndex: 10,
-            background: 'rgba(7,11,20,0.88)', backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(201,168,76,0.15)', borderRadius: '10px',
-            padding: '0.625rem 0.875rem',
-          }}>
+          {/* Legenda */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '2.5rem',
+              left: '1rem',
+              zIndex: 10,
+              background: 'var(--bg-raised)',
+              border: '1px solid var(--border-panel)',
+              borderRadius: '4px',
+              padding: '0.625rem 0.875rem',
+            }}
+          >
             {LEGEND.map((item) => (
-              <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '4px' }}>
-                <div style={{ width: '24px', height: '3px', borderRadius: '2px', background: item.color, boxShadow: `0 0 4px ${colorMix(item.color, 50)}` }} />
-                <span style={{ fontSize: '9px', color: 'var(--text-secondary)', letterSpacing: '0.08em' }}>{item.label}</span>
+              <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                <div style={{ width: '24px', height: '3px', borderRadius: '2px', background: item.color }} />
+                <span className="ui-note" style={{ letterSpacing: '0.06em' }}>{item.label}</span>
               </div>
             ))}
           </div>
 
-          <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+          <div ref={containerRef} style={{ width: '100%', height: '100%', background: 'var(--bg-sunken)' }} />
         </div>
 
-        {/* Side panel */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <GlassCard style={{ padding: '1.25rem' }}>
-            <span style={{ fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.875rem' }}>
-              FONTE
-            </span>
-            <p style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
-              Dados de tráfego em tempo real fornecidos pelo{' '}
-              <a href="https://www.mapbox.com/traffic-data" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-text)', textDecoration: 'none' }}>
-                Mapbox Traffic API
-              </a>
-              {' '}— actualização contínua via sondas GPS agregadas anonimamente.
+          <GlassCard>
+            <Label>Como ler</Label>
+            <p className="ui-note" style={{ margin: 0, lineHeight: 1.6 }}>
+              A cor de cada rua é a velocidade actual face à velocidade habitual àquela hora, calculada a partir de
+              sondas GPS agregadas de forma anónima. Não distingue obras de acidentes.
             </p>
-            <DataSource meta={live('Mapbox Traffic')} />
+            <DataSource meta={meta} />
           </GlassCard>
         </div>
       </div>

@@ -51,7 +51,7 @@ function AqiArc({ value }: { value: number }) {
         {value}
       </text>
       <text x="55" y="76" textAnchor="middle" fill="var(--text-tertiary)"
-        fontFamily="var(--font-ibm-plex)" fontSize="8" letterSpacing="2">
+        fontFamily="var(--font-ibm-plex)" fontSize="11" letterSpacing="2">
         EAQI
       </text>
     </svg>
@@ -93,7 +93,7 @@ function PollenSection({ pollen }: { pollen: Pollen[] }) {
   return (
     <div style={{ marginTop: '1rem', paddingTop: '0.875rem', borderTop: '1px solid var(--border-subtle)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.625rem' }}>
-        <span style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
+        <span style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
           Pólen · grãos/m³
         </span>
       </div>
@@ -103,7 +103,7 @@ function PollenSection({ pollen }: { pollen: Pollen[] }) {
           <div key={p.key} style={{ marginBottom: '0.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
               <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{p.label}</span>
-              <span style={{ fontSize: '10px', color: s.color, fontFamily: 'var(--font-jetbrains)', fontWeight: 600 }}>
+              <span style={{ fontSize: '11px', color: s.color, fontFamily: 'var(--font-jetbrains)', fontWeight: 600 }}>
                 {s.label} <span style={{ color: 'var(--text-tertiary)' }}>{p.value}</span>
               </span>
             </div>
@@ -133,7 +133,7 @@ export default function AirQualityModule() {
   }
 
   const header = (
-    <span style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-secondary)', fontFamily: 'var(--font-ibm-plex)', display: 'block', marginBottom: '0.75rem' }}>
+    <span style={{ fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-secondary)', fontFamily: 'var(--font-ibm-plex)', display: 'block', marginBottom: '0.75rem' }}>
       Qualidade do Ar
     </span>
   )

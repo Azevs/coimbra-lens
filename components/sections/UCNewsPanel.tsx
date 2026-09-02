@@ -26,7 +26,7 @@ export default function UCNewsPanel() {
   if (items.length === 0) {
     return (
       <GlassCard>
-        <span style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '1rem' }}>
+        <span style={{ fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '1rem' }}>
           Notícias UC
         </span>
         <DataUnavailable meta={data.meta} />
@@ -37,7 +37,7 @@ export default function UCNewsPanel() {
 
   return (
     <GlassCard>
-      <span style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '1rem' }}>
+      <span style={{ fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '1rem' }}>
         Notícias UC
       </span>
 
@@ -52,7 +52,7 @@ export default function UCNewsPanel() {
           >
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
               <span style={{
-                fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase',
+                fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase',
                 color: 'var(--accent-text)', flexShrink: 0, marginTop: '2px',
                 fontFamily: 'var(--font-ibm-plex)',
               }}>
@@ -69,7 +69,7 @@ export default function UCNewsPanel() {
               {item.title}
             </p>
             {item.date && (
-              <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontFamily: 'var(--font-jetbrains)' }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontFamily: 'var(--font-jetbrains)' }}>
                 {new Date(item.date + 'T12:00:00').toLocaleDateString('pt-PT', { day: 'numeric', month: 'short', year: 'numeric' })}
               </span>
             )}

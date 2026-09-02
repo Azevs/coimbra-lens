@@ -52,7 +52,7 @@ function WarningRow({ warning }: { warning: Warning }) {
         <span style={{ fontSize: '12px', fontWeight: 600, color, display: 'block', fontFamily: 'var(--font-ibm-plex)' }}>
           {warning.type}
         </span>
-        <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontFamily: 'var(--font-jetbrains)' }}>
+        <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontFamily: 'var(--font-jetbrains)' }}>
           {formatWindow(warning.startTime, warning.endTime)}
         </span>
         {warning.text && (
@@ -109,7 +109,7 @@ export default function IpmaModule() {
   const header = (
     <span
       style={{
-        fontSize: '10px',
+        fontSize: '11px',
         letterSpacing: '0.14em',
         textTransform: 'uppercase',
         color: 'var(--text-secondary)',
@@ -173,7 +173,7 @@ export default function IpmaModule() {
       {data.fire && (
         <div style={{ marginTop: '1rem', paddingTop: '0.875rem', borderTop: '1px solid var(--border-subtle)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <span style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
+            <span style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
               Risco de incêndio rural
             </span>
             <span style={{ fontSize: '12px', fontWeight: 700, color: fireColor, fontFamily: 'var(--font-ibm-plex)' }}>
@@ -181,7 +181,7 @@ export default function IpmaModule() {
             </span>
           </div>
           <FireScale level={data.fire.level} />
-          <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginTop: '5px', display: 'block', fontFamily: 'var(--font-jetbrains)' }}>
+          <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '5px', display: 'block', fontFamily: 'var(--font-jetbrains)' }}>
             Concelho de Coimbra · {data.fire.level}/5
           </span>
         </div>

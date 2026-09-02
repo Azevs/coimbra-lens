@@ -62,7 +62,9 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#F2EEE6",
-  colorScheme: "dark",
+  // A paleta é papel claro; com "dark" os controlos nativos e a barra de
+  // scroll saíam escuros sobre o papel.
+  colorScheme: "light",
 };
 
 export default function RootLayout({

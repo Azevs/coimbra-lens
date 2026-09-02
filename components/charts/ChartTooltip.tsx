@@ -66,7 +66,7 @@ export function ChartTooltip({ tip }: { tip: TooltipState | null }) {
           key={r.label}
           style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'baseline' }}
         >
-          <span style={{ fontFamily: 'var(--font-ibm-plex)', fontSize: '10px', color: 'var(--text-secondary)' }}>
+          <span style={{ fontFamily: 'var(--font-ibm-plex)', fontSize: '11px', color: 'var(--text-secondary)' }}>
             {r.label}
           </span>
           <span

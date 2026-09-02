@@ -12,6 +12,9 @@ import { motion, AnimatePresence } from 'framer-motion'
  * um andar que aqui estava punha nove links planos em fila e não tinha para
  * onde crescer quando o site deixou de ser só dados.
  *
+ * É pegajosa, não fixa: faz parte do fluxo da página, por isso nenhuma
+ * página precisa de calcular a altura dela para não nascer por baixo.
+ *
  * Uma área só entra nesta lista quando a página existe — um link para uma
  * página por construir é a versão de navegação de um número inventado.
  */
@@ -52,17 +55,6 @@ const SECTIONS: Record<string, { label: string; href: string }[]> = {
   ],
 }
 
-const subLinkStyle = {
-  fontFamily: 'var(--font-jetbrains)',
-  fontSize: '10px',
-  fontWeight: 500,
-  letterSpacing: '0.18em',
-  textTransform: 'uppercase' as const,
-  color: 'var(--text-secondary)',
-  textDecoration: 'none',
-  whiteSpace: 'nowrap' as const,
-}
-
 export default function Navbar() {
   const [open, setOpen] = useState(false)
   const pathname = usePathname() ?? '/'
@@ -70,7 +62,7 @@ export default function Navbar() {
   const sections = SECTIONS[area] ?? []
 
   return (
-    <nav style={{ position: 'fixed', top: '40px', left: 0, right: 0, zIndex: 50 }}>
+    <nav className="nav-sticky">
       <div className="nav-panel">
         <Link
           href="/"
@@ -101,14 +93,8 @@ export default function Navbar() {
           ))}
         </div>
 
-        <button
-          className="md:hidden"
-          onClick={() => setOpen(!open)}
-          aria-label="Menu"
-          aria-expanded={open}
-          style={{ color: 'var(--text-primary)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <button className="nav-burger" onClick={() => setOpen(!open)} aria-label="Menu" aria-expanded={open}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
             {open ? <path d="M18 6L6 18M6 6l12 12" /> : <path d="M3 12h18M3 6h18M3 18h18" />}
           </svg>
         </button>
@@ -118,7 +104,7 @@ export default function Navbar() {
       {sections.length > 0 && (
         <div className="nav-sub hidden md:flex">
           {sections.map((link) => (
-            <a key={link.href} href={link.href} style={subLinkStyle}>
+            <a key={link.href} href={link.href} className="nav-sub-link">
               {link.label}
             </a>
           ))}
@@ -148,7 +134,7 @@ export default function Navbar() {
                 onClick={() => setOpen(false)}
                 style={{
                   display: 'block',
-                  padding: '0.75rem 2rem',
+                  padding: '0.75rem 1.25rem',
                   fontFamily: 'var(--font-fraunces)',
                   fontWeight: 700,
                   fontSize: '1.0625rem',
@@ -165,7 +151,8 @@ export default function Navbar() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setOpen(false)}
-                style={{ ...subLinkStyle, display: 'block', padding: '0.625rem 2rem' }}
+                className="nav-sub-link"
+                style={{ display: 'flex', padding: '0 1.25rem', height: '44px' }}
               >
                 {link.label}
               </a>

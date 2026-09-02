@@ -4,7 +4,9 @@ import { useTransport } from '@/hooks/useTransport'
 import SectionReveal from '@/components/ui/SectionReveal'
 import SectionTitle from '@/components/ui/SectionTitle'
 import GlassCard from '@/components/ui/GlassCard'
+import Label from '@/components/ui/Label'
 import DataSource, { DataUnavailable } from '@/components/ui/DataSource'
+import { unavailable } from '@/lib/provenance'
 
 /**
  * Esta secção tinha um diagrama de fluxos casa–trabalho: oito ligações
@@ -14,8 +16,13 @@ import DataSource, { DataUnavailable } from '@/components/ui/DataSource'
  *
  * Os Censos publicam movimentos pendulares, mas por município de origem e
  * destino, não entre zonas dentro de Coimbra. Enquanto não houver fonte,
- * a secção diz o que não tem.
+ * a secção diz o que não tem — numa linha cada, não em dois painéis.
  */
+const PENDULAR_META = unavailable(
+  'INE · Censos',
+  'Os Censos publicam movimentos pendulares entre municípios, não entre zonas dentro de Coimbra. Sem essa fonte, não há fluxos a mostrar.',
+)
+
 export default function MobilityFlow() {
   const { data: transport, isLoading } = useTransport()
 
@@ -29,22 +36,11 @@ export default function MobilityFlow() {
 
       <div className="grid-split">
         <GlassCard>
-          <span
-            style={{
-              fontSize: '10px',
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              color: 'var(--text-secondary)',
-              display: 'block',
-              marginBottom: '0.875rem',
-            }}
-          >
-            Autocarros SMTUC
-          </span>
+          <Label>Autocarros SMTUC</Label>
 
           {isLoading || !transport ? (
             <div className="animate-pulse space-y-2">
-              {Array.from({ length: 4 }).map((_, i) => (
+              {Array.from({ length: 2 }).map((_, i) => (
                 <div key={i} className="h-8 bg-[var(--bg-sunken)] rounded" />
               ))}
             </div>
@@ -57,48 +53,9 @@ export default function MobilityFlow() {
         </GlassCard>
 
         <GlassCard>
-          <span
-            style={{
-              fontSize: '10px',
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              color: 'var(--text-secondary)',
-              display: 'block',
-              marginBottom: '0.875rem',
-            }}
-          >
-            Deslocações dentro da cidade
-          </span>
-
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem',
-              padding: '1.75rem 1rem',
-              background: 'var(--bg-sunken)',
-              border: '1px dashed var(--border-panel)',
-              borderRadius: '4px',
-              textAlign: 'center',
-            }}
-          >
-            <span
-              style={{
-                fontFamily: 'var(--font-jetbrains)',
-                fontSize: '1.75rem',
-                color: 'var(--text-tertiary)',
-                lineHeight: 1,
-              }}
-            >
-              —
-            </span>
-            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', maxWidth: '34ch', lineHeight: 1.55 }}>
-              Os Censos publicam movimentos pendulares entre municípios, não entre zonas dentro de
-              Coimbra. Sem essa fonte, não há fluxos a mostrar.
-            </span>
-          </div>
+          <Label>Deslocações dentro da cidade</Label>
+          <DataUnavailable meta={PENDULAR_META} />
+          <DataSource meta={PENDULAR_META} showNote={false} />
         </GlassCard>
       </div>
     </SectionReveal>

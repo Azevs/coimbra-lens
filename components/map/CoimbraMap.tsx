@@ -58,7 +58,7 @@ function Legend() {
     >
       <p
         style={{
-          fontSize: '10px',
+          fontSize: '11px',
           letterSpacing: '0.12em',
           textTransform: 'uppercase',
           color: 'var(--text-secondary)',
@@ -80,7 +80,7 @@ function Legend() {
                 display: 'block',
               }}
             />
-            <span style={{ fontSize: '9px', fontFamily: 'var(--font-jetbrains)', color: 'var(--text-tertiary)' }}>
+            <span style={{ fontSize: '11px', fontFamily: 'var(--font-jetbrains)', color: 'var(--text-tertiary)' }}>
               {v >= 1000 ? `${Math.round(v / 1000)}k` : v}
             </span>
           </div>

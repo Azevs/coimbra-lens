@@ -22,7 +22,7 @@ export default function WaterQualityModule() {
     <GlassCard>
       <span
         style={{
-          fontSize: '10px',
+          fontSize: '11px',
           letterSpacing: '0.14em',
           textTransform: 'uppercase',
           color: 'var(--text-secondary)',

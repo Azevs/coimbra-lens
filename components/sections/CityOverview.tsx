@@ -3,6 +3,8 @@
 import SectionReveal from '@/components/ui/SectionReveal'
 import SectionTitle from '@/components/ui/SectionTitle'
 import GlassCard from '@/components/ui/GlassCard'
+import Label from '@/components/ui/Label'
+import Icon, { type IconName } from '@/components/ui/Icon'
 import DataSource from '@/components/ui/DataSource'
 import { useDemografia } from '@/hooks/useDemografia'
 import { usePordata } from '@/hooks/usePordata'
@@ -14,6 +16,10 @@ import { CITY_FACTS, CITY_STATS, type ReferenceValue } from '@/lib/reference-dat
  * um número sem data envelhece em silêncio, que é como este painel tinha
  * "Capital Europeia da Cultura candidata 2027" muito depois de o título ter
  * sido atribuído.
+ *
+ * É uma coluna aberta por um filete, como todos os outros blocos do site:
+ * a caixa com fundo e borda que aqui estava era o terceiro sistema de
+ * blocos numa página que só devia ter um.
  */
 const NATIONALITY_TONES = [
   'var(--tone-moss)',
@@ -23,6 +29,9 @@ const NATIONALITY_TONES = [
   'var(--tone-blue)',
   'var(--tone-violet)',
 ]
+
+/** Ícone de cada facto rápido, pela ordem de `CITY_FACTS`. */
+const FACT_ICONS: IconName[] = ['hospital', 'bus', 'train', 'river', 'graduation', 'landmark']
 
 function StatCard({
   label,
@@ -40,56 +49,14 @@ function StatCard({
   tone: string
 }) {
   return (
-    <div
-      style={{
-        background: 'var(--bg-secondary)',
-        border: '1px solid var(--border-panel)',
-        borderRadius: '4px',
-        padding: '1.25rem',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: tone, opacity: 0.75 }} />
-
-      <span
-        style={{
-          fontSize: '10px',
-          letterSpacing: '0.12em',
-          textTransform: 'uppercase',
-          color: 'var(--text-secondary)',
-          display: 'block',
-          marginBottom: '0.625rem',
-        }}
-      >
-        {label}
-      </span>
-
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.375rem' }}>
-        <span
-          style={{
-            fontFamily: 'var(--font-jetbrains)',
-            fontSize: '1.5rem',
-            color: tone,
-            fontWeight: 700,
-            lineHeight: 1,
-            fontVariantNumeric: 'tabular-nums',
-          }}
-        >
-          {value}
-        </span>
-        <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{unit}</span>
+    <div className="stat-card">
+      <span aria-hidden="true" style={{ position: 'absolute', top: '-1px', left: 0, width: '2.5rem', height: '2px', background: tone }} />
+      <Label style={{ marginBottom: '0.625rem' }}>{label}</Label>
+      <div style={{ display: 'flex', alignItems: 'baseline' }}>
+        <span className="stat-value" style={{ color: value === '—' ? 'var(--text-tertiary)' : undefined }}>{value}</span>
+        <span className="stat-unit">{unit}</span>
       </div>
-
-      <span
-        style={{
-          fontSize: '10px',
-          color: 'var(--text-tertiary)',
-          marginTop: '0.5rem',
-          display: 'block',
-          fontFamily: 'var(--font-jetbrains)',
-        }}
-      >
+      <span className="ui-mono" style={{ display: 'block', marginTop: '0.5rem' }}>
         {source} · {asOf}
       </span>
     </div>
@@ -219,7 +186,7 @@ export default function CityOverview() {
         subtitle="Indicadores do município. Cada número mostra a fonte e o período a que se refere."
       />
 
-      <div className="grid-stats" style={{ marginBottom: '2rem' }}>
+      <div className="grid-stats" style={{ marginBottom: '2rem', columnGap: '2rem', rowGap: '1.5rem' }}>
         <LiveIndicators />
         {CITY_STATS.map((s: ReferenceValue) => (
           <StatCard
@@ -241,29 +208,18 @@ export default function CityOverview() {
 
       <div className="grid-split">
         <GlassCard>
-          <span
-            style={{
-              fontSize: '10px',
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              color: 'var(--text-secondary)',
-              display: 'block',
-              marginBottom: '1rem',
-            }}
-          >
-            Residentes estrangeiros — nacionalidades
-          </span>
+          <Label style={{ marginBottom: '1rem' }}>Residentes estrangeiros — nacionalidades</Label>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
             {(demo?.nationalities ?? []).slice(0, 6).map((n, i) => (
               <div key={n.country}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px', gap: '1rem' }}>
-                  <span style={{ fontSize: '12px', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: '13px', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {n.country}
                   </span>
                   <span
                     style={{
-                      fontSize: '11px',
+                      fontSize: '12px',
                       fontFamily: 'var(--font-jetbrains)',
                       color: NATIONALITY_TONES[i % NATIONALITY_TONES.length],
                       fontVariantNumeric: 'tabular-nums',
@@ -286,35 +242,20 @@ export default function CityOverview() {
                 </div>
               </div>
             ))}
-            {!demo && (
-              <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>A obter do INE…</span>
-            )}
+            {!demo && <span className="ui-note">A obter do INE…</span>}
           </div>
 
           {demo && <DataSource meta={demo.meta} showNote={false} />}
         </GlassCard>
 
         <GlassCard>
-          <span
-            style={{
-              fontSize: '10px',
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              color: 'var(--text-secondary)',
-              display: 'block',
-              marginBottom: '1rem',
-            }}
-          >
-            Factos rápidos
-          </span>
+          <Label style={{ marginBottom: '0.5rem' }}>Factos rápidos</Label>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {CITY_FACTS.map((f) => (
-              <div key={f.text} style={{ display: 'flex', gap: '0.625rem', alignItems: 'flex-start' }}>
-                <span aria-hidden="true" style={{ fontSize: '15px', flexShrink: 0, lineHeight: 1.4 }}>
-                  {f.icon}
-                </span>
-                <span style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.55 }}>{f.text}</span>
+          <div className="ruled-list">
+            {CITY_FACTS.map((f, i) => (
+              <div key={f.text} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+                <Icon name={FACT_ICONS[i] ?? 'landmark'} size={16} style={{ color: 'var(--accent-text)', marginTop: '3px' }} />
+                <span style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.55 }}>{f.text}</span>
               </div>
             ))}
           </div>

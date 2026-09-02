@@ -44,7 +44,7 @@ export default function SiteFooter() {
           <span
             style={{
               fontFamily: 'var(--font-jetbrains)',
-              fontSize: '10px',
+              fontSize: '11px',
               letterSpacing: '0.14em',
               textTransform: 'uppercase',
               color: 'var(--text-secondary)',

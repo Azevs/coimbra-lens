@@ -17,7 +17,7 @@ function formatObserved(iso: string): string {
  * Selo de proveniência — o rodapé de cada módulo de dados.
  *
  * Diz sempre três coisas: o estado da leitura, quem publica, e quando foi
- * medido. É deliberadamente legível: 10px, sem opacidade reduzida. A
+ * medido. É deliberadamente legível: 11px, sem opacidade reduzida. A
  * credibilidade do painel depende de isto não parecer letra pequena.
  */
 export default function DataSource({
@@ -53,7 +53,7 @@ export default function DataSource({
           alignItems: 'center',
           gap: '5px',
           fontFamily: 'var(--font-jetbrains)',
-          fontSize: '10px',
+          fontSize: '11px',
           fontWeight: 700,
           letterSpacing: '0.08em',
           textTransform: 'uppercase',
@@ -61,8 +61,9 @@ export default function DataSource({
           background: `${colorMix(color, 9)}`,
           border: `1px solid ${colorMix(color, 27)}`,
           borderRadius: '3px',
-          padding: '2px 7px',
+          padding: '3px 8px',
           whiteSpace: 'nowrap',
+          lineHeight: 1.3,
         }}
       >
         <span
@@ -72,28 +73,13 @@ export default function DataSource({
         {label}
       </span>
 
-      <span
-        style={{
-          fontFamily: 'var(--font-jetbrains)',
-          fontSize: '10px',
-          color: 'var(--text-secondary)',
-          letterSpacing: '0.03em',
-        }}
-      >
+      <span className="ui-mono" style={{ color: 'var(--text-secondary)' }}>
         {meta.source}
         {meta.observedAt && ` · ${formatObserved(meta.observedAt)}`}
       </span>
 
       {meta.note && showNote && (
-        <span
-          style={{
-            fontFamily: 'var(--font-ibm-plex)',
-            fontSize: '10px',
-            color: 'var(--text-secondary)',
-            lineHeight: 1.45,
-            flexBasis: '100%',
-          }}
-        >
+        <span className="ui-note" style={{ flexBasis: '100%' }}>
           {meta.note}
         </span>
       )}
@@ -102,45 +88,17 @@ export default function DataSource({
 }
 
 /**
- * Estado vazio para um módulo cuja fonte não respondeu. Ocupa o lugar do
- * número que não temos, em vez de o substituir por um valor plausível.
+ * Estado vazio para um módulo cuja fonte não respondeu.
+ *
+ * Era um painel tracejado de meia secção com um traço no meio, que se lia
+ * como um erro. Passa a uma linha: o traço, e a explicação ao lado. O
+ * lugar do número que não temos continua ocupado, sem ocupar a página.
  */
 export function DataUnavailable({ meta }: { meta: Sourced }) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '0.5rem',
-        padding: '1.75rem 1rem',
-        background: 'var(--bg-sunken)',
-        border: '1px dashed var(--border-panel)',
-        borderRadius: '4px',
-        textAlign: 'center',
-      }}
-    >
-      <span
-        style={{
-          fontFamily: 'var(--font-jetbrains)',
-          fontSize: '1.75rem',
-          fontWeight: 500,
-          color: 'var(--text-tertiary)',
-          lineHeight: 1,
-        }}
-      >
-        —
-      </span>
-      <span
-        style={{
-          fontFamily: 'var(--font-ibm-plex)',
-          fontSize: '11px',
-          color: 'var(--text-secondary)',
-          maxWidth: '28ch',
-          lineHeight: 1.5,
-        }}
-      >
+    <div className="empty-line">
+      <span className="empty-line-dash" aria-hidden="true">—</span>
+      <span className="ui-note" style={{ maxWidth: '44ch' }}>
         {meta.note ?? 'A fonte não respondeu.'}
       </span>
     </div>

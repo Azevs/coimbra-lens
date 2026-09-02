@@ -24,7 +24,7 @@ export default function TerritorioPage() {
           <div
             style={{
               fontFamily: 'var(--font-jetbrains)',
-              fontSize: '10px',
+              fontSize: '11px',
               letterSpacing: '0.22em',
               textTransform: 'uppercase',
               color: 'var(--accent-text)',

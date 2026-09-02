@@ -16,7 +16,7 @@ import type { Obra } from '@/app/api/obras/route'
 function Elsewhere({ links }: { links: { label: string; href: string }[] }) {
   return (
     <div style={{ marginTop: '0.875rem' }}>
-      <span style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem' }}>
+      <span style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem' }}>
         Entretanto, consulte
       </span>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
@@ -141,7 +141,7 @@ export default function EventsSection() {
 
       <div className="grid-split">
         <GlassCard>
-          <span style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.875rem' }}>
+          <span style={{ fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.875rem' }}>
             Este mês em Coimbra
           </span>
 
@@ -191,7 +191,7 @@ export default function EventsSection() {
         </GlassCard>
 
         <GlassCard>
-          <span style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.875rem' }}>
+          <span style={{ fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.875rem' }}>
             Obras municipais {obrasData?.total ? `· ${obrasData.total} em curso` : ''}
           </span>
 

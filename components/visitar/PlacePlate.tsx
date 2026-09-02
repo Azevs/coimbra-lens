@@ -30,7 +30,6 @@ export default function PlacePlate({ kind }: { kind: PlateKind }) {
     <svg
       viewBox="0 0 420 250"
       width="100%"
-      height="auto"
       role="presentation"
       style={{ display: 'block' }}
     >

@@ -95,8 +95,10 @@
   box-sizing: border-box;
 }
 
+/* `clip`, não `hidden`: `hidden` transforma o html e o body em contentores
+   de scroll e mata o `position: sticky` da barra de navegação. */
 html {
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* ── Base ───────────────────────────────────────────────────────────────── */
@@ -106,7 +108,7 @@ body {
   font-family: var(--font-ibm-plex), 'IBM Plex Sans', system-ui, sans-serif;
   font-size: 15px;
   line-height: 1.6;
-  overflow-x: hidden;
+  overflow-x: clip;
   /* Grão de papel — em fundo claro precisa de mais peso do que tinha em
      fundo escuro para se ler como papel e não como ecrã branco. */
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
@@ -123,11 +125,17 @@ body {
   .page-section { padding: 7rem 6rem; }
 }
 
-/* O cabeçalho é fixo: 40px de tira de edição + 56px de áreas + 40px de
-   secções. Sem esta margem, qualquer link da navegação aterra com o título
-   escondido por baixo dele. */
-.page-section[id] {
-  scroll-margin-top: 140px;
+/* A barra de navegação é pegajosa (56px de áreas + 40px de secções). O
+   ticker deixou de ser fixo: faz parte do topo da página e vai-se embora
+   com o scroll, devolvendo 40px de ecrã. Sem esta margem, qualquer link da
+   navegação aterra com o título escondido por baixo da barra. */
+.page-section[id],
+section[id] {
+  scroll-margin-top: 104px;
+}
+@media (max-width: 767px) {
+  .page-section[id],
+  section[id] { scroll-margin-top: 64px; }
 }
 
 .section-container {
@@ -194,8 +202,90 @@ body {
   font-family: var(--font-ibm-plex), 'IBM Plex Sans', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
+}
+
+/* ── Rótulo de módulo ────────────────────────────────────────────────────
+   O mínimo legível é 11px. Nenhum rótulo do painel desce abaixo disto. */
+.ui-label {
+  display: block;
+  font-family: var(--font-ibm-plex), 'IBM Plex Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1.4;
+  margin: 0 0 0.875rem;
+}
+.ui-label-secondary { color: var(--text-secondary); }
+.ui-label-tertiary  { color: var(--text-tertiary); }
+.ui-label-accent    { color: var(--accent-text); font-family: var(--font-jetbrains), monospace; letter-spacing: 0.22em; }
+
+/* Texto de apoio — notas, fontes, unidades. Também não desce dos 11px. */
+.ui-note {
+  font-family: var(--font-ibm-plex), 'IBM Plex Sans', sans-serif;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+.ui-mono {
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+  font-feature-settings: 'tnum' 1;
+}
+
+/* ── Cartão de indicador ─────────────────────────────────────────────────
+   Uma coluna de jornal aberta por um filete, como todos os outros blocos:
+   sem fundo, sem borda à volta, sem cantos. A variante de destaque leva o
+   filete a tinta cheia. */
+.stat-card {
+  border-top: 1px solid var(--border-panel);
+  padding: 1rem 0 0.25rem;
+  position: relative;
+}
+.stat-card-emphasis {
+  border-top: 3px solid var(--accent);
+}
+.stat-card .stat-value {
+  font-family: var(--font-fraunces), 'Fraunces', Georgia, serif;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-size: 1.75rem;
+  line-height: 1;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.stat-card-emphasis .stat-value { font-size: 2.5rem; }
+.stat-card .stat-unit {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-left: 0.375rem;
+}
+
+/* Lista de linhas com filete entre elas — factos, eventos, obras. */
+.ruled-list > * {
+  border-top: 1px solid var(--border-subtle);
+  padding: 0.625rem 0;
+}
+
+/* Estado vazio compacto: uma linha, não um painel. */
+.empty-line {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.empty-line-dash {
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
 }
 
 /* ── Signature detail: cartographic rule ────────────────────────────────── */
@@ -387,30 +477,36 @@ input[type='range']::-moz-range-thumb {
 }
 
 /* ── Herói — primeira página ───────────────────────────────────────────── */
-/* O cabeçalho fixo ocupa 136px (40 de tira + 56 de áreas + 40 de secções);
-   sem este padding-top a manchete nasce por baixo dele. */
+/* A barra é pegajosa e faz parte do fluxo: o herói começa logo por baixo
+   dela, sem compensação. */
 .hero-content {
-  padding: calc(136px + 2.5rem) 1.25rem 3.5rem;
+  padding: 2.5rem 1.25rem 3.5rem;
   max-width: 1280px;
   width: 100%;
   margin: 0 auto;
 }
-@media (min-width: 768px)  { .hero-content { padding: calc(136px + 3rem) 2.5rem 4.5rem; } }
-@media (min-width: 1024px) { .hero-content { padding: calc(136px + 3rem) 4rem 5rem; } }
+@media (min-width: 768px)  { .hero-content { padding: 3rem 2.5rem 4.5rem; } }
+@media (min-width: 1024px) { .hero-content { padding: 3rem 4rem 5rem; } }
 
-/* Manchete de primeira página: a caixa alta é da Gazeta, e o tamanho é o
-   maior que cabe numa linha aos 1280px do contentor. */
+/* A manchete de primeira página é a frase do dia. A marca já está na barra
+   a 20px de distância; repeti-la a 150px era gastar o melhor espaço da
+   página a dizer o que a barra já diz. */
 .hero-headline {
   font-family: var(--font-fraunces), 'Fraunces', Georgia, serif;
   font-weight: 900;
-  /* Dimensionada para caber numa linha nos 1152px úteis do contentor —
-     a 12.6vw partia "Lens" para a linha de baixo. */
-  font-size: clamp(2.625rem, 10.3vw, 9.25rem);
-  line-height: 0.84;
-  letter-spacing: -0.05em;
-  text-align: center;
-  padding: 1.625rem 0 0.625rem;
+  font-size: clamp(2.25rem, 6.2vw, 5.75rem);
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+  max-width: 18ch;
+  padding: 1.5rem 0 1.75rem;
   margin: 0;
+}
+/* Enquanto as leituras não chegam, a manchete é um marcador neutro. */
+.hero-headline-pending {
+  color: var(--text-tertiary);
+  font-weight: 300;
+  font-style: italic;
 }
 
 .hero-columns {
@@ -422,20 +518,22 @@ input[type='range']::-moz-range-thumb {
 }
 @media (min-width: 1024px) { .hero-columns { grid-template-columns: 1fr 23.25rem; } }
 
-/* A manchete do dia ocupa a largura toda que sobra do boletim. */
+/* A coluna da esquerda encosta ao topo: os números de apoio vêm logo a
+   seguir à explicação, sem espaço morto até ao fundo do boletim. */
 .hero-lead {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 2rem;
+  justify-content: flex-start;
+  gap: 1.75rem;
 }
 
 .hero-lead-line {
   margin: 0;
-  font-size: clamp(1.75rem, 3.6vw, 3.25rem);
-  font-weight: 700;
-  line-height: 1.08;
-  letter-spacing: -0.035em;
+  font-size: clamp(1.125rem, 1.6vw, 1.375rem);
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  max-width: 44ch;
   text-wrap: pretty;
 }
 
@@ -470,12 +568,22 @@ input[type='range']::-moz-range-thumb {
 .city-score svg { flex-shrink: 0; }
 
 /* ── Páginas sem herói ──────────────────────────────────────────────────
-   O cabeçalho fixo ocupa 136px; estas páginas começam por baixo dele. */
+   A barra está no fluxo; estas páginas começam logo por baixo dela. */
 .page-top {
-  padding-top: calc(136px + 2.5rem);
+  padding-top: 2.5rem;
   min-height: 100vh;
 }
-@media (min-width: 768px) { .page-top { padding-top: calc(136px + 3rem); } }
+@media (min-width: 768px) { .page-top { padding-top: 3rem; } }
+
+/* Tira de edição — estática no topo do documento, desaparece com o scroll. */
+.ticker {
+  position: relative;
+  z-index: 60;
+  overflow: hidden;
+  height: 40px;
+  background: var(--text-primary);
+  border-bottom: 1px solid var(--text-primary);
+}
 
 .visitar-headline {
   font-family: var(--font-fraunces), 'Fraunces', Georgia, serif;
@@ -523,7 +631,7 @@ input[type='range']::-moz-range-thumb {
 /* Agenda — dia a dia */
 .agenda-dia {
   font-family: var(--font-jetbrains);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--accent-text);
@@ -598,6 +706,31 @@ input[type='range']::-moz-range-thumb {
 .nav-sub::-webkit-scrollbar { display: none; }
 @media (min-width: 768px) { .nav-sub { padding: 0 2rem; } }
 
+/* Cada secção é um alvo de toque a toda a altura da fila (40px), não só
+   a altura do texto de 11px. */
+.nav-sub-link {
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  text-decoration: none;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+}
+.nav-sub-link:hover { color: var(--accent-text); }
+
+/* A barra inteira (áreas + secções) é pegajosa. Em desktop mede 96px, em
+   telemóvel 56px porque a fila de secções vive dentro do menu. */
+.nav-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
 /* Entrada de área — Fraunces, com o filete terracota na activa */
 .nav-area {
   font-family: var(--font-fraunces), 'Fraunces', Georgia, serif;
@@ -671,3 +804,33 @@ input[type='range']::-moz-range-thumb {
 
 
 
+
+/* Agenda anual — linha com filete, como a agenda do mês */
+.agenda-anual-linha:hover .font-display { color: var(--accent); }
+
+/* Ligações de texto dentro dos módulos e do rodapé: alvo de toque de 24px
+   mesmo quando o texto tem 11px. */
+.glass-card a:not([style*="display: grid"]):not([style*="display: block"]),
+.stat-card a,
+.empty-line a,
+footer a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+}
+
+/* Botão do menu — só em telemóvel. É uma classe, não um estilo inline,
+   para que o `md:hidden` não seja vencido pelo `display` inline. */
+.nav-burger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-right: -12px;
+  color: var(--text-primary);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+@media (min-width: 768px) { .nav-burger { display: none; } }

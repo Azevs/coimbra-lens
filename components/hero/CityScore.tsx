@@ -108,7 +108,7 @@ export default function CityScore() {
           x="65" y="80"
           textAnchor="middle"
           style={{ fill: 'var(--text-tertiary)' }}
-          fontSize="9"
+          fontSize="11"
           fontFamily="var(--font-ibm-plex)"
           letterSpacing="2"
         >
@@ -116,13 +116,13 @@ export default function CityScore() {
         </text>
       </svg>
       <div>
-        <div style={{ fontSize: '9px', letterSpacing: '0.2em', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
+        <div style={{ fontSize: '11px', letterSpacing: '0.2em', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
           CONFORTO ATMOSFÉRICO
         </div>
         <div style={{ fontSize: '15px', color, fontWeight: 600, fontFamily: 'var(--font-ibm-plex)', marginTop: '4px' }}>
           {label}
         </div>
-        <div style={{ fontSize: '9px', fontFamily: 'var(--font-jetbrains)', color: 'var(--text-tertiary)', marginTop: '6px' }}>
+        <div style={{ fontSize: '11px', fontFamily: 'var(--font-jetbrains)', color: 'var(--text-tertiary)', marginTop: '6px' }}>
           ar 50 · temperatura 30 · vento 20
         </div>
       </div>

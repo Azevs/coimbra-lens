@@ -7,6 +7,7 @@ import MobilityFlow from '@/components/sections/MobilityFlow'
 import AcademicPulse from '@/components/sections/AcademicPulse'
 import RealEstate from '@/components/sections/RealEstate'
 import SiteFooter from '@/components/navigation/SiteFooter'
+import DataTicker from '@/components/hero/DataTicker'
 // O mapa de trânsito fica fora do servidor; tudo o resto é renderizado nele.
 // O mapa das freguesias e o ranking mudaram-se para /territorio, e a agenda
 // cultural para /agenda — cada área tem página própria desde que o site
@@ -19,6 +20,7 @@ export default function Home() {
       <a href="#conteudo" className="skip-link">
         Saltar para o conteúdo
       </a>
+      <DataTicker />
       <Navbar />
       <main id="conteudo" className="min-h-screen bg-[var(--bg-primary)] overflow-x-hidden">
         <HeroSection />

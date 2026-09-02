@@ -3,6 +3,7 @@
 import { useRiver, type RiverPoint, type RiverTrend } from '@/hooks/useRiver'
 import GlassCard from '@/components/ui/GlassCard'
 import DataSource, { DataUnavailable } from '@/components/ui/DataSource'
+import { fmt } from '@/lib/format'
 
 const TREND_ICON: Record<RiverTrend, string> = { rising: '↑', falling: '↓', stable: '→' }
 const TREND_COLOR: Record<RiverTrend, string> = { rising: 'var(--tone-amber)', falling: 'var(--tone-blue)', stable: 'var(--tone-teal)' }
@@ -71,7 +72,7 @@ export default function RiverModule() {
   }
 
   const header = (
-    <span style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.75rem' }}>
+    <span style={{ fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.75rem' }}>
       Rio Mondego · Caudal
     </span>
   )
@@ -102,13 +103,13 @@ export default function RiverModule() {
           background: 'rgba(176,125,58,0.15)', border: '1px solid rgba(176,125,58,0.45)',
           fontSize: '11px', color: 'var(--tone-amber-text)', fontFamily: 'var(--font-ibm-plex)', fontWeight: 600, lineHeight: 1.45,
         }}>
-          Subida prevista até {river.forecastPeak?.toFixed(0)} m³/s nos próximos dias.
+          Subida prevista até {fmt(river.forecastPeak ?? 0)} m³/s nos próximos dias.
         </div>
       )}
 
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.75rem', marginBottom: '0.35rem' }}>
         <span style={{ fontFamily: 'var(--font-jetbrains)', fontSize: '2.25rem', fontWeight: 600, color: 'var(--tone-blue-text)', lineHeight: 1 }}>
-          {river.discharge.toFixed(1)}
+          {fmt(river.discharge, 1)}
           <span style={{ fontSize: '0.9rem', marginLeft: '5px', color: 'var(--text-secondary)' }}>m³/s</span>
         </span>
         <span style={{ fontSize: '1.25rem', color: trendColor, lineHeight: 1, marginBottom: '4px', fontWeight: 700 }} aria-hidden="true">
@@ -123,8 +124,8 @@ export default function RiverModule() {
       <DischargeSparkline series={river.series} />
 
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
-        <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>–7 dias</span>
-        <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>previsão +7</span>
+        <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>–7 dias</span>
+        <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>previsão +7</span>
       </div>
 
       <DataSource meta={river.meta} />

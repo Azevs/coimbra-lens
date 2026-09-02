@@ -2,14 +2,19 @@
 
 import { useEffect, useRef } from 'react'
 import { gsap } from '@/lib/gsap-config'
+import { canAnimate } from '@/lib/motion'
 import { useWeather } from '@/hooks/useWeather'
 import { useAirQuality } from '@/hooks/useAirQuality'
 import { useRiver } from '@/hooks/useRiver'
+import { fmt } from '@/lib/format'
 
 const TREND_ICON = { rising: '↑', falling: '↓', stable: '→' } as const
 
+/**
+ * Tira de edição no topo do documento. Estática: rola com a página e
+ * devolve os 40px que antes ocupava em permanência.
+ */
 export default function DataTicker() {
-  const tickerRef = useRef<HTMLDivElement>(null)
   const innerRef = useRef<HTMLDivElement>(null)
   const { data: weather } = useWeather()
   const { data: air } = useAirQuality()
@@ -19,7 +24,7 @@ export default function DataTicker() {
   const allItems = [
     {
       label: 'Temperatura',
-      value: weather?.temperature != null ? weather.temperature.toFixed(1) : '—',
+      value: weather?.temperature != null ? fmt(weather.temperature, 1) : '—',
       unit: '°C',
     },
     {
@@ -29,12 +34,12 @@ export default function DataTicker() {
     },
     {
       label: 'Vento',
-      value: weather?.windSpeed != null ? weather.windSpeed.toFixed(0) : '—',
+      value: weather?.windSpeed != null ? fmt(weather.windSpeed, 0) : '—',
       unit: 'km/h',
     },
     {
       label: 'Mondego',
-      value: river?.discharge != null ? `${river.discharge.toFixed(1)} ${TREND_ICON[river.trend]}` : '—',
+      value: river?.discharge != null ? `${fmt(river.discharge, 1)} ${TREND_ICON[river.trend]}` : '—',
       unit: 'm³/s',
     },
   ]
@@ -45,6 +50,7 @@ export default function DataTicker() {
 
     gsap.killTweensOf(inner)
     gsap.set(inner, { x: 0 })
+    if (!canAnimate()) return
 
     const totalWidth = inner.scrollWidth / 2
 
@@ -57,24 +63,16 @@ export default function DataTicker() {
   }, [weather, air, river])
 
   return (
-    <div
-      ref={tickerRef}
-      className="fixed top-0 left-0 right-0 z-[60] overflow-hidden"
-      style={{
-        background: 'var(--text-primary)',
-        borderBottom: '1px solid var(--text-primary)',
-        height: '40px',
-      }}
-    >
+    <div className="ticker" role="marquee" aria-label="Leituras da hora">
       <div ref={innerRef} className="flex items-center h-full whitespace-nowrap">
         {[...allItems, ...allItems].map((item, i) => (
-          <span key={i} className="flex items-center shrink-0">
+          <span key={i} className="flex items-center shrink-0" aria-hidden={i >= allItems.length}>
             <span style={{
               fontFamily: 'var(--font-jetbrains)',
               fontSize: '11px',
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
-              color: 'rgba(242,238,230,0.62)',
+              color: 'rgba(242,238,230,0.72)',
               marginRight: '7px',
               marginLeft: '20px',
             }}>
@@ -92,8 +90,8 @@ export default function DataTicker() {
             {item.unit && (
               <span style={{
                 fontFamily: 'var(--font-jetbrains)',
-                fontSize: '10px',
-                color: 'rgba(242,238,230,0.62)',
+                fontSize: '11px',
+                color: 'rgba(242,238,230,0.72)',
                 marginLeft: '3px',
               }}>
                 {item.unit}

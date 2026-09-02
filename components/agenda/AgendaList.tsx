@@ -48,7 +48,7 @@ function Linha({ evento, prefixo }: { evento: CityEvent; prefixo: string }) {
         <span className="font-display" style={{ fontSize: '1.125rem', lineHeight: 1.3, display: 'block' }}>
           {evento.title}
         </span>
-        <span style={{ fontFamily: 'var(--font-jetbrains)', fontSize: '10px', letterSpacing: '0.08em', color: 'var(--text-tertiary)' }}>
+        <span style={{ fontFamily: 'var(--font-jetbrains)', fontSize: '11px', letterSpacing: '0.08em', color: 'var(--text-tertiary)' }}>
           {[evento.category, evento.venue, evento.organiser].filter(Boolean).join(' · ')}
         </span>
       </span>
