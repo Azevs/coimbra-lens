@@ -121,7 +121,21 @@ export const TRACKED: TrackedDatum[] = [
     source: 'INE · Censos',
     // Os Censos são decenais; os próximos são em 2031.
     refreshEvery: 120,
-    usedIn: 'lib/mapbox-config',
+    usedIn: 'lib/parishes',
+  },
+  {
+    id: 'freguesias-limites',
+    label: 'Limites e áreas das freguesias',
+    // Mês em que a carta foi obtida — o mesmo BOUNDARIES_FETCHED_AT que o
+    // gerador escreveu em lib/parish-map.ts. Fica repetido à mão de
+    // propósito: importar o ficheiro gerado só por causa de uma data
+    // arrastava 45 KB de geometria para todo o lado onde este manifesto é
+    // lido.
+    asOf: '2026-09',
+    source: 'DGT · CAOP',
+    // A DGT republica a carta administrativa uma vez por ano.
+    refreshEvery: 12,
+    usedIn: 'lib/parish-map (scripts/build-parish-map.mjs)',
   },
   {
     id: 'agua-qualidade',

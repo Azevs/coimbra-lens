@@ -9,6 +9,7 @@
     "lint": "eslint",
     "postinstall": "node -e \"try{require('fs').rmSync('node_modules/@types/mapbox__point-geometry',{recursive:true,force:true})}catch(e){}\"",
     "check:data": "node --experimental-strip-types --no-warnings scripts/check-data.mjs",
+    "build:map": "node scripts/build-parish-map.mjs",
     "check:contrast": "node scripts/check-contrast.mjs",
     "check": "npm run check:contrast && npm run check:data"
   },
@@ -40,6 +41,9 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
+    "topojson-client": "^3.1.0",
+    "topojson-server": "^3.0.1",
+    "topojson-simplify": "^3.0.3",
     "typescript": "^5"
   }
 }

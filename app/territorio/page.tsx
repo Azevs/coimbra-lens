@@ -3,7 +3,7 @@ import Navbar from '@/components/navigation/Navbar'
 import SiteFooter from '@/components/navigation/SiteFooter'
 import DataTicker from '@/components/hero/DataTicker'
 import ParishRanking from '@/components/sections/ParishRanking'
-import { CoimbraMap } from '@/components/map/LazyMaps'
+import ParishMap from '@/components/map/ParishMap'
 
 export const metadata: Metadata = {
   title: 'Território',
@@ -51,7 +51,7 @@ export default function TerritorioPage() {
           </div>
         </div>
 
-        <CoimbraMap />
+        <ParishMap />
         <ParishRanking />
       </main>
 

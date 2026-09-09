@@ -7,7 +7,7 @@ import SectionTitle from '@/components/ui/SectionTitle'
 import GlassCard from '@/components/ui/GlassCard'
 import RankedBars from '@/components/charts/RankedBars'
 import DataSource from '@/components/ui/DataSource'
-import { COIMBRA_PARISHES, PARISH_CENSUS_YEAR, NEXT_CENSUS } from '@/lib/mapbox-config'
+import { COIMBRA_PARISHES, PARISH_CENSUS_YEAR, NEXT_CENSUS } from '@/lib/parishes'
 import { published } from '@/lib/provenance'
 
 /**

@@ -69,6 +69,22 @@
                                     manchetes e filetes; texto pequeno usa
                                     esta versão mais escura */
 
+  /* ── Rampa do mapa ────────────────────────────────────
+     Cinco degraus de uma variável só, do papel à tinta azul, terminando
+     no --tone-blue. Sequencial e não categórica: mais escuro é sempre
+     mais, e a ordem dos degraus é a ordem dos números.
+
+     Não entram no check:contrast, e é deliberado. Um degrau claro de uma
+     rampa sequencial nunca chega aos 3:1 contra o papel — nem precisa: o
+     que separa cada freguesia da vizinha é o filete claro entre elas, o
+     que separa o município do fundo é o contorno a tinta, e o nome por
+     cima leva halo. O contraste que conta é entre degraus consecutivos. */
+  --map-1: #EAE3D5;
+  --map-2: #BFC7C6;
+  --map-3: #93ABB4;
+  --map-4: #5A8195;
+  --map-5: #2F5A74;
+
   /* ── Semântica de estado ──────────────────────────────
      Bom → mau. Usada por índices e limiares, nunca como cor de marca. */
   --state-good: var(--tone-teal);
@@ -834,3 +850,222 @@ footer a {
   cursor: pointer;
 }
 @media (min-width: 768px) { .nav-burger { display: none; } }
+
+/* ── Mapa das freguesias ─────────────────────────────────────────────────
+   Um mapa fixo, desenhado em SVG a partir da carta oficial. Não há tiles,
+   não há zoom e não há arrastar: o município cabe todo de uma vez, e é
+   contra as vizinhas que o valor de uma freguesia se lê. */
+.parish-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.parish-metrics {
+  display: inline-flex;
+  border: 1px solid var(--border-strong);
+}
+
+.parish-metric {
+  font-family: var(--font-ibm-plex), 'IBM Plex Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.45rem 1rem;
+  min-height: 36px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 0;
+  cursor: pointer;
+}
+.parish-metric + .parish-metric { border-left: 1px solid var(--border-strong); }
+.parish-metric.is-on {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+}
+
+.parish-legend {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  flex: 1 1 280px;
+}
+.parish-legend > div {
+  flex: 1;
+  min-width: 0;
+}
+.parish-legend-ramp {
+  display: flex;
+  width: 100%;
+  max-width: 340px;
+}
+.parish-legend-ramp span {
+  flex: 1;
+  height: 12px;
+  border: 1px solid var(--border-subtle);
+  border-right: 0;
+}
+.parish-legend-ramp span:last-child { border-right: 1px solid var(--border-subtle); }
+
+.parish-legend-ticks {
+  position: relative;
+  width: 100%;
+  max-width: 340px;
+  height: 18px;
+}
+
+/* Em ecrã estreito a unidade sobe para cima da rampa: ao lado, roubava-lhe
+   um terço da largura e os números dos degraus encavalitavam-se. */
+@media (max-width: 560px) {
+  .parish-legend {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
+  }
+}
+.parish-legend-ticks span {
+  position: absolute;
+  top: 3px;
+  transform: translateX(-50%);
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-feature-settings: 'tnum' 1;
+  white-space: nowrap;
+}
+
+.parish-layout {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+/* A coluna do painel só abre quando sobra carta que chegue à esquerda: a
+   300px de painel mais 2,5rem de goteira, abaixo dos 1240px de ecrã o mapa
+   ficava mais estreito do que os nomes que tem de segurar. Em vez de o
+   apertar, o painel desce para debaixo dele. */
+@media (min-width: 1240px) {
+  .parish-layout {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 2.5rem;
+    align-items: start;
+  }
+  /* A carta é alta; o painel acompanha a leitura em vez de fugir. */
+  .parish-detail { position: sticky; top: 120px; }
+}
+
+/* A carta é mais alta do que larga. Sem tecto, num portátil ficava mais
+   alta do que o ecrã e nunca se via inteira — que é a única coisa que este
+   mapa faz melhor do que o anterior. O tecto é a altura disponível, e a
+   largura sai dela pela razão do desenho. */
+.parish-figure {
+  position: relative;
+  /* `justify-self` e não `margin: auto`: uma margem automática desliga o
+     esticar do item da grelha, e a figura encolhia até aos 300px que um
+     SVG sem width vale por omissão. */
+  width: 100%;
+  justify-self: center;
+  max-width: min(100%, max(340px, calc((100vh - 11rem) * var(--map-ratio, 0.84))));
+}
+
+.parish-map {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* O filete entre freguesias é a cor do papel, e mede-se em pixéis e não em
+   unidades do desenho — a mesma espessura em qualquer largura de ecrã. */
+.parish-shape {
+  stroke: var(--bg-primary);
+  stroke-width: 1;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  cursor: pointer;
+  outline: none;
+  transition: fill 0.25s ease;
+}
+
+.parish-outline,
+.parish-active,
+.parish-selected {
+  fill: none;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+.parish-outline { stroke: var(--text-primary); stroke-width: 1.5; }
+.parish-active { stroke: var(--text-primary); stroke-width: 2; }
+.parish-selected { stroke: var(--accent); stroke-width: 3; }
+
+/* O nome leva halo da cor do fundo por baixo do traço — é o que o deixa
+   legível tanto sobre o degrau mais claro como sobre o mais escuro. */
+.parish-label {
+  font-family: var(--font-ibm-plex), 'IBM Plex Sans', sans-serif;
+  font-weight: 600;
+  text-anchor: middle;
+  fill: var(--text-primary);
+  stroke: var(--bg-primary);
+  paint-order: stroke fill;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+.parish-label-inverse {
+  fill: var(--bg-raised);
+  stroke: var(--text-primary);
+}
+.parish-label-selected { font-weight: 700; }
+
+.parish-tip {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 150px;
+  padding: 0.5rem 0.625rem;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-panel);
+  box-shadow: var(--shadow-lg);
+}
+.parish-tip-name {
+  font-family: var(--font-ibm-plex), 'IBM Plex Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+.parish-tip-value { font-size: 15px; }
+
+.parish-detail-close {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--font-ibm-plex), 'IBM Plex Sans', sans-serif;
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Em telemóvel a carta inteira tem 340px de largura: o nome de uma
+   freguesia ficaria a 8px, abaixo do mínimo legível do painel. Em vez de o
+   encolher até deixar de se ler, sai — e a freguesia diz o nome quando
+   for tocada. */
+.parish-hint { display: none; }
+@media (max-width: 719px) {
+  .parish-label { display: none; }
+  .parish-hint { display: block; margin-bottom: 0.75rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .parish-shape { transition: none; }
+}
+
+
+
+
