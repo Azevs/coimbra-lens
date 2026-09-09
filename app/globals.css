@@ -1066,6 +1066,321 @@ footer a {
   .parish-shape { transition: none; }
 }
 
+/* ── Zonas verdes ─────────────────────────────────────────────────────────
+   A carta do verde partilha a projecção e o viewBox com a das freguesias,
+   mas não o desenho: ali pinta-se todo o território por classes, aqui há
+   formas soltas sobre o papel. Daí um bloco próprio em vez de reaproveitar
+   `.parish-*`, que teria de crescer com excepções para os dois casos. */
+
+.green-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.green-scales {
+  display: inline-flex;
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.green-scale {
+  padding: 0.4rem 1rem;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--font-ibm-plex), 'IBM Plex Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.green-scale + .green-scale { border-left: 1px solid var(--border-strong); }
+.green-scale.is-on {
+  background: var(--accent);
+  color: var(--bg-raised);
+}
+
+.green-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem 1rem;
+}
+.green-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--font-ibm-plex), 'IBM Plex Sans', sans-serif;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+/* Uma família desligada continua legível — está desligada, não apagada. */
+.green-legend-item.is-off { color: var(--text-secondary); }
+.green-legend-item.is-off .green-legend-swatch { background: none !important; }
+.green-legend-swatch {
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  border: 1px solid var(--border-strong);
+  flex-shrink: 0;
+}
+.green-legend-count {
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.green-layout {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 1240px) {
+  .green-layout {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 2.5rem;
+    align-items: start;
+  }
+  .green-detail { position: sticky; top: 120px; }
+}
+
+/* O mesmo tecto de altura da carta das freguesias, pela mesma razão: sem
+   ele a figura passa do ecrã e nunca se vê inteira. A razão vem em
+   variável porque aqui muda com a escala escolhida. */
+.green-figure {
+  position: relative;
+  width: 100%;
+  justify-self: center;
+  max-width: min(100%, max(340px, calc((100vh - 11rem) * var(--map-ratio, 0.84))));
+  margin: 0;
+}
+
+.green-map {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--bg-sunken);
+}
+
+/* As freguesias por baixo são contexto, não dados: o traço mais fino que o
+   ecrã consegue, e nenhuma área pintada. */
+.green-context path {
+  fill: none;
+  stroke: var(--border-strong);
+  stroke-width: 0.75;
+  vector-effect: non-scaling-stroke;
+}
+
+.green-outline {
+  fill: none;
+  stroke: var(--text-primary);
+  stroke-width: 1.25;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.green-radius {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.25;
+  stroke-dasharray: 6 5;
+  opacity: 0.7;
+  vector-effect: non-scaling-stroke;
+}
+
+.green-shape {
+  cursor: pointer;
+  outline: none;
+}
+.green-shape path,
+.green-shape circle {
+  stroke: var(--bg-primary);
+  stroke-width: 0.75;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  transition: opacity 0.2s ease;
+}
+.green-shape:hover path,
+.green-shape:focus-visible path,
+.green-shape:hover circle,
+.green-shape:focus-visible circle { opacity: 0.82; }
+
+/* O disco por baixo das formas pequenas é uma marca de posição, não o
+   desenho do lugar — fica mais claro do que ele para não se confundirem. */
+.green-marker { opacity: 0.55; }
+
+.green-active,
+.green-selected {
+  fill: none;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+/* Espessura em pixéis do ecrã e não em unidades do desenho: o mesmo traço
+   nas duas escalas, como no mapa das freguesias. */
+.green-active,
+.green-selected { vector-effect: non-scaling-stroke; }
+.green-active { stroke: var(--text-primary); stroke-width: 2; }
+.green-selected { stroke: var(--accent); stroke-width: 2.5; }
+
+.green-label {
+  font-family: var(--font-ibm-plex), 'IBM Plex Sans', sans-serif;
+  font-weight: 600;
+  text-anchor: middle;
+  fill: var(--text-primary);
+  stroke: var(--bg-sunken);
+  paint-order: stroke fill;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+.green-label.is-selected { font-weight: 700; }
+
+.green-detail-close {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--font-ibm-plex), 'IBM Plex Sans', sans-serif;
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.green-hint { display: none; }
+@media (max-width: 719px) {
+  .green-label { display: none; }
+  .green-hint { display: block; margin-bottom: 0.75rem; }
+}
+
+/* ── A lista ───────────────────────────────────────────────────────────── */
+
+.green-sorts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+.green-sort {
+  padding: 0.4rem 1rem;
+  border-radius: 3px;
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-ibm-plex), 'IBM Plex Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.green-sort.is-on {
+  color: var(--accent-text);
+  border-color: var(--accent);
+}
+
+.green-group + .green-group { margin-top: 2.5rem; }
+.green-group-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding-bottom: 0.625rem;
+  border-bottom: 2px solid var(--text-primary);
+}
+
+.green-rows { list-style: none; margin: 0; padding: 0; }
+
+/* Uma grelha e não uma tabela: os cinco campos alinham em coluna sem que a
+   barra, que é a única parte elástica, aperte o nome. */
+.green-row {
+  display: grid;
+  grid-template-columns: 3px minmax(0, 1fr) auto;
+  grid-template-areas:
+    'kind name area'
+    'kind bar  dist';
+  align-items: center;
+  gap: 0.25rem 0.875rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+@media (min-width: 720px) {
+  .green-row {
+    grid-template-columns: 3px minmax(9rem, 1fr) minmax(0, 1.1fr) 5.5rem 4.5rem;
+    grid-template-areas: 'kind name bar area dist';
+  }
+}
+
+.green-row-kind {
+  grid-area: kind;
+  align-self: stretch;
+  border-radius: 2px;
+}
+.green-row-name { grid-area: name; display: flex; flex-direction: column; gap: 2px; }
+.green-row-bar {
+  grid-area: bar;
+  height: 6px;
+  background: var(--bg-sunken);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.green-row-bar span { display: block; height: 100%; border-radius: 2px; }
+.green-row-area {
+  grid-area: area;
+  font-size: 13px;
+  color: var(--text-primary);
+  text-align: right;
+  white-space: nowrap;
+}
+.green-row-dist { grid-area: dist; text-align: right; white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  .green-shape path,
+  .green-shape circle { transition: none; }
+}
 
 
+.green-tip {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 140px;
+  padding: 0.5rem 0.625rem;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-panel);
+  box-shadow: var(--shadow-lg);
+}
+.green-tip-name {
+  font-family: var(--font-ibm-plex), 'IBM Plex Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+.green-tip-value { font-size: 15px; }
 
+/* A água. Fica atrás de tudo o que é verde e à frente das freguesias: é
+   terreno, não é dado. Não leva o azul dos parques — leva-o clareado, para
+   se ler como rio e nunca se confundir com uma zona que se possa escolher.
+   Clareado com branco e não com o papel: o papel é quente, e o azul
+   diluído nele dava cinzento em vez de rio. */
+.green-water path {
+  fill: color-mix(in srgb, var(--tone-blue) 30%, white);
+  stroke: none;
+  pointer-events: none;
+}
+.green-water .green-river {
+  fill: none;
+  stroke: color-mix(in srgb, var(--tone-blue) 45%, white);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}

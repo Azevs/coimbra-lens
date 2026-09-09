@@ -23,6 +23,7 @@ const AREAS = [
   { label: 'Visitar', href: '/visitar' },
   { label: 'Agenda', href: '/agenda' },
   { label: 'Território', href: '/territorio' },
+  { label: 'Zonas verdes', href: '/zonas-verdes' },
   { label: 'Sobre', href: '/sobre' },
 ]
 
@@ -48,6 +49,10 @@ const SECTIONS: Record<string, { label: string; href: string }[]> = {
   '/territorio': [
     { label: 'Mapa', href: '#mapa' },
     { label: 'Freguesias', href: '#freguesias' },
+  ],
+  '/zonas-verdes': [
+    { label: 'Mapa', href: '#mapa' },
+    { label: 'A lista', href: '#lista' },
   ],
   '/sobre': [
     { label: 'O projecto', href: '#projecto' },

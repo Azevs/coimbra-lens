@@ -138,6 +138,18 @@ export const TRACKED: TrackedDatum[] = [
     usedIn: 'lib/parish-map (scripts/build-parish-map.mjs)',
   },
   {
+    id: 'zonas-verdes',
+    label: 'Contornos das zonas verdes',
+    // O mesmo GREEN_FETCHED_AT que o gerador escreveu em lib/green-spaces.ts,
+    // repetido à mão pela razão acima: o ficheiro gerado tem 78 KB.
+    asOf: '2026-09',
+    source: 'OpenStreetMap',
+    // O OSM muda todos os dias, mas o contorno de uma mata não. Uma revisão
+    // por semestre apanha jardins novos sem refazer a carta por nada.
+    refreshEvery: 6,
+    usedIn: 'lib/green-spaces (scripts/build-green-spaces.mjs)',
+  },
+  {
     id: 'agua-qualidade',
     label: 'Estado da qualidade da água da rede',
     asOf: '2025',
