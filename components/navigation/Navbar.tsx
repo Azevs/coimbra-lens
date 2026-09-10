@@ -24,6 +24,7 @@ const AREAS = [
   { label: 'Agenda', href: '/agenda' },
   { label: 'Território', href: '/territorio' },
   { label: 'Zonas verdes', href: '/zonas-verdes' },
+  { label: 'Zonas urbanas', href: '/zonas-urbanas' },
   { label: 'Sobre', href: '/sobre' },
 ]
 
@@ -53,6 +54,10 @@ const SECTIONS: Record<string, { label: string; href: string }[]> = {
   '/zonas-verdes': [
     { label: 'Mapa', href: '#mapa' },
     { label: 'A lista', href: '#lista' },
+  ],
+  '/zonas-urbanas': [
+    { label: 'Rua do Brasil', href: '#rua-do-brasil' },
+    { label: 'Baixa', href: '#baixa' },
   ],
   '/sobre': [
     { label: 'O projecto', href: '#projecto' },

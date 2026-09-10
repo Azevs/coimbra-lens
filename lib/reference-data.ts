@@ -150,6 +150,19 @@ export const TRACKED: TrackedDatum[] = [
     usedIn: 'lib/green-spaces (scripts/build-green-spaces.mjs)',
   },
   {
+    id: 'maquetas-urbanas',
+    label: 'Edificado e altimetria das maquetas urbanas',
+    // O mesmo MODEL_FETCHED_AT que o gerador escreveu em lib/urban-zones.ts.
+    asOf: '2026-09',
+    source: 'OpenStreetMap · EU-DEM (Copernicus)',
+    // O edificado de uma rua feita muda devagar, e o terreno não muda de
+    // todo. O que envelhece é a cobertura de `building:levels`, que sobe à
+    // medida que alguém a preenche — refazer por semestre levanta os
+    // edifícios que entretanto ganharam altura publicada.
+    refreshEvery: 6,
+    usedIn: 'lib/urban-zones (scripts/build-urban-model.mjs)',
+  },
+  {
     id: 'agua-qualidade',
     label: 'Estado da qualidade da água da rede',
     asOf: '2025',

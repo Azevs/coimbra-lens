@@ -10,12 +10,15 @@
     "postinstall": "node -e \"try{require('fs').rmSync('node_modules/@types/mapbox__point-geometry',{recursive:true,force:true})}catch(e){}\"",
     "check:data": "node --experimental-strip-types --no-warnings scripts/check-data.mjs",
     "build:map": "node scripts/build-parish-map.mjs",
+    "build:urban": "node scripts/build-urban-model.mjs",
+    "build:maqueta": "blender -b --factory-startup --python scripts/blender/maqueta.py -- rua-do-brasil && blender -b --factory-startup --python scripts/blender/maqueta.py -- baixa && node scripts/optimise-maquetas.mjs",
     "check:contrast": "node scripts/check-contrast.mjs",
     "check": "npm run check:contrast && npm run check:data"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
     "@tanstack/react-query": "^5.90.21",
+    "@types/three": "^0.185.4",
     "axios": "^1.13.5",
     "d3": "^7.9.0",
     "echarts": "^6.0.0",
@@ -27,6 +30,7 @@
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "three": "^0.186.0",
     "zustand": "^5.0.11"
   },
   "devDependencies": {
@@ -40,6 +44,8 @@
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "geotiff": "^3.0.5",
+    "proj4": "^2.22.0",
     "tailwindcss": "^4",
     "topojson-client": "^3.1.0",
     "topojson-server": "^3.0.1",
