@@ -55,10 +55,8 @@ const SECTIONS: Record<string, { label: string; href: string }[]> = {
     { label: 'Mapa', href: '#mapa' },
     { label: 'A lista', href: '#lista' },
   ],
-  '/zonas-urbanas': [
-    { label: 'Rua do Brasil', href: '#rua-do-brasil' },
-    { label: 'Baixa', href: '#baixa' },
-  ],
+  // Zonas urbanas não tem fila aqui: cada zona é uma página, e o selector
+  // delas vive na própria página (`SeletorZonas`), visível em qualquer ecrã.
   '/sobre': [
     { label: 'O projecto', href: '#projecto' },
     { label: 'Como é feito', href: '#metodo' },

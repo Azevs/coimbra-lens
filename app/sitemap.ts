@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { siteUrl } from '@/lib/site'
+import { URBAN_ZONES } from '@/lib/urban-zones'
 
 /** As áreas do site, com a cadência a que cada uma muda mesmo. */
 const AREAS: { path: string; changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency']; priority: number }[] = [
@@ -14,10 +15,18 @@ const AREAS: { path: string; changeFrequency: MetadataRoute.Sitemap[number]['cha
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = siteUrl().replace(/\/$/, '')
-  return AREAS.map(({ path, changeFrequency, priority }) => ({
+  const areas = AREAS.map(({ path, changeFrequency, priority }) => ({
     url: path ? `${base}/${path}` : base,
     lastModified: new Date(),
     changeFrequency,
     priority,
   }))
+  // Cada zona urbana tem página própria; muda quando o modelo é regenerado.
+  const zonas = URBAN_ZONES.map((z) => ({
+    url: `${base}/zonas-urbanas/${z.id}`,
+    lastModified: new Date(z.lidoEm),
+    changeFrequency: 'yearly' as const,
+    priority: 0.6,
+  }))
+  return [...areas, ...zonas]
 }
