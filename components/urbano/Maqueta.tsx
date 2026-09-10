@@ -16,7 +16,11 @@ const LEGENDA = [
   { cor: '#B4AB97', borda: 'var(--border-panel)', termo: 'altura por registar' },
 ] as const
 
-export function LegendaMaqueta() {
+/** Só nas zonas onde as árvores foram medidas; noutras a entrada mentiria. */
+const ARVORE = { cor: '#A7B08F', borda: 'var(--border-panel)', termo: 'árvore' } as const
+
+export function LegendaMaqueta({ arvores = false }: { arvores?: boolean } = {}) {
+  const itens = arvores ? [...LEGENDA, ARVORE] : LEGENDA
   return (
     <ul
       style={{
@@ -28,7 +32,7 @@ export function LegendaMaqueta() {
         padding: 0,
       }}
     >
-      {LEGENDA.map((l) => (
+      {itens.map((l) => (
         <li key={l.termo} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.625rem' }}>
           <span
             aria-hidden

@@ -36,6 +36,10 @@ from mathutils import Vector
 ARGS = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
 ZONA = ARGS[0] if ARGS else 'rua-do-brasil'
 SO_MODELO = '--so-modelo' in ARGS
+# Estampa de ensaio com a ortofoto no chão (ver scripts/build-orto.mjs).
+# Não grava o .blend nem o .glb, e escreve ao lado deste ficheiro, fora de
+# public/: é para comparar, não para o site.
+ORTO = '--orto' in ARGS
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 RAIZ = os.path.dirname(AQUI)
@@ -160,6 +164,24 @@ terreno = malha('Terreno', verts, faces, M_TERRENO)
 for p in terreno.data.polygons:
     p.use_smooth = True
 
+if ORTO:
+    # A imagem cobre a placa exactamente (x0..x1, y0..y1), com o norte em
+    # cima; as coordenadas UV são a posição do vértice na placa.
+    img = bpy.data.images.load(os.path.join(AQUI, ZONA + '.orto.jpg'))
+    m_orto = bpy.data.materials.new('ortofoto')
+    m_orto.use_nodes = True
+    nt = m_orto.node_tree
+    bsdf = nt.nodes['Principled BSDF']
+    tex = nt.nodes.new('ShaderNodeTexImage')
+    tex.image = img
+    nt.links.new(tex.outputs['Color'], bsdf.inputs['Base Color'])
+    bsdf.inputs['Roughness'].default_value = 0.95
+    terreno.data.materials[0] = m_orto
+    uv = terreno.data.uv_layers.new(name='UV')
+    for loop in terreno.data.loops:
+        co = terreno.data.vertices[loop.vertex_index].co
+        uv.data[loop.index].uv = ((co.x - PX0) / (PX1 - PX0), (co.y - PY0) / (PY1 - PY0))
+
 # --- plinto: o modelo pousa numa placa, não flutua ---
 bordo = ([c for c in range(L)] +
          [r * L + NX for r in range(1, NY + 1)] +
@@ -208,6 +230,42 @@ for classe, mat in (('medida', M_MEDIDA), ('tipo', M_TIPO), ('desconhecida', M_D
     if V:
         malha('Edif_' + classe, V, F, mat)
 
+# --- árvores ---
+# Posição, altura e raio da copa vêm medidos (ortofoto + LiDAR, ver o
+# gerador). A forma não: é uma bola de cartão achatada, do mesmo material
+# mate dos edifícios, com um tronco fino para não flutuar. A copa não desce
+# abaixo de 10% da altura, e nunca é mais alta do que 45% da árvore.
+ARVORES = CENA.get('arvores', [])
+if ARVORES:
+    import bmesh
+    M_ARVORE = material('arvore', srgb('A7B08F'), 0.9)
+    M_TRONCO = material('tronco', srgb('8C8272'), 0.9)
+    bm = bmesh.new()
+    tv, tf = [], []
+    for a in ARVORES:
+        x, y = a['p']
+        h, r, z0 = a['h'], a['r'], a['z']
+        rv = min(r, h * 0.45)
+        zc = z0 + h - rv
+        geo = bmesh.ops.create_icosphere(bm, subdivisions=1, radius=1.0)
+        for v in geo['verts']:
+            v.co = Vector((x + v.co.x * r, y + v.co.y * r, zc + v.co.z * rv))
+        # tronco: prisma quadrado de 0,5 m, do chão (enterrado 1 m) à copa
+        o, m = len(tv), 0.25
+        for zz in (z0 - 1.0, zc):
+            tv += [(x - m, y - m, zz), (x + m, y - m, zz), (x + m, y + m, zz), (x - m, y + m, zz)]
+        tf += [(o + i, o + (i + 1) % 4, o + 4 + (i + 1) % 4, o + 4 + i) for i in range(4)]
+    me = bpy.data.meshes.new('Arvores')
+    bm.to_mesh(me)
+    bm.free()
+    ob = bpy.data.objects.new('Arvores', me)
+    ob.data.materials.append(M_ARVORE)
+    bpy.context.collection.objects.link(ob)
+    for p in me.polygons:
+        p.use_smooth = True
+    malha('Troncos', tv, tf, M_TRONCO)
+    print('árvores: %d' % len(ARVORES))
+
 # --- via ---
 LARGURA = {'1': 4.0, '2': 7.0, '3': 10.0}
 vv, vf = [], []
@@ -233,7 +291,8 @@ if vv:
 # Sem cópia .blend1 a cada gravação: o ficheiro é regenerável a partir do
 # .scene.json, e um duplicado de meio megabyte no repositório não serve.
 bpy.context.preferences.filepaths.save_version = 0
-bpy.ops.wm.save_as_mainfile(filepath=os.path.join(AQUI, ZONA + '.blend'))
+if not ORTO:
+    bpy.ops.wm.save_as_mainfile(filepath=os.path.join(AQUI, ZONA + '.blend'))
 
 tris = 0
 for ob in bpy.data.objects:
@@ -247,7 +306,8 @@ print('maqueta: %d triângulos' % tris)
 # `export_yup` porque o three.js tem o Y para cima e o Blender o Z; converter
 # aqui poupa uma rotação em toda a cena do lado do cliente.
 os.makedirs(SAIDA, exist_ok=True)
-bpy.ops.export_scene.gltf(
+if not ORTO:
+  bpy.ops.export_scene.gltf(
     filepath=os.path.join(SAIDA, ZONA + '.glb'), export_format='GLB', export_apply=True,
     export_draco_mesh_compression_enable=True, export_draco_mesh_compression_level=6,
     export_yup=True)
@@ -428,6 +488,9 @@ for nome, ((cx, cy), eixo, meia, azimute, elevacao, lente, res) in VISTAS.items(
                 alvos += [ob.matrix_world @ Vector(c) for c in ob.bound_box]
     zc = sum(p.z for p in alvos) / len(alvos)
     dist = enquadrar((cx, cy, zc), azimute, elevacao, lente, alvos)
-    sc.render.filepath = os.path.join(SAIDA, '%s-%s.png' % (ZONA, nome))
+    if ORTO:
+        sc.render.filepath = os.path.join(AQUI, '%s-orto-%s.png' % (ZONA, nome))
+    else:
+        sc.render.filepath = os.path.join(SAIDA, '%s-%s.png' % (ZONA, nome))
     print('vista %s: %d pontos, câmara a %.0f m' % (nome, len(alvos), dist))
     bpy.ops.render.render(write_still=True)

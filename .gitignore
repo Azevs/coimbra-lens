@@ -39,3 +39,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# maquetas urbanas — dados brutos grandes e ensaios
+# As ortofotos da DGT têm ~450 MB por folha: o GitHub recusa ficheiros acima
+# de 100 MB, e servem só para gerar o modelo. Descarregam-se do CDD da DGT
+# para scripts/blender/dem/. (As folhas LiDAR MDT/MDS, ~1 MB cada, ficam
+# versionadas: são o que permite voltar a gerar as maquetas.)
+scripts/blender/dem/ortos*.tif
+scripts/blender/dem/ortos*.tiff
+# Ensaios com a ortofoto no chão (build-orto.mjs + maqueta.py --orto)
+scripts/blender/*.orto.jpg
+scripts/blender/*-orto-*.png

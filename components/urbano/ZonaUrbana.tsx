@@ -92,7 +92,7 @@ export default function ZonaUrbana({ z }: { z: ZonaTexto }) {
           </div>
 
           <div style={{ marginTop: '2.5rem' }}>
-            <LegendaMaqueta />
+            <LegendaMaqueta arvores={!!zona.arvores} />
           </div>
 
           <DataSource meta={estimate(z.fonte, '', zona.lidoEm, 'Modelo')} showNote={false} />

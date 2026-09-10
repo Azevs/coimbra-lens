@@ -32,6 +32,10 @@ export interface UrbanZone {
   umPisoPorTipo: number
   /** Sem altura publicada — na maqueta ficam como implantação no chão. */
   semAltura: number
+  /** Dos com altura, quantos medidos pelo LiDAR da DGT (superfície − terreno). */
+  alturaLidar?: number
+  /** Árvores no corredor, medidas por ortofoto (NDVI) e LiDAR. Ausente se não houver ortofoto da zona inteira. */
+  arvores?: number
   /** Altura do edifício medido mais alto, em metros. */
   maisAlto: number
   /** Soma das áreas de implantação, em m². */
@@ -41,7 +45,7 @@ export interface UrbanZone {
 }
 
 /** A leitura mais recente de todas as zonas. */
-export const MODEL_FETCHED_AT = '2026-09-10T08:31:57.355Z'
+export const MODEL_FETCHED_AT = '2026-09-10T10:17:27.069Z'
 
 export const URBAN_ZONES: UrbanZone[] = [
   {
@@ -55,15 +59,16 @@ export const URBAN_ZONES: UrbanZone[] = [
       -8.414505
     ],
     "comprimento": 2210,
-    "cotaMin": 27,
-    "cotaMax": 52.8,
+    "cotaMin": 21.4,
+    "cotaMax": 44.6,
     "edificios": 670,
-    "comAltura": 339,
-    "umPisoPorTipo": 68,
-    "semAltura": 263,
-    "maisAlto": 33.8,
+    "comAltura": 632,
+    "umPisoPorTipo": 10,
+    "semAltura": 28,
+    "alturaLidar": 626,
+    "maisAlto": 33.9,
     "areaImplantacao": 97153,
-    "lidoEm": "2026-09-09T16:17:57.160Z"
+    "lidoEm": "2026-09-10T09:48:33.496Z"
   },
   {
     "id": "baixa",
@@ -79,12 +84,14 @@ export const URBAN_ZONES: UrbanZone[] = [
     "cotaMin": 19,
     "cotaMax": 29.6,
     "edificios": 986,
-    "comAltura": 530,
-    "umPisoPorTipo": 8,
-    "semAltura": 448,
-    "maisAlto": 21.8,
+    "comAltura": 962,
+    "umPisoPorTipo": 1,
+    "semAltura": 23,
+    "alturaLidar": 960,
+    "arvores": 230,
+    "maisAlto": 25.1,
     "areaImplantacao": 109818,
-    "lidoEm": "2026-09-10T08:31:57.355Z"
+    "lidoEm": "2026-09-10T10:17:27.069Z"
   }
 ]
 

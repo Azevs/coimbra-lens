@@ -92,6 +92,9 @@ const ZONAS = [
     tipo: 'eixo',
     freguesia: 'Santo António dos Olivais / São Martinho do Bispo e Ribeira de Frades',
     raio: 90,
+    // Desde Setembro de 2026 com LiDAR (6 folhas, 175–177 × 359–360): o
+    // EU-DEM media telhados e copas, como na Baixa.
+    terreno: 'dgt',
     via: { nomes: ['Rua do Brasil'], filtro: (t) => t['name:etymology:wikidata'] === 'Q155' },
   },
   /**
@@ -274,11 +277,19 @@ proj4.defs(
 )
 const paraTM06 = proj4('EPSG:4326', 'EPSG:3763')
 
-async function folhasDGT() {
+/**
+ * As folhas de um tipo (`MDT` terreno, `MDS` superfície) que tocam a caixa
+ * da zona. Folhas a mais na pasta — de outra zona, ou de uma área pedida
+ * maior do que o necessário — são ignoradas, não um erro.
+ */
+async function folhasDGT(tipo, bb) {
+  const [ax, ay] = paraTM06.forward([bb.w, bb.s])
+  const [bx, by] = paraTM06.forward([bb.e, bb.n])
   const folhas = []
-  for (const f of readdirSync(DIR_DEM).filter((f) => /^MDT-.*\.tiff?$/.test(f))) {
+  for (const f of readdirSync(DIR_DEM).filter((f) => new RegExp(`^${tipo}-.*\\.tiff?$`).test(f))) {
     const im = await (await fromFile(join(DIR_DEM, f))).getImage()
     const [w, s, e, n] = im.getBoundingBox()
+    if (e < Math.min(ax, bx) || w > Math.max(ax, bx) || n < Math.min(ay, by) || s > Math.max(ay, by)) continue
     const [rx, ry] = im.getResolution()
     folhas.push({
       f, w, s, e, n, rx, ry: -ry,
@@ -287,27 +298,301 @@ async function folhasDGT() {
       r: await im.readRasters({ interleave: true }),
     })
   }
-  if (!folhas.length) throw new Error(`nenhuma folha MDT em ${DIR_DEM}`)
   return folhas
 }
 
-/** Caixa em graus inteiramente coberta pelas folhas (a união tem de ser um rectângulo). */
-function coberturaDGT(folhas) {
-  const w = Math.min(...folhas.map((t) => t.w))
-  const e = Math.max(...folhas.map((t) => t.e))
-  const s = Math.min(...folhas.map((t) => t.s))
-  const n = Math.max(...folhas.map((t) => t.n))
-  const area = folhas.reduce((a, t) => a + (t.e - t.w) * (t.n - t.s), 0)
-  if (Math.abs(area - (e - w) * (n - s)) > 1) throw new Error('as folhas MDT não formam um rectângulo')
+/** Valor do píxel de 2 m que contém o ponto (sem interpolar), ou null. */
+function pixelDGT(folhas, x, y) {
+  for (const t of folhas) {
+    if (x < t.w || x >= t.e || y <= t.s || y > t.n) continue
+    const v = t.r[Math.floor((t.n - y) / t.ry) * t.W + Math.floor((x - t.w) / t.rx)]
+    return v === t.nodata || v <= -999 ? null : v
+  }
+  return null
+}
+
+function dentroDoPoligono(x, y, pol) {
+  let dentro = false
+  for (let i = 0, j = pol.length - 1; i < pol.length; j = i++) {
+    const [xi, yi] = pol[i]
+    const [xj, yj] = pol[j]
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) dentro = !dentro
+  }
+  return dentro
+}
+
+/**
+ * ALTURA MEDIDA PELO LASER
+ *
+ * O MDS é o topo de tudo o que o laser tocou; o MDT é o chão. Dentro do
+ * contorno de um edifício, a diferença é a altura do edifício — medida, não
+ * estimada, e para todos os edifícios de uma vez, com ou sem pisos no OSM.
+ *
+ * Três escolhas, e porquê:
+ *   - MEDIANA dos píxeis, não o máximo: uma chaminé, uma antena ou uma torre
+ *     sineira não fazem o prédio inteiro subir. É a altura da maior parte
+ *     do telhado — a que um prisma de maqueta deve ter.
+ *   - RECUO de 1 m das paredes: no bordo, o píxel de 2 m apanha meio telhado
+ *     e meio passeio. Nos edifícios pequenos, se o recuo deixar menos de
+ *     PIXEIS_MIN píxeis, mede-se sem ele.
+ *   - Abaixo de ALTURA_MIN_LIDAR, o laser não viu volume: ou o edifício já
+ *     não existe, ou o contorno do OSM está deslocado. Não se inventa um
+ *     volume — fica o que o OSM disser, e o caso é contado.
+ *
+ * O que o MDS não sabe separar: uma árvore por cima de um telhado baixo.
+ * Na Baixa isso é raro; numa zona arborizada seria de verificar.
+ */
+const RECUO_M = 1.0
+const PIXEIS_MIN = 3
+const ALTURA_MIN_LIDAR = 2.0
+
+function alturaLidar(geom, mdt, mds) {
+  const pol = geom.map((p) => paraTM06.forward([p.lon, p.lat]))
+  const xs = pol.map((p) => p[0])
+  const ys = pol.map((p) => p[1])
+  const bordos = pol.map((p, i) => [p, pol[(i + 1) % pol.length]])
+  const amostras = (recuo) => {
+    const d = []
+    // Centros dos píxeis: as folhas começam em milhares de metros, portanto
+    // os centros caem nos ímpares.
+    for (let x = Math.floor((Math.min(...xs) - 1) / 2) * 2 + 1; x <= Math.max(...xs); x += 2) {
+      for (let y = Math.floor((Math.min(...ys) - 1) / 2) * 2 + 1; y <= Math.max(...ys); y += 2) {
+        if (!dentroDoPoligono(x, y, pol)) continue
+        if (recuo && Math.min(...bordos.map(([a, b]) => distSegmento([x, y], a, b))) < recuo) continue
+        const s = pixelDGT(mds, x, y)
+        const t = pixelDGT(mdt, x, y)
+        if (s != null && t != null) d.push(s - t)
+      }
+    }
+    return d
+  }
+  let d = amostras(RECUO_M)
+  if (d.length < PIXEIS_MIN) d = amostras(0)
+  if (d.length < PIXEIS_MIN) return null
+  d.sort((a, b) => a - b)
+  return d[Math.floor(d.length / 2)]
+}
+
+/**
+ * ÁRVORES, MEDIDAS E NÃO SEMEADAS
+ *
+ * Uma árvore entra na maqueta quando duas fontes independentes concordam
+ * num píxel de 2 m:
+ *   - a ortofoto da DGT (2025, 25 cm, com infravermelho próximo) diz que ali
+ *     há vegetação — NDVI acima de NDVI_MIN. Sozinha apanharia relva.
+ *   - o LiDAR mede ali mais de COPA_MIN_M acima do chão. Sozinho apanharia
+ *     muros e telheiros.
+ * e o píxel não está dentro do contorno de nenhum edifício.
+ *
+ * A ortofoto não é verdadeira: uma copa aparece deslocada um ou dois metros
+ * em relação à vertical. Por isso o NDVI conta na vizinhança 3 × 3 do píxel,
+ * e é o LiDAR — que é vertical — que decide onde a copa está.
+ *
+ * Cada árvore é um máximo local da altura medida; a copa é o conjunto de
+ * píxeis de vegetação mais próximos desse topo, e a área deles dá o raio.
+ * Posição, altura e tamanho são todos medidos. O que não se sabe — a forma
+ * exacta da copa, a espécie — a maqueta não finge: é uma bola de cartão.
+ */
+const NDVI_MIN = 0.2
+const COPA_MIN_M = 2.5
+const ALTURA_ARVORE_MIN = 3
+const RAIO_TOPO_PX = 2 // janela de 5 × 5 píxeis (10 m) para um topo
+const ALCANCE_COPA_M = 8
+const PIXEIS_COPA_MIN = 3
+
+/** Folhas de ortofoto que tocam a caixa, e se juntas a cobrem inteira. */
+async function ortoDGT(caixa) {
+  const folhas = []
+  for (const f of readdirSync(DIR_DEM).filter((f) => /^ortos.*\.tiff?$/.test(f))) {
+    const t = await fromFile(join(DIR_DEM, f))
+    const [w, s, e, n] = (await t.getImage(0)).getBoundingBox()
+    if (e <= caixa[0] || w >= caixa[2] || n <= caixa[1] || s >= caixa[3]) continue
+    folhas.push({ f, t, w, s, e, n })
+  }
+  let completa = folhas.length > 0
+  for (let x = caixa[0]; x <= caixa[2] && completa; x += 20) {
+    for (let y = caixa[1]; y <= caixa[3]; y += 20) {
+      if (!folhas.some((q) => x >= q.w && x <= q.e && y >= q.s && y <= q.n)) { completa = false; break }
+    }
+  }
+  return { folhas, completa }
+}
+
+/** R, G, B e NIR numa grelha de `passo` m sobre a caixa (linha 0 = norte). */
+async function lerOrto(folhas, caixa, passo) {
+  const W = Math.round((caixa[2] - caixa[0]) / passo)
+  const H = Math.round((caixa[3] - caixa[1]) / passo)
+  const bandas = [0, 1, 2, 3].map(() => new Uint8Array(W * H))
+  const valido = new Uint8Array(W * H)
+  for (const q of folhas) {
+    const ix0 = Math.max(caixa[0], q.w), ix1 = Math.min(caixa[2], q.e)
+    const iy0 = Math.max(caixa[1], q.s), iy1 = Math.min(caixa[3], q.n)
+    if (ix1 <= ix0 || iy1 <= iy0) continue
+    const w = Math.round((ix1 - ix0) / passo), h = Math.round((iy1 - iy0) / passo)
+    const r = await q.t.readRasters({ bbox: [ix0, iy0, ix1, iy1], width: w, height: h })
+    const c0 = Math.round((ix0 - caixa[0]) / passo), r0 = Math.round((caixa[3] - iy1) / passo)
+    for (let j = 0; j < h; j++) {
+      for (let i = 0; i < w; i++) {
+        const s = j * w + i
+        if (r[4] && r[4][s] === 0) continue // máscara da DGT: sem fotografia
+        const k = (r0 + j) * W + (c0 + i)
+        for (let b = 0; b < 4; b++) bandas[b][k] = r[b][s]
+        valido[k] = 1
+      }
+    }
+  }
+  return { W, H, bandas, valido }
+}
+
+async function arvoresDGT({ caixa, mdt, mds, orto, pegadas, paraLocal, naZona }) {
+  const P2 = 2
+  const { W, H, bandas, valido } = await lerOrto(orto, caixa, P2)
+  const [R, , , N] = bandas
+  const cx = (i) => caixa[0] + (i + 0.5) * P2
+  const cy = (j) => caixa[3] - (j + 0.5) * P2
+  const ndsm = new Float32Array(W * H).fill(NaN)
+  const ndvi = new Float32Array(W * H).fill(-1)
+  for (let j = 0; j < H; j++) {
+    for (let i = 0; i < W; i++) {
+      const k = j * W + i
+      const s = pixelDGT(mds, cx(i), cy(j))
+      const t = pixelDGT(mdt, cx(i), cy(j))
+      if (s != null && t != null) ndsm[k] = s - t
+      if (valido[k]) ndvi[k] = (N[k] - R[k]) / (N[k] + R[k] + 1e-6)
+    }
+  }
+  // Contornos de todos os edifícios da caixa, não só os do corredor: um
+  // terraço ajardinado não é uma árvore.
+  const edif = new Uint8Array(W * H)
+  for (const pol of pegadas) {
+    const xs = pol.map((p) => p[0]), ys = pol.map((p) => p[1])
+    const i0 = Math.max(0, Math.floor((Math.min(...xs) - caixa[0]) / P2))
+    const i1 = Math.min(W - 1, Math.ceil((Math.max(...xs) - caixa[0]) / P2))
+    const j0 = Math.max(0, Math.floor((caixa[3] - Math.max(...ys)) / P2))
+    const j1 = Math.min(H - 1, Math.ceil((caixa[3] - Math.min(...ys)) / P2))
+    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+      if (dentroDoPoligono(cx(i), cy(j), pol)) edif[j * W + i] = 1
+    }
+  }
+  const veg = new Uint8Array(W * H)
+  for (let j = 1; j < H - 1; j++) {
+    for (let i = 1; i < W - 1; i++) {
+      const k = j * W + i
+      if (edif[k] || !(ndsm[k] >= COPA_MIN_M)) continue
+      let verde = false
+      for (let dj = -1; dj <= 1 && !verde; dj++) for (let di = -1; di <= 1; di++) {
+        if (ndvi[k + dj * W + di] > NDVI_MIN) { verde = true; break }
+      }
+      if (verde) veg[k] = 1
+    }
+  }
+  // Topos: máximos locais da altura medida, com desempate pelo índice para
+  // um patamar de valores iguais dar um topo e não vários.
+  const topos = []
+  const Rt = RAIO_TOPO_PX
+  for (let j = Rt; j < H - Rt; j++) {
+    for (let i = Rt; i < W - Rt; i++) {
+      const k = j * W + i
+      if (!veg[k] || ndsm[k] < ALTURA_ARVORE_MIN) continue
+      let max = true
+      for (let dj = -Rt; dj <= Rt && max; dj++) for (let di = -Rt; di <= Rt; di++) {
+        const m = k + dj * W + di
+        if (m === k || !veg[m]) continue
+        if (ndsm[m] > ndsm[k] || (ndsm[m] === ndsm[k] && m < k)) { max = false; break }
+      }
+      if (max) topos.push({ i, j, h: ndsm[k], n: 0 })
+    }
+  }
+  // Copa: cada píxel de vegetação conta para o topo mais próximo.
+  const B = Math.ceil(ALCANCE_COPA_M / P2)
+  const balde = new Map()
+  topos.forEach((t, idx) => {
+    const chave = `${Math.floor(t.i / B)},${Math.floor(t.j / B)}`
+    if (!balde.has(chave)) balde.set(chave, [])
+    balde.get(chave).push(idx)
+  })
+  for (let j = 0; j < H; j++) {
+    for (let i = 0; i < W; i++) {
+      if (!veg[j * W + i]) continue
+      const bi = Math.floor(i / B), bj = Math.floor(j / B)
+      let melhor = -1, dMin = (ALCANCE_COPA_M / P2) ** 2
+      for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) {
+        for (const idx of balde.get(`${bi + a},${bj + b}`) ?? []) {
+          const d = (topos[idx].i - i) ** 2 + (topos[idx].j - j) ** 2
+          if (d <= dMin) { dMin = d; melhor = idx }
+        }
+      }
+      if (melhor >= 0) topos[melhor].n++
+    }
+  }
+  const arvores = []
+  for (const t of topos) {
+    if (t.n < PIXEIS_COPA_MIN) continue
+    const p = paraLocal(cx(t.i), cy(t.j))
+    if (!naZona(p)) continue
+    arvores.push({
+      p: [+p[0].toFixed(2), +p[1].toFixed(2)],
+      h: +t.h.toFixed(2),
+      r: +Math.sqrt((t.n * P2 * P2) / Math.PI).toFixed(2),
+    })
+  }
+  return arvores
+}
+
+/**
+ * O rectângulo de folhas completas que mais cobre a caixa da zona, e a caixa
+ * em graus que ele cobre.
+ *
+ * As folhas que tocam a caixa nem sempre formam um rectângulo: a margem da
+ * Rua do Brasil chega à coluna 174, onde há a folha 174360 da Baixa mas não
+ * a 174359, e a união fica em L. Em vez de exigir um rectângulo, escolhe-se
+ * o maior que existe — a placa recorta-se a ele, e o que ficar de fora é
+ * contado no registo, como qualquer edifício fora do terreno medido.
+ */
+function coberturaDGT(todas, bb) {
+  const [ax, ay] = paraTM06.forward([bb.w, bb.s])
+  const [bx, by] = paraTM06.forward([bb.e, bb.n])
+  const cx0 = Math.min(ax, bx), cx1 = Math.max(ax, bx), cy0 = Math.min(ay, by), cy1 = Math.max(ay, by)
+  const L = todas[0].e - todas[0].w
+  const chave = (c, r) => `${c},${r}`
+  const porCelula = new Map(todas.map((t) => [chave(Math.round(t.w / L), Math.round(t.s / L)), t]))
+  const cols = [...new Set(todas.map((t) => Math.round(t.w / L)))].sort((a, b) => a - b)
+  const rows = [...new Set(todas.map((t) => Math.round(t.s / L)))].sort((a, b) => a - b)
+  let melhor = null
+  let melhorArea = 0
+  for (const c0 of cols) for (const c1 of cols) for (const r0 of rows) for (const r1 of rows) {
+    if (c1 < c0 || r1 < r0) continue
+    let completo = true
+    for (let c = c0; c <= c1 && completo; c++) for (let r = r0; r <= r1; r++) if (!porCelula.has(chave(c, r))) { completo = false; break }
+    if (!completo) continue
+    const iw = Math.max(0, Math.min(cx1, (c1 + 1) * L) - Math.max(cx0, c0 * L))
+    const ih = Math.max(0, Math.min(cy1, (r1 + 1) * L) - Math.max(cy0, r0 * L))
+    if (iw * ih > melhorArea) {
+      melhorArea = iw * ih
+      melhor = { c0, c1, r0, r1 }
+    }
+  }
+  if (!melhor) throw new Error('nenhum rectângulo de folhas MDT cobre a zona')
+  const folhas = todas.filter((t) => {
+    const c = Math.round(t.w / L), r = Math.round(t.s / L)
+    return c >= melhor.c0 && c <= melhor.c1 && r >= melhor.r0 && r <= melhor.r1
+  })
+  const w = melhor.c0 * L, e = (melhor.c1 + 1) * L, s = melhor.r0 * L, n = (melhor.r1 + 1) * L
+  if (folhas.length < todas.length) {
+    console.log(`  folhas MDT: ${folhas.length} em rectângulo; ignoradas ${todas.filter((t) => !folhas.includes(t)).map((t) => t.f).join(', ')}`)
+  }
   // 4 m para dentro, e o canto mais interior de cada lado: a grelha PT-TM06
   // está rodada ~0,2° em relação ao norte geográfico.
   const g = (x, y) => proj4('EPSG:3763', 'EPSG:4326', [x, y])
   const [sw, se, nw, ne] = [g(w + 4, s + 4), g(e - 4, s + 4), g(w + 4, n - 4), g(e - 4, n - 4)]
   return {
-    w: Math.max(sw[0], nw[0]),
-    e: Math.min(se[0], ne[0]),
-    s: Math.max(sw[1], se[1]),
-    n: Math.min(nw[1], ne[1]),
+    cob: {
+      w: Math.max(sw[0], nw[0]),
+      e: Math.min(se[0], ne[0]),
+      s: Math.max(sw[1], se[1]),
+      n: Math.min(nw[1], ne[1]),
+    },
+    folhas,
   }
 }
 
@@ -508,11 +793,20 @@ out tags geom;`)
   const bbRecolha = { ...bb }
   let dem
   let folhas = null
+  let folhasMDS = []
   if (z.terreno === 'dgt') {
     // A placa encolhe ao que as folhas cobrem, nunca o contrário: terreno
     // que não se mediu não se desenha.
-    folhas = await folhasDGT()
-    const cob = coberturaDGT(folhas)
+    folhas = await folhasDGT('MDT', bb)
+    if (!folhas.length) throw new Error(`nenhuma folha MDT em ${DIR_DEM} cobre ${z.nome}`)
+    folhasMDS = await folhasDGT('MDS', bb)
+    console.log(
+      folhasMDS.length
+        ? `  alturas: LiDAR DGT, ${folhasMDS.length} folhas MDS`
+        : '  alturas: sem folhas MDS — só as do OSM'
+    )
+    const { cob, folhas: noRectangulo } = coberturaDGT(folhas, bb)
+    folhas = noRectangulo
     const antes = { ...bb }
     bb.w = Math.max(bb.w, cob.w)
     bb.e = Math.min(bb.e, cob.e)
@@ -543,6 +837,10 @@ out tags geom;`)
   const conta = { medida: 0, tipo: 0, desconhecida: 0 }
   let areaImplantacao = 0
   let foraDoTerreno = 0
+  /** Edifícios medidos pelo LiDAR, e a diferença OSM − LiDAR onde há as duas. */
+  const lidar = { n: 0, semVolume: 0, dif: [] }
+  /** Contornos de edifícios omitidos (centro fora do raio) que atravessam a borda da zona. */
+  const cortados = []
   for (const e of jb.elements) {
     const g = (e.geometry ?? []).filter((p) => p && p.lat != null)
     if (g.length < 4) continue
@@ -554,7 +852,12 @@ out tags geom;`)
 
     const cx = pts.reduce((s, p) => s + p[0], 0) / pts.length
     const cy = pts.reduce((s, p) => s + p[1], 0) / pts.length
-    if (aoEixo([cx, cy]) > z.raio) continue
+    if (aoEixo([cx, cy]) > z.raio) {
+      // Fora da zona mas a tocar-lhe: guarda-se o contorno para o chão
+      // fotográfico não o mostrar espalmado na borda (ver build-orto.mjs).
+      if (pts.some((p) => aoEixo(p) <= z.raio)) cortados.push(pts.map((p) => [+p[0].toFixed(2), +p[1].toFixed(2)]))
+      continue
+    }
     if (pts.some(([x, y]) => x < x0 || x > x1 || y < y0 || y > y1)) {
       foraDoTerreno++
       continue
@@ -566,8 +869,22 @@ out tags geom;`)
     const t = e.tags ?? {}
     const pisos = parseFloat(t['building:levels'])
     const altura = parseFloat(t.height)
+    const hOSM = Number.isFinite(altura) && altura > 1 ? altura
+      : Number.isFinite(pisos) && pisos >= 1 ? pisos * PE_DIREITO + REMATE : null
+    const hL = folhasMDS.length ? alturaLidar(g, folhas, folhasMDS) : null
     let h, classe
-    if (Number.isFinite(altura) && altura > 1) {
+    if (hL != null && hL >= ALTURA_MIN_LIDAR) {
+      // Medida pelo laser: vence qualquer outra fonte.
+      h = hL
+      classe = 'medida'
+      lidar.n++
+      if (hOSM != null) lidar.dif.push(hOSM - hL)
+    } else if (folhasMDS.length && hOSM != null && hL != null) {
+      // O OSM diz que há prédio e o laser não o vê. Fica o do OSM, contado.
+      lidar.semVolume++
+      h = hOSM
+      classe = 'medida'
+    } else if (Number.isFinite(altura) && altura > 1) {
       h = altura
       classe = 'medida'
     } else if (Number.isFinite(pisos) && pisos >= 1) {
@@ -600,6 +917,16 @@ out tags geom;`)
       `${conta.medida} com altura, ${conta.tipo} de um piso por tipo, ${conta.desconhecida} sem altura`
   )
   if (foraDoTerreno) console.log(`  ${foraDoTerreno} edifícios do corredor ficam fora do terreno medido e saem do modelo`)
+  if (folhasMDS.length) {
+    const d = [...lidar.dif].sort((a, b) => a - b)
+    const abs = d.map(Math.abs).sort((a, b) => a - b)
+    const q = (v, f) => (v.length ? v[Math.floor(v.length * f)].toFixed(1) : '—')
+    console.log(`  LiDAR: ${lidar.n} edifícios medidos; ${lidar.semVolume} com pisos no OSM mas sem volume no laser`)
+    console.log(
+      `  OSM − LiDAR em ${d.length} com as duas: mediana ${q(d, 0.5)} m, ` +
+        `desvio absoluto mediano ${q(abs, 0.5)} m, p90 ${q(abs, 0.9)} m`
+    )
+  }
 
   // A placa da maqueta ajusta-se ao que existe: eixo e edificado, mais uma
   // bordadura, e nunca além do terreno medido. Fixá-la a olho — ou simétrica
@@ -637,6 +964,47 @@ out tags geom;`)
     placa.grelha = true
   }
 
+  // --- árvores: ortofoto + LiDAR, na mesma regra de corredor dos edifícios ---
+  let arvores = null
+  if (folhasMDS.length) {
+    const cantos = [[placa.x0, placa.y0], [placa.x1, placa.y0], [placa.x0, placa.y1], [placa.x1, placa.y1]]
+      .map(([x, y]) => paraTM06.forward([lon0 + x / mLon, lat0 + y / mLat]))
+    const caixa = [
+      Math.floor(Math.min(...cantos.map((c) => c[0])) / 2) * 2,
+      Math.floor(Math.min(...cantos.map((c) => c[1])) / 2) * 2,
+      Math.ceil(Math.max(...cantos.map((c) => c[0])) / 2) * 2,
+      Math.ceil(Math.max(...cantos.map((c) => c[1])) / 2) * 2,
+    ]
+    const { folhas: orto, completa } = await ortoDGT(caixa)
+    if (!completa) {
+      // Árvores em meia zona leriam como "a outra metade não tem árvores".
+      console.log(`  árvores: a ortofoto não cobre a placa inteira (${orto.length} folhas) — fica sem vegetação`)
+    } else {
+      const pegadas = jb.elements
+        .map((e) => (e.geometry ?? []).filter((p) => p && p.lat != null).map((p) => paraTM06.forward([p.lon, p.lat])))
+        .filter((p) => p.length >= 3)
+      const lista = await arvoresDGT({
+        caixa,
+        mdt: folhas,
+        mds: folhasMDS,
+        orto,
+        pegadas,
+        paraLocal: (x, y) => {
+          const [lon, lat] = proj4('EPSG:3763', 'EPSG:4326', [x, y])
+          return P({ lat, lon })
+        },
+        naZona: ([x, y]) => x > placa.x0 && x < placa.x1 && y > placa.y0 && y < placa.y1 && aoEixo([x, y]) <= z.raio,
+      })
+      arvores = lista.map((a) => ({ ...a, z: +alt(a.p[0], a.p[1]).toFixed(2) }))
+      const copa = arvores.reduce((s, a) => s + Math.PI * a.r * a.r, 0)
+      const hs = arvores.map((a) => a.h).sort((a, b) => a - b)
+      console.log(
+        `  árvores: ${arvores.length} no corredor, ${Math.round(copa)} m² de copa; ` +
+          `altura mediana ${hs.length ? hs[Math.floor(hs.length / 2)].toFixed(1) : '—'} m, máx ${hs.length ? hs.at(-1).toFixed(1) : '—'} m`
+      )
+    }
+  }
+
   const eixo = vias.map((w) => ({
     lanes: w.tags?.lanes ?? null,
     // Largura medida, quando o OSM a tem — a Visconde da Luz tem 9,5 m.
@@ -653,7 +1021,7 @@ out tags geom;`)
   mkdirSync(OUT_DIR, { recursive: true })
   writeFileSync(
     join(OUT_DIR, `${z.id}.scene.json`),
-    JSON.stringify({ id: z.id, placa, buildings: edificios, eixo, dem: demFinal })
+    JSON.stringify({ id: z.id, raio: z.raio, placa, buildings: edificios, eixo, dem: demFinal, arvores: arvores ?? [], cortados })
   )
 
   return {
@@ -670,6 +1038,8 @@ out tags geom;`)
     comAltura: conta.medida,
     umPisoPorTipo: conta.tipo,
     semAltura: conta.desconhecida,
+    ...(folhasMDS.length ? { alturaLidar: lidar.n } : {}),
+    ...(arvores ? { arvores: arvores.length } : {}),
     maisAlto: +maisAlto.toFixed(1),
     areaImplantacao: Math.round(areaImplantacao),
   }
@@ -739,6 +1109,10 @@ export interface UrbanZone {
   umPisoPorTipo: number
   /** Sem altura publicada — na maqueta ficam como implantação no chão. */
   semAltura: number
+  /** Dos com altura, quantos medidos pelo LiDAR da DGT (superfície − terreno). */
+  alturaLidar?: number
+  /** Árvores no corredor, medidas por ortofoto (NDVI) e LiDAR. Ausente se não houver ortofoto da zona inteira. */
+  arvores?: number
   /** Altura do edifício medido mais alto, em metros. */
   maisAlto: number
   /** Soma das áreas de implantação, em m². */

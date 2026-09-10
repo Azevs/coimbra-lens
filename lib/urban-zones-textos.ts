@@ -34,6 +34,7 @@ export interface ZonaTexto {
 const PE_DIREITO = 3
 
 export const numero = (n: number) => n.toLocaleString('pt-PT')
+const cota1 = (m: number) => m.toLocaleString('pt-PT', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 export const km = (m: number) =>
   `${(m / 1000).toLocaleString('pt-PT', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`
 
@@ -43,10 +44,15 @@ const edificiosFicha = (z: UrbanZone): Ficha => ({
   nota: `a menos de ${z.raio} m do eixo`,
 })
 
+/**
+ * Onde a altura vem dos pisos do OSM, converter de volta em pisos é exacto.
+ * Onde vem do laser, não: os prédios antigos da Baixa têm pés-direitos de
+ * 3,5 m, e 25 m a 3 m por piso dariam 8 pisos a um edifício que tem 7.
+ */
 const maisAltoFicha = (z: UrbanZone): Ficha => ({
   termo: 'Mais alto',
   valor: `${z.maisAlto.toLocaleString('pt-PT', { maximumFractionDigits: 1 })} m`,
-  nota: `cerca de ${Math.round(z.maisAlto / PE_DIREITO)} pisos`,
+  nota: z.alturaLidar ? 'até ao telhado, no edifício mais alto' : `cerca de ${Math.round(z.maisAlto / PE_DIREITO)} pisos`,
 })
 
 const brasil = byId('rua-do-brasil')!
@@ -57,17 +63,21 @@ export const ZONAS_URBANAS: ZonaTexto[] = [
     zona: brasil,
     titulo: ['Dois quilómetros', 'a subir'],
     abertura:
-      `A Rua do Brasil começa quase ao nível do Mondego e acaba vinte e seis metros acima, ` +
+      // A subida vem das cotas: escrita à mão, dizia 26 m, que era o que o
+      // EU-DEM media com os telhados; o LiDAR mede 23.
+      `A Rua do Brasil começa quase ao nível do Mondego e acaba ${Math.round(brasil.cotaMax - brasil.cotaMin)} metros acima, ` +
       `onde era a Ladeira do Baptista. Pelo caminho passa ${numero(brasil.edificios)} edifícios ` +
       `e duas rotundas.`,
     resumo: `${km(brasil.comprimento)} e ${numero(brasil.edificios)} edifícios a subir do Mondego a Santo António dos Olivais.`,
-    fonte: 'OpenStreetMap · EU-DEM (Copernicus)',
+    fonte: 'OpenStreetMap · LiDAR DGT (MDT e MDS 2 m)',
     ficha: [
       { termo: 'Percurso', valor: km(brasil.comprimento), nota: 'de uma ponta à outra' },
       {
         termo: 'Subida',
         valor: `${Math.round(brasil.cotaMax - brasil.cotaMin)} m`,
-        nota: `dos ${Math.round(brasil.cotaMin)} aos ${Math.round(brasil.cotaMax)} de altitude`,
+        // Uma casa decimal nas pontas: arredondadas a inteiros, 21,4 e 44,6
+        // davam "dos 21 aos 45" ao lado de uma subida de 23.
+        nota: `de ${cota1(brasil.cotaMin)} a ${cota1(brasil.cotaMax)} m de altitude`,
       },
       edificiosFicha(brasil),
       maisAltoFicha(brasil),
@@ -89,12 +99,12 @@ export const ZONAS_URBANAS: ZonaTexto[] = [
         {
           vista: 'centro',
           legenda:
-            'Centro: a frente contínua de prédios de quatro e cinco pisos que dá o carácter à avenida, com a rotunda a marcar o meio.',
+            'Centro: a frente contínua de prédios que dá o carácter à avenida, cerrada dos dois lados do eixo.',
         },
         {
           vista: 'nascente',
           legenda:
-            'Nascente: já no alto, o tecido abre-se em quarteirões mais soltos e blocos isolados de maior altura.',
+            'Nascente: já no alto, depois da rotunda, o tecido abre-se em quarteirões mais soltos e blocos isolados de maior altura.',
         },
       ],
     },
@@ -107,7 +117,7 @@ export const ZONAS_URBANAS: ZonaTexto[] = [
       `Em menos de um quilómetro de percurso cabem ${numero(baixa.edificios)} edifícios — mais do que ` +
       `nos dois quilómetros da Rua do Brasil.`,
     resumo: `${numero(baixa.edificios)} edifícios em menos de um quilómetro, da Portagem à Rua da Sofia.`,
-    fonte: 'OpenStreetMap · LiDAR DGT (MDT 2 m)',
+    fonte: 'OpenStreetMap · LiDAR DGT (MDT e MDS 2 m)',
     ficha: [
       { termo: 'Percurso', valor: km(baixa.comprimento), nota: 'da Portagem ao fim da Sofia' },
       {
@@ -140,7 +150,7 @@ export const ZONAS_URBANAS: ZonaTexto[] = [
         {
           vista: 'norte',
           legenda:
-            'Norte: a Rua da Sofia, larga, recta e quase plana ao pé da encosta. Do lado da encosta, os edifícios grandes ficam desenhados no chão: a altura está por registar.',
+            'Norte: a Rua da Sofia, larga, recta e quase plana ao pé da encosta, com os grandes volumes dos antigos colégios ao longo dela.',
         },
       ],
     },
