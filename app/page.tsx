@@ -12,7 +12,7 @@ import DataTicker from '@/components/hero/DataTicker'
 // O mapa das freguesias e o ranking mudaram-se para /territorio, e a agenda
 // cultural para /agenda — cada área tem página própria desde que o site
 // deixou de ser só dados.
-import { TrafficMap } from '@/components/map/LazyMaps'
+import { MetrobusAerial, TrafficMap } from '@/components/map/LazyMaps'
 
 export default function Home() {
   return (
@@ -24,6 +24,7 @@ export default function Home() {
       <Navbar />
       <main id="conteudo" className="min-h-screen bg-[var(--bg-primary)] overflow-x-hidden">
         <HeroSection />
+        <MetrobusAerial />
         <ClimateSection />
         <TrafficMap />
         <CityOverview />

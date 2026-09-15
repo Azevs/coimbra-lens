@@ -465,6 +465,94 @@ input[type='range']::-moz-range-thumb {
 }
 @media (min-width: 1020px) { .grid-map-side { grid-template-columns: 1fr 240px; } }
 
+/* ── Metrobus: a vista aérea ────────────────────────────────────────────
+   A única secção de largura total da página. O mapa ocupa o fundo; o painel
+   é uma folha do mesmo papel pousada por cima, com o filete da Gazeta. No
+   telemóvel o painel desce para baixo do mapa — pousado por cima taparia
+   metade da cidade num ecrã de 400px. */
+.metrobus-aerial {
+  position: relative;
+  background: #14171C;
+  border-top: 3px solid var(--text-primary);
+  border-bottom: 3px solid var(--text-primary);
+}
+.metrobus-aerial-map {
+  height: 62vh;
+  min-height: 360px;
+  width: 100%;
+}
+.metrobus-aerial-panel {
+  background: var(--bg-raised);
+  border-top: 3px solid var(--accent);
+  padding: 1.5rem 1.25rem 1.25rem;
+}
+.metrobus-aerial-title {
+  font-size: clamp(1.625rem, 3.2vw, 2.375rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  margin: 0.625rem 0 1.25rem;
+  text-wrap: balance;
+}
+.metrobus-aerial-figures {
+  display: flex;
+  gap: 1.75rem;
+  flex-wrap: wrap;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-panel);
+}
+.metrobus-aerial-figure {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 2.125rem;
+  line-height: 1;
+  color: var(--text-data);
+}
+.metrobus-aerial-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.metrobus-aerial-legend button {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.5rem 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--border-subtle);
+  text-align: left;
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+.metrobus-aerial-legend button[aria-pressed='true'] strong { color: var(--accent-text); }
+.metrobus-aerial-legend button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.metrobus-aerial-swatch {
+  flex-shrink: 0;
+  width: 28px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--swatch);
+}
+/* Em obra: o mesmo tracejado do mapa, sobre fundo de tinta para a cor clara
+   se ver no papel. */
+.metrobus-aerial-swatch-obra {
+  background: repeating-linear-gradient(90deg, var(--swatch) 0 5px, transparent 5px 9px), var(--text-primary);
+}
+@media (min-width: 900px) {
+  .metrobus-aerial-map { height: min(86vh, 860px); min-height: 560px; }
+  .metrobus-aerial-panel {
+    position: absolute;
+    left: max(2rem, calc((100vw - 1280px) / 2 + 4rem));
+    bottom: 2.5rem;
+    width: 24rem;
+    max-width: calc(100% - 4rem);
+    box-shadow: var(--shadow-lg);
+  }
+}
+
 /* Três métricas académicas: donut + barras. */
 .grid-academic {
   display: grid;

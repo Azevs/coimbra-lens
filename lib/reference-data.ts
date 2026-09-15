@@ -150,6 +150,28 @@ export const TRACKED: TrackedDatum[] = [
     usedIn: 'lib/green-spaces (scripts/build-green-spaces.mjs)',
   },
   {
+    id: 'metrobus-tracado',
+    label: 'Traçado da via dedicada do Metrobus',
+    // O METROBUS_FETCHED_AT de lib/metrobus.ts, repetido à mão pela mesma
+    // razão das zonas verdes.
+    asOf: '2026-09',
+    source: 'OpenStreetMap',
+    // Com a linha dos hospitais em obra, a via ainda cresce: revisão
+    // trimestral até ela abrir, depois semestral.
+    refreshEvery: 3,
+    usedIn: 'lib/metrobus (scripts/build-metrobus.mjs)',
+  },
+  {
+    id: 'metrobus-em-servico',
+    label: 'Troços do Metrobus em serviço',
+    // SERVICE_LIMIT no gerador: serviço até à Praça da República desde
+    // 10-09-2026. Fica errado no dia em que a linha dos hospitais abrir.
+    asOf: '2026-09',
+    source: 'Metro Mondego',
+    refreshEvery: 3,
+    usedIn: 'scripts/build-metrobus.mjs (SERVICE_LIMIT)',
+  },
+  {
     id: 'maquetas-urbanas',
     label: 'Edificado e altimetria das maquetas urbanas',
     // O mesmo MODEL_FETCHED_AT que o gerador escreveu em lib/urban-zones.ts.

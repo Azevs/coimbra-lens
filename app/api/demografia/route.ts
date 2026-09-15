@@ -76,10 +76,17 @@ interface IneRow {
 
 const NONE: IndicatorValue<number> = { value: null, year: null }
 
+/**
+ * Sem a cache de fetch do Next, de propósito. Ao revalidar uma entrada
+ * expirada, o Next larga o `signal` (patch-fetch: "don't pass through signal
+ * when revalidating") — o limite de 6s desaparece, o pedido fica pendurado
+ * nos 10s de ligação do undici, o cliente desiste primeiro e o erro vai
+ * parar à consola apesar do catch. A cache passa a ser a do módulo, em GET.
+ */
 async function getJson(url: string): Promise<unknown | null> {
   try {
     const res = await fetch(url, {
-      next: { revalidate: 86400 },
+      cache: 'no-store',
       signal: AbortSignal.timeout(TIMEOUT_MS),
     })
     if (!res.ok) return null
@@ -172,7 +179,28 @@ function empty(note: string): DemografiaPayload {
   }
 }
 
+/**
+ * Última resposta boa do INE. O INE publica uma vez por ano: servir isto
+ * durante um dia não muda nada, e numa falha da fonte continua a ser o
+ * valor real com o período que ela própria declarou.
+ */
+const CACHE_MS = 24 * 60 * 60 * 1000
+let lastGood: { payload: DemografiaPayload; at: number } | null = null
+
 export async function GET() {
+  if (lastGood && Date.now() - lastGood.at < CACHE_MS) {
+    return Response.json(lastGood.payload)
+  }
+
+  const payload = await fetchPayload()
+  if (payload) {
+    lastGood = { payload, at: Date.now() }
+    return Response.json(payload)
+  }
+  return Response.json(lastGood?.payload ?? empty('O INE não respondeu.'))
+}
+
+async function fetchPayload(): Promise<DemografiaPayload | null> {
   const [population, foreigners, income] = await Promise.all([
     getPopulation().catch(() => NONE),
     getForeigners().catch(() => ({ total: NONE, nationalities: [] })),
@@ -180,7 +208,7 @@ export async function GET() {
   ])
 
   if (population.value === null && foreigners.total.value === null && income.value === null) {
-    return Response.json(empty('O INE não respondeu.'))
+    return null
   }
 
   const density: IndicatorValue<number> =
@@ -188,7 +216,7 @@ export async function GET() {
       ? NONE
       : { value: Math.round(population.value / MUNICIPIO.areaKm2), year: population.year }
 
-  return Response.json({
+  return {
     population,
     density,
     areaKm2: MUNICIPIO.areaKm2,
@@ -202,5 +230,5 @@ export async function GET() {
       'API de indicadores do INE. Cada valor mostra o período que a fonte devolve.',
       population.year ? `${population.year}-12-31T12:00:00` : null,
     ),
-  } satisfies DemografiaPayload)
+  } satisfies DemografiaPayload
 }

@@ -11,6 +11,8 @@
     "check:data": "node --experimental-strip-types --no-warnings scripts/check-data.mjs",
     "build:map": "node scripts/build-parish-map.mjs",
     "build:urban": "node scripts/build-urban-model.mjs",
+    "build:metrobus": "node scripts/build-metrobus.mjs",
+    "build:bus": "node scripts/build-bus-model.mjs",
     "build:maqueta": "blender -b --factory-startup --python scripts/blender/maqueta.py -- rua-do-brasil && blender -b --factory-startup --python scripts/blender/maqueta.py -- baixa && node scripts/optimise-maquetas.mjs",
     "check:contrast": "node scripts/check-contrast.mjs",
     "check": "npm run check:contrast && npm run check:data"

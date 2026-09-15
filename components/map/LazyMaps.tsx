@@ -26,6 +26,12 @@ function MapPlaceholder({ height }: { height: string }) {
   )
 }
 
+/** A vista aérea do Metrobus. Mesmo motivo: é Mapbox. */
+export const MetrobusAerial = dynamic(() => import('@/components/sections/MetrobusAerial'), {
+  ssr: false,
+  loading: () => <div aria-hidden="true" className="metrobus-aerial"><div className="metrobus-aerial-map" /></div>,
+})
+
 export const TrafficMap = dynamic(() => import('@/components/sections/TrafficMap'), {
   ssr: false,
   loading: () => <MapPlaceholder height="480px" />,
