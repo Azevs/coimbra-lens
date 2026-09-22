@@ -8,6 +8,7 @@ import Icon, { type IconName } from '@/components/ui/Icon'
 import DataSource from '@/components/ui/DataSource'
 import { useDemografia } from '@/hooks/useDemografia'
 import { usePordata } from '@/hooks/usePordata'
+import { useTurismo } from '@/hooks/useTurismo'
 import { MUNICIPIO } from '@/lib/municipio'
 import { CITY_FACTS, CITY_STATS, type ReferenceValue } from '@/lib/reference-data'
 
@@ -63,6 +64,13 @@ function StatCard({
   )
 }
 
+/** Variação face ao mesmo mês do ano anterior; nada quando falta um dos lados. */
+function yoy(value: number | null | undefined, prev: number | null | undefined): string | null {
+  if (value == null || prev == null || prev === 0) return null
+  const pct = ((value - prev) / prev) * 100
+  return `${pct >= 0 ? '+' : ''}${pct.toLocaleString('pt-PT', { maximumFractionDigits: 1 })}% homólogo`
+}
+
 /**
  * Indicadores municipais em directo.
  *
@@ -74,6 +82,7 @@ function StatCard({
 function LiveIndicators() {
   const { data: ine } = useDemografia()
   const { data: pd } = usePordata()
+  const { data: tur } = useTurismo()
 
   // A PORDATA primeiro quando tem o valor; o INE cobre o que ela não traz.
   const population = pd?.population.value != null ? pd.population : ine?.population
@@ -155,6 +164,27 @@ function LiveIndicators() {
       year: pd?.saleExisting.year,
       tone: 'var(--tone-rose)',
     },
+    {
+      label: 'Dormidas turísticas',
+      value: tur?.dormidas.value?.toLocaleString('pt-PT'),
+      unit: yoy(tur?.dormidas.value, tur?.dormidas.previousYear) ?? 'no mês',
+      source: 'INE',
+      year: tur?.dormidas.period,
+      fallbackNote: tur ? 'fonte sem resposta' : undefined,
+      tone: 'var(--tone-blue)',
+    },
+    {
+      label: 'Proveitos do alojamento',
+      value:
+        tur?.proveitos.value != null
+          ? (tur.proveitos.value / 1e6).toLocaleString('pt-PT', { maximumFractionDigits: 1 })
+          : undefined,
+      unit: `M€${yoy(tur?.proveitos.value, tur?.proveitos.previousYear) ? ' · ' + yoy(tur?.proveitos.value, tur?.proveitos.previousYear) : ''}`,
+      source: 'INE',
+      year: tur?.proveitos.period,
+      fallbackNote: tur ? 'fonte sem resposta' : undefined,
+      tone: 'var(--tone-amber)',
+    },
   ]
 
   return (
@@ -177,6 +207,7 @@ function LiveIndicators() {
 export default function CityOverview() {
   const { data: demo } = useDemografia()
   const { data: pd } = usePordata()
+  const { data: tur } = useTurismo()
 
   return (
     <SectionReveal id="cidade-overview">
@@ -204,6 +235,7 @@ export default function CityOverview() {
       <div style={{ marginBottom: '2rem', marginTop: '-1rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
         {pd && <DataSource meta={pd.meta} />}
         {demo && <DataSource meta={demo.meta} />}
+        {tur && <DataSource meta={tur.meta} />}
       </div>
 
       <div className="grid-split">

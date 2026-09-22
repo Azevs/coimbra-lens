@@ -25,6 +25,7 @@ const AREAS = [
   { label: 'Território', href: '/territorio' },
   { label: 'Zonas verdes', href: '/zonas-verdes' },
   { label: 'Zonas urbanas', href: '/zonas-urbanas' },
+  { label: 'História', href: '/historia' },
   { label: 'Sobre', href: '/sobre' },
 ]
 
@@ -57,6 +58,12 @@ const SECTIONS: Record<string, { label: string; href: string }[]> = {
   ],
   // Zonas urbanas não tem fila aqui: cada zona é uma página, e o selector
   // delas vive na própria página (`SeletorZonas`), visível em qualquer ecrã.
+  '/historia': [
+    { label: 'O corte', href: '#corte' },
+    { label: 'Criptopórtico', href: '#criptoportico' },
+    { label: 'Em camadas', href: '#camadas' },
+    { label: 'Referências', href: '#referencias' },
+  ],
   '/sobre': [
     { label: 'O projecto', href: '#projecto' },
     { label: 'Como é feito', href: '#metodo' },

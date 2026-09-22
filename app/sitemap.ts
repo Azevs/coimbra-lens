@@ -10,6 +10,7 @@ const AREAS: { path: string; changeFrequency: MetadataRoute.Sitemap[number]['cha
   { path: 'territorio', changeFrequency: 'yearly', priority: 0.7 },
   { path: 'zonas-verdes', changeFrequency: 'yearly', priority: 0.7 },
   { path: 'zonas-urbanas', changeFrequency: 'yearly', priority: 0.7 },
+  { path: 'historia', changeFrequency: 'yearly', priority: 0.7 },
   { path: 'sobre', changeFrequency: 'yearly', priority: 0.5 },
 ]
 
