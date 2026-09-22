@@ -51,6 +51,8 @@ export type PassoId = 'hoje' | 'chao' | 'problema' | 'criptoportico' | 'forum' |
 
 export interface Passo {
   id: PassoId
+  /** A época que o desenho mostra neste passo — o carimbo grande da estampa. */
+  epoca: string
   titulo: string
   /** Parágrafos. `{subida}` e `{distancia}` vêm do terreno medido. */
   texto: string[]
@@ -60,6 +62,7 @@ export interface Passo {
 export const PASSOS: Passo[] = [
   {
     id: 'hoje',
+    epoca: 'Hoje',
     titulo: 'Uma linha pela colina',
     texto: [
       'Corte-se a cidade ao meio, numa linha recta de poente para nascente: da margem esquerda do Mondego, pela Baixa, até ao alto da Alta.',
@@ -69,6 +72,7 @@ export const PASSOS: Passo[] = [
   },
   {
     id: 'chao',
+    epoca: 'Hoje, sem a cidade',
     titulo: 'Tire-se a cidade',
     texto: [
       'Sem os edifícios fica o chão. A Baixa é plana, quase à cota do rio. Depois, a colina.',
@@ -78,6 +82,7 @@ export const PASSOS: Passo[] = [
   },
   {
     id: 'problema',
+    epoca: 'Tempo de Augusto',
     titulo: 'Uma praça não cabe numa encosta',
     texto: [
       'No tempo de Augusto, os romanos puseram o centro de Aeminium no alto desta colina. O centro de uma cidade romana é o fórum: uma praça plana, com pórticos, a basílica e os templos à volta.',
@@ -87,6 +92,7 @@ export const PASSOS: Passo[] = [
   },
   {
     id: 'criptoportico',
+    epoca: '41 – 68 d.C.',
     titulo: 'Então construiu-se o chão',
     texto: [
       'Contra a encosta ergueu-se um criptopórtico: dois pisos de galerias abobadadas, fechadas, que seguram uma plataforma horizontal. Por fora, um pódio alto e liso, só com frestas para entrar ar e luz.',
@@ -99,6 +105,7 @@ export const PASSOS: Passo[] = [
   },
   {
     id: 'forum',
+    epoca: 'Séc. I',
     titulo: 'Por cima, a praça',
     texto: [
       'Sobre a plataforma assentou o fórum, com um pórtico de dois pisos. Na fachada poente o pórtico abria-se em arcadas, como o Tabulário de Roma.',
@@ -111,6 +118,7 @@ export const PASSOS: Passo[] = [
   },
   {
     id: 'depois',
+    epoca: 'Séc. XI → hoje',
     titulo: 'O fórum foi-se. O chão ficou',
     texto: [
       'No fim do século XI já não restava nada do fórum; em cima do criptopórtico estava o paço do bispo. O paço foi sendo refeito durante séculos e, no início do século XX, passou a museu.',

@@ -32,7 +32,12 @@ const depoisDe = (a: PassoId, b: PassoId) => ORDEM.indexOf(a) >= ORDEM.indexOf(b
 /* ── Geometria do terreno (uma vez) ────────────────────────────────────── */
 
 const perfil = CORTE.perfil
-const BASE = -5
+/**
+ * Até onde o chão desce no desenho. Não é medida — é o fundo da estampa, e
+ * fica bem abaixo do que qualquer vista mostra, para a hachura chegar sempre
+ * à moldura.
+ */
+const BASE = -400
 
 /** Troços contíguos com valor, como polígonos fechados até à base. */
 function massas(valor: (i: number) => number | null): string {
@@ -110,10 +115,10 @@ const P = PLATAFORMA
 const JANELAS: Record<PassoId, { largo: Janela; estreito: Janela }> = {
   hoje: { largo: { d0: -900, d1: 340, z0: 5, z1: 135, ev: 3 }, estreito: { d0: -520, d1: 250, z0: 5, z1: 135, ev: 3 } },
   chao: { largo: { d0: -900, d1: 340, z0: 5, z1: 135, ev: 3 }, estreito: { d0: -520, d1: 250, z0: 5, z1: 135, ev: 3 } },
-  problema: { largo: { d0: -200, d1: 150, z0: P - 70, z1: P + 25 }, estreito: { d0: -110, d1: 110, z0: P - 70, z1: P + 25 } },
-  criptoportico: { largo: { d0: -45, d1: 95, z0: P - 36, z1: P + 8 }, estreito: { d0: -46, d1: 80, z0: P - 36, z1: P + 8 } },
-  forum: { largo: { d0: -300, d1: 110, z0: P - 70, z1: P + 30 }, estreito: { d0: -160, d1: 80, z0: P - 70, z1: P + 30 } },
-  depois: { largo: { d0: -120, d1: 140, z0: P - 45, z1: P + 40 }, estreito: { d0: -60, d1: 110, z0: P - 45, z1: P + 40 } },
+  problema: { largo: { d0: -150, d1: 130, z0: P - 60, z1: P + 25 }, estreito: { d0: -110, d1: 110, z0: P - 70, z1: P + 25 } },
+  criptoportico: { largo: { d0: -45, d1: 95, z0: P - 36, z1: P + 8 }, estreito: { d0: -62, d1: 78, z0: P - 36, z1: P + 8 } },
+  forum: { largo: { d0: -170, d1: 95, z0: P - 45, z1: P + 30 }, estreito: { d0: -160, d1: 80, z0: P - 70, z1: P + 30 } },
+  depois: { largo: { d0: -80, d1: 125, z0: P - 40, z1: P + 30 }, estreito: { d0: -60, d1: 110, z0: P - 45, z1: P + 40 } },
 }
 
 /* ── Componente ────────────────────────────────────────────────────────── */
@@ -200,7 +205,8 @@ export default function CorteAeminium({ planta }: { planta: ReactNode }) {
   return (
     <div className="corte">
       <div className="corte-palco-wrap">
-        <div ref={palco} className="corte-palco" aria-hidden="true">
+        <div ref={palco} className={`corte-palco is-${passo}`} aria-hidden="true">
+          <Regua ecra={ecra} sz={sz} />
           <svg width={tam.w} height={tam.h} className="corte-svg">
             <defs>
               <pattern id="hachura" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
@@ -209,10 +215,9 @@ export default function CorteAeminium({ planta }: { planta: ReactNode }) {
               <pattern id="hachura-cripto" width="2.2" height="2.2" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
                 <line x1="0" y1="0" x2="0" y2="2.2" stroke="var(--accent)" strokeWidth="0.3" strokeOpacity="0.5" />
               </pattern>
-              <linearGradient id="ceu" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0" stopColor="var(--bg-primary)" stopOpacity="0" />
-                <stop offset="1" stopColor="var(--bg-sunken)" stopOpacity="0.6" />
-              </linearGradient>
+              <filter id="brilho" x="-30%" y="-30%" width="160%" height="160%">
+                <feGaussianBlur stdDeviation="4" />
+              </filter>
             </defs>
 
             <g
@@ -233,7 +238,7 @@ export default function CorteAeminium({ planta }: { planta: ReactNode }) {
               {/* Rio: a superfície medida e um véu de água por baixo */}
               {RIO && (
                 <g className="corte-rio">
-                  <rect x={RIO.d0} y={-RIO.z} width={RIO.d1 - RIO.d0} height={RIO.z - BASE} fill="var(--tone-blue)" fillOpacity="0.14" />
+                  <rect x={RIO.d0} y={-RIO.z} width={RIO.d1 - RIO.d0} height={RIO.z + 5} fill="var(--tone-blue)" fillOpacity="0.14" />
                   <line x1={RIO.d0} x2={RIO.d1} y1={-RIO.z} y2={-RIO.z} stroke="var(--tone-blue)" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
                 </g>
               )}
@@ -253,28 +258,37 @@ export default function CorteAeminium({ planta }: { planta: ReactNode }) {
                 />
               )}
 
-              {/* O problema: o plano que o fórum pedia */}
-              <g className="corte-fase" style={{ opacity: verPlano ? 1 : 0 }}>
+              {/* O problema: o plano que o fórum pedia, desenhado da encosta para dentro */}
+              <g className={`corte-estado${verPlano ? ' is-visivel' : ''}`}>
+                <rect
+                  x={-60}
+                  y={-PLATAFORMA}
+                  width={LARGURA + 100}
+                  height={FACHADA_POENTE_M}
+                  fill="var(--accent)"
+                  fillOpacity="0.07"
+                  className="desenha-y"
+                />
                 <line
                   x1={-60}
                   x2={LARGURA + 40}
                   y1={-PLATAFORMA}
                   y2={-PLATAFORMA}
                   stroke="var(--accent)"
-                  strokeWidth="1.6"
-                  strokeDasharray="6 5"
+                  strokeWidth="2"
+                  strokeDasharray="7 5"
                   vectorEffect="non-scaling-stroke"
+                  className="desenha-x"
                 />
-                <line x1={0} x2={0} y1={-PLATAFORMA} y2={-PE} stroke="var(--accent)" strokeWidth="1" strokeDasharray="2 4" vectorEffect="non-scaling-stroke" />
               </g>
 
               {/* O criptopórtico: esquema sobre a altura publicada */}
-              <g className="corte-fase" style={{ opacity: verCripto ? 1 : 0 }}>
+              <g className={`corte-cripto${verCripto ? ' is-visivel' : ''}${passo === 'depois' ? ' is-depois' : ''}`}>
                 <Criptoportico />
               </g>
 
               {/* O pórtico do fórum e o que dali se via */}
-              <g className="corte-fase" style={{ opacity: verForum ? 1 : 0 }}>
+              <g className={`corte-estado${verForum ? ' is-visivel' : ''}`}>
                 <Portico />
                 {RIO && (
                   <line
@@ -283,10 +297,10 @@ export default function CorteAeminium({ planta }: { planta: ReactNode }) {
                     x2={(RIO.d0 + RIO.d1) / 2}
                     y2={-RIO.z}
                     stroke="var(--accent)"
-                    strokeWidth="1"
-                    strokeDasharray="1 5"
-                    strokeLinecap="round"
+                    strokeWidth="1.2"
+                    strokeOpacity="0.8"
                     vectorEffect="non-scaling-stroke"
+                    className="desenha-vista"
                   />
                 )}
               </g>
@@ -319,7 +333,7 @@ export default function CorteAeminium({ planta }: { planta: ReactNode }) {
             <Legenda at={ecra(LARGURA * 0.35, PE)} visivel={passo === 'criptoportico'} centro abaixo>
               dois pisos de galerias
             </Legenda>
-            <Legenda at={ecra(LARGURA * 0.45, PLATAFORMA + 3)} visivel={verForum} centro destaque>
+            <Legenda at={ecra(LARGURA * 0.62, PLATAFORMA + 3)} visivel={verForum} centro destaque>
               a praça do fórum
             </Legenda>
             {RIO && (
@@ -336,6 +350,26 @@ export default function CorteAeminium({ planta }: { planta: ReactNode }) {
               </Legenda>
             )}
           </div>
+
+          <Regua ecra={ecra} sz={sz} numeros />
+
+          {/* Cartela: o que é a estampa e a que época o desenho se refere */}
+          <div className="corte-cartela">
+            <span className="corte-cartela-titulo">Corte A–A′ · poente → nascente</span>
+            <span className="corte-epocas">
+              {PASSOS.map((p) => (
+                <span key={p.id} className={`corte-epoca${p.id === passo ? ' is-activa' : ''}`}>
+                  {p.epoca}
+                </span>
+              ))}
+            </span>
+          </div>
+          <span className="corte-marca" style={{ transform: `translate(${ecra(perfil[0].d, 0).left}px, ${ecra(0, perfil[0].sup ?? 20).top}px) translateX(14px)` }}>
+            A
+          </span>
+          <span className="corte-marca" style={{ transform: `translate(${ecra(perfil.at(-1)!.d, 0).left}px, ${ecra(0, perfil.at(-1)!.sup ?? 100).top}px) translateX(calc(-100% - 14px))` }}>
+            A′
+          </span>
 
           {/* A planta com a linha do corte, só enquanto a vista é larga */}
           <div className="corte-planta" style={{ opacity: passo === 'hoje' ? 1 : 0 }}>
@@ -403,35 +437,43 @@ function Criptoportico() {
   const wSup = W * 0.85
   const parede = 1.6
 
-  // Abóbadas: n vãos em cada piso, arcos de volta perfeita.
+  // Abóbadas: n vãos em cada piso, arcos de volta perfeita. Cada vão é um
+  // caminho próprio, para se poder erguer um a um.
   const vaos = (x0: number, x1: number, zBase: number, alt: number, n: number) => {
     const w = (x1 - x0) / n
-    let d = ''
-    for (let k = 0; k < n; k++) {
+    return Array.from({ length: n }, (_, k) => {
       const a = x0 + k * w + parede / 2
       const b = a + w - parede
       const r = (b - a) / 2
       const zArr = zBase + parede + Math.max(0, alt - parede * 2 - r)
-      d += `M${a} ${-(zBase + parede)}L${a} ${-zArr}A${r} ${r} 0 0 1 ${b} ${-zArr}L${b} ${-(zBase + parede)}Z`
-    }
-    return d
+      return `M${a} ${-(zBase + parede)}L${a} ${-zArr}A${r} ${r} 0 0 1 ${b} ${-zArr}L${b} ${-(zBase + parede)}Z`
+    })
   }
 
   const contorno =
     `M0 ${-PE}L${wInf} ${-PE}L${wInf} ${-(PE + inf)}L${wSup} ${-(PE + inf)}L${wSup} ${-PLATAFORMA}` +
     `L0 ${-PLATAFORMA}Z`
+  const baixo = vaos(0, wInf, PE, inf, 3)
+  const cima = vaos(0, wSup, PE + inf, sup, 5)
 
+  // A ordem de obra: o piso de baixo, depois o de cima, por fim a plataforma.
   return (
     <g>
-      <path d={contorno} fill="var(--bg-raised)" />
-      <path d={contorno} fill="url(#hachura-cripto)" />
-      <path d={vaos(0, wInf, PE, inf, 3)} fill="var(--accent)" fillOpacity="0.9" />
-      <path d={vaos(0, wSup, PE + inf, sup, 5)} fill="var(--accent)" fillOpacity="0.72" />
-      <path d={contorno} fill="none" stroke="var(--accent)" strokeWidth="1.4" vectorEffect="non-scaling-stroke" />
-      <line x1={-2} x2={W + 30} y1={-PLATAFORMA} y2={-PLATAFORMA} stroke="var(--accent)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+      {/* Brilho: só no último passo, quando o fórum já não está e isto fica */}
+      <rect className="cr-brilho" x={-6} y={-(PLATAFORMA + 4)} width={wSup + 12} height={H + 10} fill="var(--accent)" filter="url(#brilho)" />
+      <path className="cr-massa" d={contorno} fill="var(--bg-raised)" />
+      <path className="cr-massa" d={contorno} fill="url(#hachura-cripto)" />
+      {baixo.map((d, k) => (
+        <path key={`b${k}`} className="cr-vao" d={d} fill="var(--accent)" fillOpacity="0.92" style={{ transitionDelay: `${0.25 + k * 0.12}s` }} />
+      ))}
+      {cima.map((d, k) => (
+        <path key={`c${k}`} className="cr-vao" d={d} fill="var(--accent)" fillOpacity="0.7" style={{ transitionDelay: `${0.7 + k * 0.1}s` }} />
+      ))}
+      <path className="cr-massa" d={contorno} fill="none" stroke="var(--accent)" strokeWidth="1.4" vectorEffect="non-scaling-stroke" />
+      <line className="cr-plano" x1={-2} x2={W + 30} y1={-PLATAFORMA} y2={-PLATAFORMA} stroke="var(--accent)" strokeWidth="2.4" vectorEffect="non-scaling-stroke" />
       {/* Frestas na fachada poente */}
       {[0.2, 0.45, 0.72].map((f) => (
-        <line key={f} x1={0} x2={0} y1={-(PE + H * f)} y2={-(PE + H * f + 1.6)} stroke="var(--bg-primary)" strokeWidth="2.2" vectorEffect="non-scaling-stroke" />
+        <line key={f} className="cr-massa" x1={0} x2={0} y1={-(PE + H * f)} y2={-(PE + H * f + 1.6)} stroke="var(--bg-primary)" strokeWidth="2.2" vectorEffect="non-scaling-stroke" />
       ))}
     </g>
   )
@@ -444,7 +486,7 @@ function Portico() {
   const arco = (x: number, z: number, h: number) =>
     `M${x} ${-z}L${x} ${-(z + h - fundo / 2)}A${fundo / 2 - 0.6} ${fundo / 2 - 0.6} 0 0 1 ${x + fundo - 1.2} ${-(z + h - fundo / 2)}L${x + fundo - 1.2} ${-z}Z`
   return (
-    <g>
+    <g className="po-ergue">
       <rect x={0} y={-(PLATAFORMA + alt)} width={fundo} height={alt} fill="var(--bg-raised)" stroke="var(--accent)" strokeWidth="1.2" vectorEffect="non-scaling-stroke" />
       <path d={arco(0.6, PLATAFORMA + 0.4, alt / 2)} fill="var(--accent)" fillOpacity="0.25" />
       <path d={arco(0.6, PLATAFORMA + alt / 2 + 0.2, alt / 2 - 0.4)} fill="var(--accent)" fillOpacity="0.25" />
@@ -494,6 +536,37 @@ function Legenda({
   )
 }
 
+/**
+ * Régua de cotas na margem direita, com guias ténues a atravessar a estampa.
+ * As cotas são altitudes reais (metros acima do nível médio do mar, as do
+ * LiDAR), e a régua anda com a câmara.
+ */
+function Regua({
+  ecra,
+  sz,
+  numeros,
+}: {
+  ecra: (d: number, z: number) => { left: number; top: number }
+  /** Píxeis por metro na vertical: decide o passo da régua. */
+  sz: number
+  /** As guias vão por trás do desenho; os números, por cima dele. */
+  numeros?: boolean
+}) {
+  // O passo redondo mais pequeno que deixa ~48 px entre marcas.
+  const passo = [5, 10, 20, 25, 50].find((p) => p * sz >= 48) ?? 50
+  const cotas = Array.from({ length: Math.floor(200 / passo) + 1 }, (_, i) => i * passo)
+  return (
+    <div className={`corte-regua${numeros ? ' is-numeros' : ''}`}>
+      {cotas.map((z) => (
+        <span key={z} className="corte-regua-linha" style={{ transform: `translateY(${ecra(0, z).top}px)` }}>
+          {/* Sem número na faixa de cima, que é da cartela */}
+          {numeros && ecra(0, z).top > 96 && <span className="corte-regua-cota">{z} m</span>}
+        </span>
+      ))}
+    </div>
+  )
+}
+
 /** Barra de escala: o maior número redondo de metros que cabe em ~120 px. */
 function EscalaGrafica({ s, ev }: { s: number; ev: number }) {
   const alvo = 120 / s
@@ -502,7 +575,7 @@ function EscalaGrafica({ s, ev }: { s: number; ev: number }) {
     <div className="corte-escala-barra">
       <span style={{ width: m * s }} />
       <span className="ui-mono">
-        {m} m · {ev === 1 ? 'escala igual na horizontal e na vertical' : `altura exagerada ${ev}×`}
+        {m} m · {ev === 1 ? 'sem exagero vertical' : `altura exagerada ${ev}×`}
       </span>
     </div>
   )

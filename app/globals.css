@@ -1511,6 +1511,18 @@ footer a {
   .hero-aeminium-larga { display: none !important; }
   .hero-aeminium-estreita { display: block !important; }
 }
+/* A entrada: a linha dos telhados desenha-se, as letras de baixo sobem da terra */
+.hero-horizonte { stroke-dasharray: 1; stroke-dashoffset: 1; animation: hero-traco 2.2s cubic-bezier(0.65, 0, 0.35, 1) 0.2s forwards; }
+.hero-tinta { opacity: 0; animation: hero-surge 1.2s ease 0.1s forwards; }
+.hero-terra { opacity: 0; animation: hero-surge 1s ease 0.9s forwards; }
+.hero-enterradas { opacity: 0; transform: translateY(14px); animation: hero-sobe 1.4s cubic-bezier(0.2, 0.8, 0.2, 1) 1.4s forwards; }
+.hero-marca { opacity: 0; animation: hero-surge 0.9s ease 2.6s forwards; }
+@keyframes hero-traco { to { stroke-dashoffset: 0; } }
+@keyframes hero-surge { to { opacity: 1; } }
+@keyframes hero-sobe { to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .hero-horizonte, .hero-tinta, .hero-terra, .hero-enterradas, .hero-marca { animation: none; opacity: 1; transform: none; stroke-dashoffset: 0; }
+}
 .hero-aeminium-legenda {
   display: flex;
   justify-content: space-between;
@@ -1532,26 +1544,34 @@ footer a {
 }
 .historia-lede em { font-style: italic; font-weight: 300; color: var(--accent); }
 
+/* Entrada: o texto à esquerda, a legenda dos selos à direita */
+.historia-entrada { display: grid; gap: 2.5rem; margin-top: 2rem; }
+.historia-entrada .historia-lede { margin: 0; }
+@media (min-width: 900px) {
+  .historia-entrada { grid-template-columns: 1.5fr 1fr; gap: 4rem; align-items: start; }
+}
+.historia-chave-caixa { border-top: 3px solid var(--text-primary); padding-top: 1rem; }
 /* Legenda dos selos */
 .historia-chave {
   list-style: none;
-  margin: 2.5rem 0 0;
-  padding: 1rem 0 0;
-  border-top: 1px solid var(--border-panel);
+  margin: 0;
+  padding: 0;
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem 1.75rem;
+  flex-direction: column;
+  gap: 0.625rem;
 }
-.historia-chave li { display: flex; align-items: center; gap: 0.5rem; }
+.historia-chave li { display: grid; grid-template-columns: 8.75rem 1fr; align-items: center; gap: 0.75rem; }
 
 /* O corte — scrollytelling. Em telemóvel o desenho fica pegajoso em cima e
    os passos sobem por baixo dele; em ecrã largo, duas colunas. */
 .corte { position: relative; }
+/* Em telemóvel o desenho fica por cima: os cartões passam por baixo dele e
+   lêem-se na metade de baixo do ecrã, sem nunca o taparem. */
 .corte-palco-wrap {
   position: sticky;
   top: 56px;
-  height: 50svh;
-  z-index: 1;
+  height: 46svh;
+  z-index: 3;
   background: var(--bg-primary);
   border-bottom: 1px solid var(--border-panel);
 }
@@ -1618,7 +1638,7 @@ footer a {
   background: var(--bg-primary);
   padding: 0.25rem 0.5rem;
 }
-.corte-escala-barra { display: flex; align-items: center; gap: 0.625rem; }
+.corte-escala-barra { display: flex; align-items: center; gap: 0.625rem; white-space: nowrap; }
 .corte-escala-barra > span:first-child {
   display: block;
   height: 6px;
@@ -1628,7 +1648,7 @@ footer a {
 }
 
 .corte-passos { list-style: none; margin: 0; padding: 0; position: relative; z-index: 2; }
-.corte-passo { min-height: 78svh; display: flex; align-items: flex-end; padding: 0 0 12svh; }
+.corte-passo { min-height: 80svh; display: flex; align-items: flex-end; padding: 0 0 6svh; }
 .corte-passo:last-child { min-height: 70svh; }
 .corte-passo-cartao {
   background: var(--bg-raised);
@@ -1679,9 +1699,152 @@ footer a {
   .corte-passo.is-activo .corte-passo-cartao { opacity: 1; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .corte-camara, .corte-fase, .corte-legenda, .corte-escala-barra > span:first-child { transition: none; }
+/* A estampa: moldura dupla, cartela, régua de cotas, marcas A e A′ */
+.corte-palco::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  border: 1px solid var(--text-primary);
+  box-shadow: inset 0 0 0 4px var(--bg-primary), inset 0 0 0 5px var(--border-strong);
 }
+.corte-cartela {
+  position: absolute;
+  left: 1.125rem;
+  top: 1rem;
+  z-index: 3;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.corte-cartela-titulo {
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.corte-epocas { display: grid; }
+.corte-epoca {
+  grid-area: 1 / 1;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-style: italic;
+  font-weight: 300;
+  font-size: clamp(1.75rem, 3.4vw, 3.25rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--accent);
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.5s ease, transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.corte-epoca.is-activa { opacity: 1; transform: none; transition-delay: 0.15s; }
+
+.corte-regua { position: absolute; inset: 0; pointer-events: none; }
+.corte-regua.is-numeros { z-index: 2; }
+.corte-regua.is-numeros .corte-regua-linha { border-top-color: transparent; }
+.corte-regua-linha {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 0;
+  border-top: 1px dashed rgba(20, 23, 28, 0.08);
+  transition: transform 1.1s cubic-bezier(0.65, 0, 0.25, 1);
+}
+.corte-regua-cota {
+  position: absolute;
+  right: 0.625rem;
+  transform: translateY(-50%);
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  background: var(--bg-primary);
+  padding: 0 0.25rem;
+  font-feature-settings: 'tnum' 1;
+}
+.corte-marca {
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin-top: -2.5rem;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-weight: 700;
+  font-size: 1.375rem;
+  color: var(--text-primary);
+  pointer-events: none;
+  transition: transform 1.1s cubic-bezier(0.65, 0, 0.25, 1);
+}
+
+/* Estados que entram e saem com o passo */
+.corte-estado { opacity: 0; transition: opacity 0.6s ease; }
+.corte-estado.is-visivel { opacity: 1; }
+
+/* Desenhar-se: cada peça cresce a partir de onde a obra começa */
+.desenha-x, .desenha-y, .desenha-vista, .po-ergue, .cr-vao, .cr-plano {
+  transform-box: fill-box;
+  transition: transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.desenha-x { transform-origin: left center; transform: scaleX(0); transition-delay: 0.2s; }
+.desenha-y { transform-origin: center top; transform: scaleY(0); transition-delay: 0.8s; }
+.desenha-vista { transform-origin: right top; transform: scale(0); transition-duration: 1.6s; transition-delay: 0.9s; }
+.po-ergue { transform-origin: center bottom; transform: scaleY(0); transition-delay: 0.35s; }
+.is-visivel .desenha-x, .is-visivel .desenha-vista { transform: none; }
+.is-visivel .desenha-y, .is-visivel .po-ergue { transform: none; }
+
+.cr-massa { opacity: 0; transition: opacity 0.6s ease; }
+.cr-vao { transform-origin: center bottom; transform: scaleY(0); }
+.cr-plano { transform-origin: left center; transform: scaleX(0); transition-duration: 0.8s; transition-delay: 1.3s; }
+.corte-cripto.is-visivel .cr-massa { opacity: 1; }
+.corte-cripto.is-visivel .cr-vao,
+.corte-cripto.is-visivel .cr-plano { transform: none; }
+.cr-brilho { opacity: 0; transition: opacity 0.8s ease; }
+.corte-cripto.is-depois .cr-brilho { animation: cr-pulsar 3.4s ease-in-out infinite; }
+@keyframes cr-pulsar {
+  0%, 100% { opacity: 0.16; }
+  50% { opacity: 0.42; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .corte-camara, .corte-fase, .corte-estado, .corte-legenda, .corte-regua-linha, .corte-marca, .corte-epoca,
+  .corte-escala-barra > span:first-child, .desenha-x, .desenha-y, .desenha-vista, .po-ergue, .cr-massa, .cr-vao,
+  .cr-plano, .cr-brilho { transition: none !important; }
+  .corte-cripto.is-depois .cr-brilho { animation: none; opacity: 0.3; }
+}
+
+/* Dentro do criptopórtico: a página desce ao escuro. As variáveis são
+   redefinidas aqui, e tudo o que está dentro (título, selos, margens) passa
+   para tinta clara sem saber. O `npm run check:contrast` verifica este
+   tema à parte: no pior fundo, texto 14,6:1, terciário 7,3:1, acento 6,6:1. */
+.historia-escuro {
+  --bg-primary:    #17140F;
+  --bg-raised:     #211C16;
+  --bg-sunken:     #0E0C09;
+  --text-primary:  #F2EEE6;
+  --text-secondary:#D9D0C1;
+  --text-tertiary: #B3A998;
+  --accent:        #E98A5B;
+  --accent-text:   #E98A5B;
+  --tone-teal:     #6FC2AE;
+  --tone-teal-text:#6FC2AE;
+  --tone-blue:     #8DB6D1;
+  --tone-blue-text:#8DB6D1;
+  --tone-amber:    #D9AE62;
+  --tone-amber-text:#D9AE62;
+  --tone-muted:    #A9A197;
+  --border-strong: rgba(242, 238, 230, 0.30);
+  --border-panel:  rgba(242, 238, 230, 0.16);
+  --border-subtle: rgba(242, 238, 230, 0.10);
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  background-image:
+    radial-gradient(ellipse 70% 45% at 30% 0%, rgba(233, 138, 91, 0.12), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 90% 100%, rgba(217, 174, 98, 0.07), transparent 70%);
+}
+.historia-escuro ::selection { background: rgba(233, 138, 91, 0.35); }
 
 /* Os dois pisos */
 .pisos { margin: 0; display: grid; gap: 2rem; align-items: center; }
@@ -1695,6 +1858,17 @@ footer a {
   text-transform: uppercase;
 }
 .pisos-texto p { font-size: 0.9375rem; line-height: 1.7; color: var(--text-secondary); margin: 0 0 1rem; }
+.pisos-nota {
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  fill: var(--text-tertiary);
+}
+/* As celas respiram devagar, como luz de candeia; cada uma no seu tempo */
+.pisos-cela { animation: pisos-respira 4.5s ease-in-out infinite alternate; }
+@keyframes pisos-respira { from { opacity: 0.78; } to { opacity: 1; } }
+.pisos-restias { mix-blend-mode: screen; }
+@media (prefers-reduced-motion: reduce) { .pisos-cela { animation: none; } }
 .pisos-texto strong { color: var(--text-primary); font-weight: 600; }
 
 /* Histórias à margem */
@@ -1705,19 +1879,46 @@ footer a {
 .margem p { font-size: 0.9375rem; line-height: 1.7; color: var(--text-secondary); margin: 0 0 0.875rem; }
 
 /* Estratigrafia: escava-se para baixo, recua-se no tempo */
+.estratos { position: relative; }
+.estrato-superficie { position: relative; }
+.estrato-superficie svg { display: block; width: 100%; height: 64px; }
+.estrato-superficie .ui-mono { position: absolute; left: 0; top: 0; }
 .estrato-lista { list-style: none; margin: 0; padding: 0; border-bottom: 3px solid var(--text-primary); }
-.estrato-superficie { border-top: 3px solid var(--text-primary); padding: 0.5rem 0; }
 .estrato {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0.375rem 2rem;
-  padding: 1.5rem 1.25rem 1.625rem;
-  border-top: 1px dashed var(--border-strong);
+  gap: 0.5rem 2rem;
+  padding: 2.25rem 1.25rem 2rem;
+  /* Cascalho: dois tamanhos de seixo, mais apertados quanto mais fundo */
+  background-image:
+    radial-gradient(circle, rgba(20, 23, 28, 0.10) 1px, transparent 1.6px),
+    radial-gradient(circle, rgba(20, 23, 28, 0.06) 1.5px, transparent 2.1px);
+  background-size: var(--seixo) var(--seixo), calc(var(--seixo) * 1.7) calc(var(--seixo) * 1.3);
+  background-position: 0 0, 7px 11px;
 }
 @media (min-width: 768px) {
-  .estrato { grid-template-columns: 11rem 1fr; padding: 1.75rem 1.5rem 2rem; }
+  .estrato { grid-template-columns: 13rem 1fr; padding: 2.5rem 1.75rem 2.25rem; }
 }
-.estrato-quando .font-data { font-size: 0.9375rem; }
+.estrato-fronteira {
+  position: absolute;
+  left: 0;
+  top: -12px;
+  width: 100%;
+  height: 24px;
+  display: block;
+  pointer-events: none;
+}
+.estrato-quando, .estrato-corpo { position: relative; }
+.estrato-data {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-weight: 700;
+  font-size: clamp(1.25rem, 2vw, 1.625rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--accent-text);
+  font-feature-settings: 'lnum' 1;
+}
 .estrato-titulo { font-size: 1.375rem; line-height: 1.15; margin: 0 0 0.5rem; }
 .estrato-corpo p {
   font-size: 0.9375rem;
@@ -1729,30 +1930,51 @@ footer a {
 }
 
 /* Visitar e referências */
+/* A faixa de saída: terracota a toda a largura. Papel sobre #B03A0B = 5,3:1. */
+.historia-faixa {
+  background: var(--accent);
+  color: var(--bg-primary);
+  padding: 4.5rem 1.25rem;
+  background-image: repeating-linear-gradient(45deg, rgba(242, 238, 230, 0.05) 0 1px, transparent 1px 9px);
+}
+@media (min-width: 768px) { .historia-faixa { padding: 5.5rem 4rem; } }
+@media (min-width: 1024px) { .historia-faixa { padding: 6rem 6rem; } }
 .historia-visita {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem 2rem;
-  align-items: baseline;
+  gap: 1.5rem 3rem;
+  align-items: flex-end;
   justify-content: space-between;
-  border-top: 3px solid var(--accent);
-  padding-top: 1.25rem;
 }
 .historia-visita p {
   font-family: var(--font-fraunces), Georgia, serif;
-  font-size: clamp(1.25rem, 2.4vw, 1.625rem);
-  line-height: 1.3;
-  max-width: 34rem;
+  font-weight: 700;
+  font-size: clamp(1.75rem, 4vw, 3.25rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  max-width: 40rem;
   margin: 0;
+}
+.historia-visita p em {
+  display: block;
+  margin-top: 0.625rem;
+  font-weight: 300;
+  font-style: italic;
+  font-size: 0.6em;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
 }
 .historia-visita a {
   font-family: var(--font-jetbrains), monospace;
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--accent-text);
+  color: var(--bg-primary);
   text-decoration: none;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 0.25rem;
 }
+.historia-visita a:hover { border-bottom-width: 3px; }
 .historia-refs { margin: 0; padding: 0 0 0 1.5rem; }
 .historia-refs li {
   font-size: 0.8125rem;

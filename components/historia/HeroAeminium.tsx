@@ -9,10 +9,17 @@ import { CORTE } from '@/lib/historia-aeminium'
  * página. A leitura é a do capítulo: Aeminium está por baixo.
  */
 
-type Vista = { d0: number; d1: number; z0: number; z1: number; base: number; corpo: number }
+/** `marca`: corpo do texto do marcador, em metros do desenho. */
+type Vista = { d0: number; d1: number; z0: number; z1: number; base: number; corpo: number; marca: number }
 
-const LARGA: Vista = { d0: -420, d1: 300, z0: 0, z1: 150, base: 24, corpo: 104 }
-const ESTREITA: Vista = { d0: -200, d1: 130, z0: 0, z1: 150, base: 34, corpo: 74 }
+const LARGA: Vista = { d0: -420, d1: 300, z0: 0, z1: 160, base: 24, corpo: 104, marca: 7 }
+const ESTREITA: Vista = { d0: -200, d1: 130, z0: 0, z1: 170, base: 34, corpo: 74, marca: 10 }
+
+/** O meio do museu no corte, e o ponto mais alto da superfície por cima dele. */
+const MEIO = CORTE.museu.nascente / 2
+const TOPO_MUSEU = Math.max(
+  ...CORTE.perfil.filter((p) => p.d >= 0 && p.d <= CORTE.museu.nascente).map((p) => p.sup ?? p.chao ?? 0)
+)
 
 function horizonte(v: Vista) {
   const pts = CORTE.perfil
@@ -56,18 +63,36 @@ function Estampa({ v, id, className }: { v: Vista; id: string; className: string
         </clipPath>
       </defs>
 
-      {texto({ fill: 'var(--text-primary)' })}
+      <g className="hero-tinta">{texto({ fill: 'var(--text-primary)' })}</g>
 
-      <path d={massa} fill="var(--bg-primary)" />
-      <path d={massa} fill={`url(#${id}-h)`} />
+      <g className="hero-terra">
+        <path d={massa} fill="var(--bg-primary)" />
+        <path d={massa} fill={`url(#${id}-h)`} />
+      </g>
 
-      <g clipPath={`url(#${id}-sob)`}>
+      <g clipPath={`url(#${id}-sob)`} className="hero-enterradas">
         {/* Preenchimento e não contorno: a Fraunces variável tem contornos
             sobrepostos dentro das letras, e um traço mostrava-os. */}
         {texto({ fill: 'var(--accent)', fillOpacity: 0.9 })}
       </g>
 
-      <path d={topo} fill="none" stroke="var(--text-primary)" strokeWidth="0.9" strokeLinejoin="round" />
+      <path className="hero-horizonte" d={topo} pathLength={1} fill="none" stroke="var(--text-primary)" strokeWidth="0.9" strokeLinejoin="round" />
+
+      {/* Onde estava o fórum: por cima do museu, à cota da linha dos telhados */}
+      <g className="hero-marca">
+        <line x1={MEIO} x2={MEIO} y1={-(TOPO_MUSEU + 4)} y2={-(TOPO_MUSEU + v.marca * 2.6)} stroke="var(--accent)" strokeWidth={v.marca * 0.09} />
+        <circle cx={MEIO} cy={-(TOPO_MUSEU + 2.5)} r={v.marca * 0.3} fill="var(--accent)" />
+        <text
+          x={MEIO}
+          y={-(TOPO_MUSEU + v.marca * 3)}
+          textAnchor="middle"
+          fontSize={v.marca}
+          fill="var(--accent)"
+          style={{ fontFamily: 'var(--font-fraunces), Georgia, serif', fontStyle: 'italic' }}
+        >
+          aqui era o fórum
+        </text>
+      </g>
     </svg>
   )
 }

@@ -68,13 +68,32 @@ const GRAPHIC_TOKENS = [
 /** Os fundos sobre os quais tudo isto assenta. */
 const BACKGROUNDS = ['bg-primary', 'bg-secondary', 'bg-sunken', 'bg-raised']
 
-function parseTokens() {
-  const css = readFileSync(join(ROOT, 'app', 'globals.css'), 'utf8')
-  const tokens = {}
-  for (const m of css.matchAll(/--([a-z0-9-]+):\s*(#[0-9A-Fa-f]{6})\s*;/g)) {
-    tokens[m[1]] = m[2]
+/**
+ * Os temas do ficheiro: `:root` é o base; qualquer outro bloco que redefina
+ * tokens (a secção escura da História, `.historia-escuro`) é um tema local
+ * por cima dele.
+ *
+ * Um tema local verifica-se só com o que redefine — os seus fundos e os seus
+ * tokens. Ler o ficheiro inteiro como um tema só misturava a tinta clara da
+ * secção escura com o papel do resto da página.
+ */
+function parseThemes() {
+  const css = readFileSync(join(ROOT, 'app', 'globals.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')
+  const read = (body) => {
+    const tokens = {}
+    for (const m of body.matchAll(/--([a-z0-9-]+):\s*(#[0-9A-Fa-f]{6})\s*;/g)) tokens[m[1]] = m[2]
+    return tokens
   }
-  return tokens
+  const themes = []
+  for (const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    const tokens = read(m[2])
+    if (Object.keys(tokens).length) themes.push({ selector: m[1].trim(), tokens })
+  }
+  const base = themes.filter((t) => t.selector === ':root').reduce((a, t) => ({ ...a, ...t.tokens }), {})
+  const locais = themes
+    .filter((t) => t.selector !== ':root')
+    .map((t) => ({ selector: t.selector, own: t.tokens, tokens: { ...base, ...t.tokens } }))
+  return { base, locais }
 }
 
 function luminance(hex) {
@@ -89,8 +108,9 @@ function contrast(a, b) {
 }
 
 function main() {
-  const tokens = parseTokens()
-  const backgrounds = BACKGROUNDS.filter((b) => tokens[b])
+  const { base, locais } = parseThemes()
+  let tokens = base
+  let backgrounds = BACKGROUNDS.filter((b) => tokens[b])
   const failures = []
 
   console.log(`\n${BOLD}Contraste dos tokens de cor${RESET}`)
@@ -129,6 +149,15 @@ function main() {
 
   check(TEXT_TOKENS, AA_TEXT, 'Texto')
   check(GRAPHIC_TOKENS, AA_GRAPHIC, 'Gráficos')
+
+  for (const tema of locais) {
+    tokens = tema.tokens
+    backgrounds = BACKGROUNDS.filter((b) => tema.own[b])
+    if (!backgrounds.length) continue
+    console.log(`${BOLD}Tema local ${tema.selector}${RESET} ${DIM}(os tokens que redefine, sobre os fundos que redefine)${RESET}\n`)
+    check(TEXT_TOKENS.filter((t) => tema.own[t]), AA_TEXT, 'Texto')
+    check(GRAPHIC_TOKENS.filter((t) => tema.own[t]), AA_GRAPHIC, 'Gráficos')
+  }
 
   if (failures.length > 0) {
     console.log(`${RED}${BOLD}${failures.length} token(s) abaixo do mínimo:${RESET}`)

@@ -59,20 +59,24 @@ export default function HistoriaPage() {
           <h1 className="sr-only">Aeminium</h1>
           <HeroAeminium />
 
-          <p className="historia-lede">
-            Antes de ser Coimbra, a cidade chamava-se Aeminium. O chão que os romanos construíram para
-            a praça principal <em>ainda lá está</em> — por baixo de um museu, na encosta que desce para
-            o Mondego.
-          </p>
+          <div className="historia-entrada">
+            <p className="historia-lede">
+              Antes de ser Coimbra, a cidade chamava-se Aeminium. O chão que os romanos construíram para a praça
+              principal <em>ainda lá está</em> — por baixo de um museu, na encosta que desce para o Mondego.
+            </p>
 
-          <ul className="historia-chave" aria-label="Como ler os selos desta página">
-            {(Object.keys(EVIDENCIA_SENTIDO) as Evidencia[]).map((e) => (
-              <li key={e}>
-                <Selo evidencia={e} />
-                <span className="ui-note">{EVIDENCIA_SENTIDO[e]}</span>
-              </li>
-            ))}
-          </ul>
+            <div className="historia-chave-caixa">
+              <span className="ui-label ui-label-tertiary">Como ler os selos</span>
+              <ul className="historia-chave" aria-label="Como ler os selos desta página">
+                {(Object.keys(EVIDENCIA_SENTIDO) as Evidencia[]).map((e) => (
+                  <li key={e}>
+                    <Selo evidencia={e} />
+                    <span className="ui-note">{EVIDENCIA_SENTIDO[e]}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </header>
 
         {/* O corte */}
@@ -88,7 +92,7 @@ export default function HistoriaPage() {
         </section>
 
         {/* Dentro do criptopórtico */}
-        <SectionReveal id="criptoportico">
+        <SectionReveal id="criptoportico" className="historia-escuro">
           <SectionTitle
             label="DENTRO DO CRIPTOPÓRTICO"
             title="Catorze celas debaixo da praça"
@@ -118,17 +122,20 @@ export default function HistoriaPage() {
         </SectionReveal>
 
         {/* Ir lá */}
-        <SectionReveal id="visitar">
-          <div className="historia-visita">
-            <p>O criptopórtico visita-se: a entrada é pelo Museu Nacional Machado de Castro.</p>
+        <section id="visitar" className="historia-faixa">
+          <div className="section-container historia-visita">
+            <p>
+              O criptopórtico visita-se.
+              <em>A entrada é pelo Museu Nacional Machado de Castro.</em>
+            </p>
             <a href="http://www.museumachadocastro.gov.pt/" target="_blank" rel="noopener noreferrer">
               Horários e bilhetes no sítio do museu →
             </a>
           </div>
-        </SectionReveal>
+        </section>
 
         {/* Referências */}
-        <section id="referencias" className="page-section" style={{ paddingTop: 0 }}>
+        <section id="referencias" className="page-section" style={{ paddingTop: '4rem' }}>
           <div className="section-container">
             <span className="ui-label ui-label-tertiary">Referências</span>
             <ol className="historia-refs">
