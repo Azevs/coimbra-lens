@@ -1,3 +1,5 @@
+import { SITE_TAGLINE } from '@/lib/site'
+
 const SOURCES = [
   { label: 'Open-Meteo', href: 'https://www.open-meteo.com' },
   { label: 'CAMS', href: 'https://atmosphere.copernicus.eu' },
@@ -36,7 +38,7 @@ export default function SiteFooter() {
             <span style={{ color: 'var(--accent-text)', fontStyle: 'italic', fontWeight: 300 }}>Lens</span>
           </p>
           <p style={{ fontFamily: 'var(--font-ibm-plex)', fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 300 }}>
-            A cidade em dados
+            {SITE_TAGLINE}
           </p>
         </div>
 

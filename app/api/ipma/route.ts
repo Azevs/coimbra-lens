@@ -80,8 +80,12 @@ async function fetchWarnings(): Promise<{ warnings: Warning[]; maxLevel: Warning
   const mine = (raw as RawWarning[]).filter((w) => w.idAreaAviso === AREA)
   if (mine.length === 0) return null
 
+  // O ficheiro do IPMA mantém avisos que já terminaram: às 18h31 um aviso
+  // "até às 18h00" já não é aviso nenhum.
+  const now = Date.now()
   const warnings: Warning[] = mine
     .filter((w) => isLevel(w.awarenessLevelID) && w.awarenessLevelID !== 'green')
+    .filter((w) => !w.endTime || new Date(w.endTime).getTime() > now)
     .map((w) => ({
       type: w.awarenessTypeName?.trim() || 'Aviso',
       level: w.awarenessLevelID as WarningLevel,

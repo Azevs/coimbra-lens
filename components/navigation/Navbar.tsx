@@ -19,7 +19,7 @@ import { motion, AnimatePresence } from 'framer-motion'
  * página por construir é a versão de navegação de um número inventado.
  */
 const AREAS = [
-  { label: 'Dados', href: '/' },
+  { label: 'Agora', href: '/' },
   { label: 'Visitar', href: '/visitar' },
   { label: 'Agenda', href: '/agenda' },
   { label: 'Território', href: '/territorio' },
@@ -32,13 +32,13 @@ const AREAS = [
 /** As secções de cada área, na ordem em que aparecem na página. */
 const SECTIONS: Record<string, { label: string; href: string }[]> = {
   '/': [
-    { label: 'Clima', href: '#clima' },
+    { label: 'Hoje', href: '#clima' },
+    { label: 'Metrobus', href: '#metrobus' },
     { label: 'Trânsito', href: '#transito' },
-    { label: 'Cidade', href: '#cidade-overview' },
     { label: 'Eventos & obras', href: '#cidade' },
-    { label: 'Mobilidade', href: '#mobilidade' },
-    { label: 'Universidade', href: '#academico' },
+    { label: 'Em números', href: '#cidade-overview' },
     { label: 'Imobiliário', href: '#imobiliario' },
+    { label: 'Explorar', href: '#explorar' },
   ],
   '/visitar': [
     { label: 'Roteiro a pé', href: '#roteiro' },
@@ -67,6 +67,7 @@ const SECTIONS: Record<string, { label: string; href: string }[]> = {
   '/sobre': [
     { label: 'O projecto', href: '#projecto' },
     { label: 'Como é feito', href: '#metodo' },
+    { label: 'O que falta', href: '#em-falta' },
   ],
 }
 

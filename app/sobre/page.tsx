@@ -81,6 +81,35 @@ export default function SobrePage() {
             </div>
           </div>
         </SectionReveal>
+
+        {/* Estes quatro temas eram secções da primeira página feitas só de
+            estados vazios. Saíram da montra, mas o vazio continua dito. */}
+        <SectionReveal id="em-falta" className="page-section">
+          <div className="section-container" style={{ maxWidth: '46rem' }}>
+            <SectionTitle label="O QUE FALTA" title="O que ainda não há" />
+            <div className="prosa">
+              <p>
+                <strong>Autocarros dos SMTUC.</strong> Os SMTUC não publicam tempos de chegada em tempo real. Está
+                prevista a importação do horário GTFS estático.
+              </p>
+              <p>
+                <strong>Deslocações dentro da cidade.</strong> Os Censos publicam movimentos pendulares entre
+                municípios, não entre zonas dentro de Coimbra. Sem essa fonte, não há fluxos a mostrar.
+              </p>
+              <p>
+                <strong>Notícias da Universidade.</strong> A UC não publica actualmente um feed RSS de notícias.
+              </p>
+              <p>
+                <strong>A UC em números.</strong> A UC publica estes números mas só através de JavaScript, sem API nem
+                HTML legível. Estão em{' '}
+                <a href="https://www.uc.pt/dados" target="_blank" rel="noopener noreferrer">
+                  A UC em Números, no uc.pt
+                </a>
+                .
+              </p>
+            </div>
+          </div>
+        </SectionReveal>
       </main>
 
       <SiteFooter />

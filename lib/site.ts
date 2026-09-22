@@ -9,7 +9,7 @@ export function siteUrl(): string {
 }
 
 export const SITE_NAME = 'CoimbraLens'
-export const SITE_TAGLINE = 'A cidade em dados'
+export const SITE_TAGLINE = 'A cidade, agora'
 export const SITE_DESCRIPTION =
   'Painel de dados sobre Coimbra: clima e qualidade do ar em directo, caudal do Mondego, trânsito, ' +
   'universidade e indicadores das 18 freguesias. Cada valor indica a sua fonte e se é medição ou estimativa.'

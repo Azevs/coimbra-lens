@@ -13,9 +13,9 @@ export default function ClimateSection() {
   return (
     <SectionReveal id="clima">
       <SectionTitle
-        label="AMBIENTE"
-        title="Clima & Qualidade do Ar"
-        subtitle="Clima, ar e avisos em directo. Água e caudal do rio a partir de fontes publicadas."
+        label="HOJE"
+        title="O tempo, o ar e o rio"
+        subtitle="Os avisos do dia, a leitura desta hora em detalhe, a água da torneira e a semana que aí vem."
       />
 
       {/* Os avisos vêm primeiro: é a única coisa aqui que pede uma decisão. */}

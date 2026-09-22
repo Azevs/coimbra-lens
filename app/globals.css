@@ -580,31 +580,172 @@ input[type='range']::-moz-range-thumb {
   .rank-row { gap: 1rem; grid-template-columns: 2rem 1fr 10rem 7rem; }
 }
 
-/* ── Herói — primeira página ───────────────────────────────────────────── */
-/* A barra é pegajosa e faz parte do fluxo: o herói começa logo por baixo
-   dela, sem compensação. */
-.hero-content {
-  padding: 2.5rem 1.25rem 3.5rem;
-  max-width: 1280px;
-  width: 100%;
-  margin: 0 auto;
+/* ── Herói — Coimbra, agora ─────────────────────────────────────────────
+   O ecrã inteiro é a cidade vista de cima, com a luz da hora. A manchete e
+   os sinais assentam num véu da cor do papel, que se desfaz para a direita
+   (e para o meio, no telemóvel) para deixar ver a Alta e o rio. De noite o
+   véu passa a escuro e a tinta a clara — `.hero-noite`, mais abaixo. */
+.hero {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100svh - 56px);
+  overflow: hidden;
+  color: var(--text-primary);
+  background: var(--bg-primary);
 }
-@media (min-width: 768px)  { .hero-content { padding: 3rem 2.5rem 4.5rem; } }
-@media (min-width: 1024px) { .hero-content { padding: 3rem 4rem 5rem; } }
+@media (min-width: 768px) { .hero { min-height: calc(100svh - 96px); } }
 
-/* A manchete de primeira página é a frase do dia. A marca já está na barra
-   a 20px de distância; repeti-la a 150px era gastar o melhor espaço da
-   página a dizer o que a barra já diz. */
+/* Por baixo de tudo, o fundo que fica se o mapa não vier. */
+.hero-fundo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 60% 70% at 78% 55%, color-mix(in srgb, var(--tone-amber) 16%, transparent), transparent 70%),
+    linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-sunken) 100%);
+}
+
+/* `.hero >` pesa mais do que o `.mapboxgl-map { position: relative }` do
+   Mapbox, que chega depois desta folha e deixava o mapa com 300px de alto. */
+.hero > .hero-map {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 1.8s ease;
+}
+.hero-map.is-shown { opacity: 1; }
+
+/* O véu vive dentro do mapa, por baixo dos controlos: a atribuição do
+   Mapbox fica sempre à vista, por cima dele. */
+.hero-map::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg,
+      var(--bg-primary) 0%,
+      color-mix(in srgb, var(--bg-primary) 88%, transparent) 30%,
+      transparent 52%,
+      transparent 60%,
+      color-mix(in srgb, var(--bg-primary) 80%, transparent) 82%,
+      var(--bg-primary) 100%);
+}
+@media (min-width: 1024px) {
+  .hero-map::after {
+    background:
+      linear-gradient(90deg,
+        var(--bg-primary) 0%,
+        color-mix(in srgb, var(--bg-primary) 94%, transparent) 30%,
+        color-mix(in srgb, var(--bg-primary) 55%, transparent) 50%,
+        transparent 68%),
+      linear-gradient(0deg,
+        color-mix(in srgb, var(--bg-primary) 92%, transparent) 0%,
+        color-mix(in srgb, var(--bg-primary) 40%, transparent) 22%,
+        transparent 40%),
+      linear-gradient(180deg,
+        var(--bg-primary) 0%,
+        transparent 16%);
+  }
+}
+.hero-map .mapboxgl-ctrl-bottom-right { z-index: 3; }
+/* De dia, a cidade aquecida para o papel: menos verde de relvado, um
+   pouco de sépia. De noite o tema do Mapbox já vem esbatido. */
+.hero:not(.hero-noite) .hero-map canvas { filter: saturate(0.55) sepia(0.22) contrast(1.06); }
+
+.hero-inner {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 2.5rem;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 2.25rem;
+}
+@media (min-width: 768px)  { .hero-inner { padding: 3rem 2.5rem 3rem; } }
+@media (min-width: 1024px) { .hero-inner { padding: 3.5rem 4rem 3.25rem; } }
+
+/* A data de edição — o "agora" dito sem slogan. */
+.hero-dateline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0 0.5rem;
+  margin: 0 0 1.5rem;
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.hero-dateline-data { color: var(--text-tertiary); }
+/* No telemóvel a data desce para a linha de baixo; o separador ficava a
+   abri-la, sozinho. */
+@media (max-width: 559px) {
+  .hero-dateline-sep { display: none; }
+  .hero-dateline-data { flex-basis: 100%; padding-left: calc(8px + 0.75rem); }
+}
+.hero-pulso {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-right: 0.25rem;
+  animation: hero-pulsa 2.4s ease-out infinite;
+}
+
+/* O aviso do IPMA, quando o há: é a única coisa aqui que pede uma decisão. */
+.hero-aviso {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.625rem;
+  margin: 0 0 1.5rem;
+  padding: 0.5rem 1rem 0.5rem 0.75rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--aviso) 16%, var(--bg-raised));
+  border: 1px solid color-mix(in srgb, var(--aviso) 50%, transparent);
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.3;
+  text-decoration: none;
+  animation: hero-entra 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s both;
+}
+.hero-aviso strong { font-weight: 600; }
+.hero-aviso:hover { border-color: var(--aviso); }
+.hero-aviso-ponto {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--aviso);
+}
+.hero-aviso-mais {
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+/* A manchete: a frase do dia, montada com as leituras desta hora. */
 .hero-headline {
   font-family: var(--font-fraunces), 'Fraunces', Georgia, serif;
   font-weight: 900;
-  font-size: clamp(2.25rem, 6.2vw, 5.75rem);
-  line-height: 0.98;
+  font-size: clamp(2.75rem, 6.6vw, 6.75rem);
+  line-height: 0.95;
   letter-spacing: -0.045em;
+  font-variation-settings: 'SOFT' 30, 'WONK' 0;
   text-wrap: balance;
-  max-width: 18ch;
-  padding: 1.5rem 0 1.75rem;
+  max-width: 14ch;
   margin: 0;
+  animation: hero-entra 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 /* Enquanto as leituras não chegam, a manchete é um marcador neutro. */
 .hero-headline-pending {
@@ -612,64 +753,225 @@ input[type='range']::-moz-range-thumb {
   font-weight: 300;
   font-style: italic;
 }
-
-.hero-columns {
-  display: grid;
-  gap: 2.125rem;
-  grid-template-columns: 1fr;
-  border-top: 1px solid var(--border-panel);
-  padding-top: 1.875rem;
+/* Cada oração sublinhada na cor do sinal de onde vem. O traço desenha-se
+   depois de a frase assentar, uma oração de cada vez. */
+.hero-oracao {
+  background-image: linear-gradient(var(--oracao), var(--oracao));
+  background-repeat: no-repeat;
+  background-position: 0 90%;
+  background-size: 100% 0.075em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  animation: hero-sublinha 0.7s cubic-bezier(0.65, 0, 0.35, 1) calc(0.7s + var(--i) * 0.22s) both;
 }
-@media (min-width: 1024px) { .hero-columns { grid-template-columns: 1fr 23.25rem; } }
 
-/* A coluna da esquerda encosta ao topo: os números de apoio vêm logo a
-   seguir à explicação, sem espaço morto até ao fundo do boletim. */
-.hero-lead {
+/* Os quatro sinais: temperatura, ar, rio e fogo. */
+.hero-sinais {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.625rem;
+}
+@media (min-width: 1024px) {
+  .hero-sinais { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
+}
+
+.sinal {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  gap: 1.75rem;
+  min-width: 0;
+  padding: 0.875rem 0.875rem 0.75rem;
+  background: color-mix(in srgb, var(--bg-raised) 93%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  backdrop-filter: blur(14px) saturate(1.15);
+  border: 1px solid var(--border-panel);
+  border-top: 3px solid var(--sinal);
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  animation: hero-entra 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) calc(0.35s + var(--i) * 0.09s) both;
 }
-
-.hero-lead-line {
-  margin: 0;
-  font-size: clamp(1.125rem, 1.6vw, 1.375rem);
-  font-weight: 400;
-  line-height: 1.5;
+@media (min-width: 768px) { .sinal { padding: 1.125rem 1.25rem 1rem; } }
+.sinal:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 34px rgba(20, 23, 28, 0.14);
+  border-color: color-mix(in srgb, var(--sinal) 45%, var(--border-panel));
+  border-top-color: var(--sinal);
+}
+.sinal-label {
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--text-secondary);
-  max-width: 44ch;
-  text-wrap: pretty;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-
-.hero-lead-support {
+.sinal-valor {
+  margin-top: 0.625rem;
+  font-family: var(--font-fraunces), 'Fraunces', Georgia, serif;
+  font-weight: 700;
+  font-size: clamp(2.125rem, 3.6vw, 3.25rem);
+  line-height: 0.95;
+  letter-spacing: -0.035em;
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
+  white-space: nowrap;
+}
+.sinal-valor.is-vazio { color: var(--text-tertiary); }
+/* O número que conta traz a classe de dado (mono, terracota); aqui manda o sinal. */
+.sinal-valor .font-data { font: inherit; color: inherit; letter-spacing: inherit; }
+.sinal-unid {
+  margin-left: 0.08em;
+  font-family: var(--font-ibm-plex), sans-serif;
+  font-size: 0.34em;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--text-tertiary);
+}
+.sinal-sufixo {
+  margin-left: 0.2em;
+  font-size: 0.5em;
+  color: var(--sinal);
+}
+.sinal-qual {
+  margin-top: 0.5rem;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+.sinal-viz {
+  display: block;
+  width: 100%;
+  height: 40px;
+  margin: 0.625rem 0 0.5rem;
+  overflow: visible;
+}
+.sinal-escala {
+  position: relative;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1.625rem;
-  border-top: 1px solid var(--border-panel);
-  padding-top: 1.125rem;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 3px;
+  height: 8px;
+  margin: 1.25rem 0;
 }
+.sinal-escala span { border-radius: 1px; }
+.sinal-escala i {
+  position: absolute;
+  top: -6px;
+  width: 3px;
+  height: 20px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  background: var(--text-primary);
+  box-shadow: 0 0 0 2px var(--bg-raised);
+}
+.sinal-fonte {
+  margin-top: auto;
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--text-tertiary);
+  line-height: 1.45;
+}
+/* Com espaço, numa linha. Nunca cortada: "há 9 m…" deixava de dizer de
+   quando é o número. */
+@media (min-width: 1180px) { .sinal-fonte { white-space: nowrap; } }
 
-/* O boletim é a coluna da direita — separada por filete a partir do ponto
-   em que fica mesmo ao lado das outras. */
-@media (min-width: 1180px) {
-  .hero-bulletin {
-    border-left: 1px solid var(--border-panel);
-    padding-left: 1.625rem;
+/* Convite a descer: um fio com uma gota a correr. Só em ecrãs largos. */
+.hero-descer { display: none; }
+@media (min-width: 1024px) {
+  .hero-descer {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    z-index: 2;
+    display: block;
+    width: 24px;
+    height: 40px;
+    margin-left: -12px;
+  }
+  .hero-descer span {
+    position: absolute;
+    left: 50%;
+    top: 8px;
+    bottom: 8px;
+    width: 1px;
+    background: var(--border-strong);
+    overflow: hidden;
+  }
+  .hero-descer span::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: -40%;
+    width: 1px;
+    height: 40%;
+    background: var(--text-primary);
+    animation: hero-gota 2.2s cubic-bezier(0.65, 0, 0.35, 1) 1.8s infinite;
   }
 }
 
-/* O selo de conforto deixou de flutuar sobre o vídeo: mora no fim do
-   boletim, como o remate da coluna. */
-.city-score {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  border-top: 1px solid var(--border-panel);
-  padding-top: 1.125rem;
-  margin-top: 0.25rem;
-  flex-wrap: wrap;
+/* A cidade depois do pôr do sol. As variáveis redefinem-se aqui e tudo o
+   que está dentro passa a tinta clara sem saber; o `check:contrast`
+   verifica este tema à parte, como o da História. Os estados (`--state-*`)
+   repetem-se porque uma variável resolve-se onde é declarada — no :root
+   continuariam a apontar para os tons de dia. */
+.hero-noite {
+  --bg-primary:    #15130F;
+  --bg-raised:     #1F1B16;
+  --bg-sunken:     #0D0C0A;
+  --text-primary:  #F4EFE6;
+  --text-secondary:#D6CDBE;
+  --text-tertiary: #ADA393;
+  --accent:        #EE8A5A;
+  --accent-text:   #EE8A5A;
+  --tone-teal:     #6FC2AE;
+  --tone-moss:     #A3C98F;
+  --tone-amber:    #E2B866;
+  --tone-blue:     #8DB6D1;
+  --tone-clay:     #E39C72;
+  --tone-crimson:  #F0909A;
+  --tone-muted:    #A9A197;
+  --border-strong: rgba(244, 239, 230, 0.30);
+  --border-panel:  rgba(244, 239, 230, 0.16);
+  --border-subtle: rgba(244, 239, 230, 0.10);
+  --state-good: var(--tone-teal);
+  --state-fair: var(--tone-moss);
+  --state-warn: var(--tone-amber);
+  --state-poor: var(--accent);
+  --state-bad:  var(--tone-crimson);
 }
-.city-score svg { flex-shrink: 0; }
+.hero-noite .hero-fundo {
+  background:
+    radial-gradient(ellipse 60% 70% at 78% 55%, rgba(238, 138, 90, 0.16), transparent 70%),
+    linear-gradient(180deg, #15130F 0%, #221C15 100%);
+}
+.hero-noite .sinal:hover { box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45); }
+
+@keyframes hero-entra {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes hero-sublinha {
+  from { background-size: 0% 0.075em; }
+  to   { background-size: 100% 0.075em; }
+}
+@keyframes hero-pulsa {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent); }
+  70%  { box-shadow: 0 0 0 9px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+@keyframes hero-gota {
+  from { top: -40%; }
+  to   { top: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-headline, .hero-oracao, .hero-aviso, .sinal, .hero-pulso, .hero-descer span::after { animation: none; }
+  .hero-map { transition: none; }
+  .sinal:hover { transform: none; }
+}
 
 /* ── Páginas sem herói ──────────────────────────────────────────────────
    A barra está no fluxo; estas páginas começam logo por baixo dela. */
@@ -833,6 +1135,9 @@ input[type='range']::-moz-range-thumb {
   position: sticky;
   top: 0;
   z-index: 50;
+  /* De ponta a ponta: por baixo dela passa o mapa da primeira página, e
+     não pode aparecer dos lados dos 1280px do painel. */
+  background: var(--bg-primary);
 }
 
 /* Entrada de área — Fraunces, com o filete terracota na activa */
@@ -1985,3 +2290,219 @@ footer a {
 }
 .historia-refs li:target { color: var(--text-primary); background: var(--accent-glow); }
 .historia-refs a { color: var(--accent-text); word-break: break-all; }
+
+/* ── Explorar — as portas para o resto do site ─────────────────────────
+   Cada porta leva um bocado do que está do outro lado: o render da
+   maqueta, a carta das freguesias, as manchas verdes junto ao rio, o
+   roteiro. Em ecrã largo é uma grelha de seis colunas — a maqueta e a
+   História em cima, as outras três em baixo. */
+.portas {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 768px) { .portas { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1024px) {
+  .portas { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .porta-maqueta  { grid-column: span 4; min-height: 460px; }
+  .porta-historia { grid-column: span 2; min-height: 460px; }
+  .porta-desenho, .porta-roteiro { grid-column: span 2; }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  .porta-maqueta { grid-column: span 2; }
+}
+
+.porta {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 1rem;
+  min-height: 340px;
+  padding: 1.5rem;
+  overflow: hidden;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-panel);
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: border-color 0.25s ease, transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@media (min-width: 1024px) { .porta { padding: 1.75rem; } }
+.porta:hover { border-color: var(--text-primary); transform: translateY(-4px); }
+.porta:focus-visible { outline-offset: 3px; }
+
+.porta-texto {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+.porta-area {
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+.porta-titulo {
+  font-family: var(--font-fraunces), 'Fraunces', Georgia, serif;
+  font-weight: 700;
+  font-size: clamp(1.625rem, 2.4vw, 2.25rem);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+}
+.porta-titulo-grande { font-size: clamp(3rem, 5.2vw, 4.75rem); line-height: 0.95; }
+.porta-linha {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  max-width: 38ch;
+}
+.porta-entrar {
+  margin-top: 0.75rem;
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+.porta-entrar span { display: inline-block; transition: transform 0.25s ease; }
+.porta:hover .porta-entrar span { transform: translateX(5px); }
+
+/* A maqueta: o render ocupa a porta; o texto assenta num véu de papel. */
+.porta-maqueta { background: linear-gradient(180deg, var(--bg-sunken) 0%, var(--bg-raised) 100%); }
+.porta-imagem {
+  object-fit: cover;
+  object-position: center 35%;
+  transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.porta-maqueta:hover .porta-imagem { transform: scale(1.035); }
+.porta-maqueta::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(0deg, var(--bg-raised) 0%, color-mix(in srgb, var(--bg-raised) 85%, transparent) 26%, transparent 55%);
+}
+
+/* A História: o mesmo escuro da página, com as camadas do corte. */
+.porta.porta-historia {
+  background:
+    radial-gradient(ellipse 90% 60% at 20% 0%, rgba(233, 138, 91, 0.16), transparent 70%),
+    var(--bg-primary);
+  border-color: var(--bg-primary);
+}
+.porta.porta-historia:hover { border-color: var(--accent); }
+.porta-camadas {
+  position: absolute;
+  top: 1.75rem;
+  left: 1.75rem;
+  right: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  z-index: 1;
+}
+.porta-camadas i {
+  display: block;
+  height: 18px;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--accent) var(--p), var(--bg-raised));
+  transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.porta-camadas i:nth-child(1) { --p: 10%; height: 8px; }
+.porta-camadas i:nth-child(2) { --p: 18%; height: 14px; }
+.porta-camadas i:nth-child(3) { --p: 28%; height: 22px; }
+.porta-camadas i:nth-child(4) { --p: 40%; height: 12px; }
+.porta-camadas i:nth-child(5) { --p: 58%; height: 30px; }
+.porta-historia:hover .porta-camadas i:nth-child(odd) { transform: translateX(6px); }
+.porta-historia:hover .porta-camadas i:nth-child(even) { transform: translateX(-6px); }
+
+/* Território e zonas verdes: a geometria das páginas, em miniatura. */
+.porta-figura {
+  position: absolute;
+  top: 1.25rem;
+  left: 1.25rem;
+  right: 1.25rem;
+  height: calc(100% - 12.5rem);
+  width: calc(100% - 2.5rem);
+  z-index: 0;
+}
+.porta-figura path {
+  fill: color-mix(in srgb, var(--text-primary) 4%, transparent);
+  stroke: var(--text-primary);
+  stroke-opacity: 0.45;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  transition: fill 0.4s ease;
+}
+.porta-desenho:hover .porta-figura path { fill: color-mix(in srgb, var(--accent) 10%, transparent); }
+
+.porta-verde .porta-figura { top: 0; left: 0; right: 0; width: 100%; height: calc(100% - 11rem); }
+.porta-verde .porta-figura .porta-agua { fill: color-mix(in srgb, var(--tone-blue) 38%, transparent); stroke: none; }
+.porta-verde .porta-figura .porta-rio { fill: none; stroke: var(--tone-blue); stroke-opacity: 0.8; stroke-width: 1.5; }
+.porta-verde .porta-figura .porta-mancha { fill: color-mix(in srgb, var(--tone-moss) 70%, transparent); stroke: var(--tone-moss-text); stroke-opacity: 0.6; }
+.porta-verde:hover .porta-figura .porta-mancha { fill: var(--tone-moss); }
+.porta-verde::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(0deg, var(--bg-raised) 0%, var(--bg-raised) 34%, transparent 60%);
+}
+
+/* Visitar: o roteiro como uma linha de paragens numeradas. */
+.porta-roteiro { justify-content: space-between; }
+.porta-paragens {
+  position: relative;
+  list-style: none;
+  counter-reset: paragem;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+.porta-paragens::before {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 12px;
+  bottom: 12px;
+  border-left: 1px dashed var(--border-strong);
+}
+.porta-paragens li {
+  position: relative;
+  counter-increment: paragem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.porta-paragens li::before {
+  content: counter(paragem);
+  flex-shrink: 0;
+  width: 23px;
+  height: 23px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--bg-raised);
+  border: 1px solid var(--text-primary);
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 11px;
+  color: var(--text-primary);
+  transition: background 0.25s ease, color 0.25s ease;
+}
+.porta-roteiro:hover .porta-paragens li::before { background: var(--text-primary); color: var(--bg-raised); }
+
+@media (prefers-reduced-motion: reduce) {
+  .porta, .porta-imagem, .porta-camadas i, .porta-entrar span { transition: none; }
+  .porta:hover { transform: none; }
+}
