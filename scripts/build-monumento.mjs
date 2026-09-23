@@ -81,6 +81,9 @@ const MONUMENTOS = [
     // Via Latina inteira e deixar a varanda sobre o rio a sul.
     centro: { lat: 40.20752, lon: -8.42608 },
     raio: 150,
+    // Só a reconstituição, com o chão desenhado (pedido de 23/09/2026). As
+    // versões fotografia e cartão saíram da página.
+    vestidos: ['rico'],
     conjunto: [
       'relation/2708767', // Faculdade de Direito — a ala norte, o antigo Paço Real
       'way/201989127', // Reitoria (Colégio de São Pedro) — a ala nascente
@@ -105,8 +108,8 @@ const MONUMENTOS = [
     // 8 de Maio, a nascente a fonte da Manga inteira.
     centro: { lat: 40.21107, lon: -8.42821 },
     raio: 100,
-    // Só a reconstituição: sem fotografia nos telhados, a verificação dos
-    // contornos contra a ortofoto (ver `fotografia`) não é precisa aqui.
+    // Só a reconstituição (a fotografia nunca foi verificada aqui contra os
+    // contornos, ver `fotografia`).
     vestidos: ['rico'],
     conjunto: [
       'way/204192080', // Igreja de Santa Cruz

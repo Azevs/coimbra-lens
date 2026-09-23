@@ -114,7 +114,7 @@ def _texturas(T, px, rng):
     tex[ASFALTO] = _hex('55585B')[None, None, :] * sujo(0.16) * grao(0.12)
     relva = _fbm(T, rng, ((6, 0.5), (24, 0.3), (80, 0.2)))
     tex[RELVA] = (_hex('6C8746')[None, None, :] * (0.82 + 0.36 * relva[..., None])) * grao(0.18)
-    tex[SAIBRO] = _hex('C4AA80')[None, None, :] * sujo(0.12) * grao(0.14)
+    tex[SAIBRO] = _hex('C8B898')[None, None, :] * sujo(0.12) * grao(0.14)
     tex[AGUA] = _hex('4C6964')[None, None, :] * sujo(0.08)
     tex[LANCIL] = _hex('D6D0C2')[None, None, :] * grao(0.05)
     tex[MURO] = pedras(0.5, 'BDB2A0', 0.08, 0.8) * sujo(0.1)
@@ -237,8 +237,13 @@ def desenhar(cena, aqui, N=3072):
     else:
         verde_fraco = np.zeros((N, N), bool)
 
-    # 2. áreas pavimentadas: praças, estacionamentos, zonas pedonais
-    for e in areas:
+    # 2. áreas pavimentadas: praças, estacionamentos, zonas pedonais. As
+    # grandes primeiro: o pátio inteiro não pode tapar os canteiros de saibro
+    # que o OSM desenha dentro dele.
+    def area_de(e):
+        g = e['g']
+        return abs(sum(g[k][0] * g[k - 1][1] - g[k - 1][0] * g[k][1] for k in range(len(g)))) / 2
+    for e in sorted(areas, key=area_de, reverse=True):
         t = e['t']
         if t.get('place') == 'square' or t.get('amenity') == 'parking' or 'highway' in t or 'area:highway' in t:
             carro = t.get('amenity') == 'parking' or t.get('highway') in CARRO or t.get('area:highway') in CARRO

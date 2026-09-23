@@ -59,7 +59,8 @@ export const TEXTOS_MONUMENTOS: TextoMonumento[] = [
         texto:
           'Foi alcácer islâmico, palácio real a partir do século XII e casa da universidade desde 1544. A meio, a estátua de D. João III. O lado sul fica aberto: é a varanda sobre o vale do Mondego.',
         camara: { azimute: -105, elevacao: 46, distancia: 170 },
-        // O assunto é o chão — a calçada em diagonal vê-se na fotografia.
+        // O assunto é o chão — os caminhos em diagonal e os canteiros de
+        // saibro, desenhados a partir do OSM.
         // Acender as cinco alas à volta só tingia a maqueta inteira.
         acende: [],
       },

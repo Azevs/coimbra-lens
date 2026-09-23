@@ -51,6 +51,10 @@ export const MONUMENTOS: Monumento[] = [
       -8.42608
     ],
     "raio": 150,
+    "vestidos": [
+      "rico"
+    ],
+    "chaoDesenhado": true,
     "edificios": 110,
     "doMonumento": 5,
     "semAltura": 0,
@@ -125,7 +129,7 @@ export const MONUMENTOS: Monumento[] = [
         "altura": 17.9
       }
     ],
-    "lidoEm": "2026-09-22T20:38:54.804Z"
+    "lidoEm": "2026-09-23T12:03:38.270Z"
   },
   {
     "id": "santa-cruz",
