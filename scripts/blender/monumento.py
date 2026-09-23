@@ -140,6 +140,16 @@ if RICO:
     import reconstituicao as rc
     MATS = rc.Materiais()
     CTX = rc.Contexto(CENA, R, IMAGEM)
+    # O chão desenhado (ver `chao.py`) em vez da ortofoto, quando a cena traz
+    # o chão do OSM. A fotografia continua a decidir telha ou zinco (`CTX`).
+    if CENA.get('chao'):
+        import chao
+        IMG_CHAO, _contagem = chao.desenhar(CENA, AQUI)
+        # Tira-se o material da fotografia antes: com o mesmo nome, o novo
+        # ficava 'chao-foto.001' e escapava às coordenadas de textura (em baixo).
+        bpy.data.materials.remove(M_TERRENO)
+        M_TERRENO = material_foto('chao-foto', IMG_CHAO, 0.92)
+        print('chão desenhado (%% da caixa): %s' % _contagem)
 
 # --- o cilindro que serra a placa ---
 Z_MIN = min(CENA['dem']['elev']) - 10.0
@@ -380,7 +390,7 @@ if not CARTAO:
     export_draco_mesh_compression_enable=True, export_draco_mesh_compression_level=6,
     # WebP na reconstituição: as grades precisam de transparência e são
     # uma dúzia de texturas; em PNG o modelo triplicava.
-    export_image_format='WEBP' if RICO else 'JPEG', export_image_quality=86,
+    export_image_format='WEBP' if RICO else 'JPEG', export_image_quality=80 if RICO and CENA.get('chao') else 86,
     export_yup=True)
 
 if SO_MODELO:

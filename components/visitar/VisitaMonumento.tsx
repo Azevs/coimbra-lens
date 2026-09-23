@@ -664,6 +664,12 @@ export default function VisitaMonumento({ monumento, textos, largura, altura }: 
               <span className="chave-cor" style={{ background: 'linear-gradient(90deg, #A8573A 50%, #8D979C 50%)' }} />
               telha ou zinco, como na fotografia aérea
             </li>
+            {monumento.chaoDesenhado && (
+              <li>
+                <span className="chave-cor" style={{ background: 'linear-gradient(90deg, #E2DCCE 50%, #55585B 50%)' }} />
+                ruas, praças e jardins: desenhados a partir do mapa
+              </li>
+            )}
             <li>
               <span className="chave-cor chave-redonda" style={{ background: '#5F6F44' }} />
               árvore

@@ -281,6 +281,8 @@ async function fotografia(id, caixa, CX, CY) {
   const W = Math.round((x1 - x0) / FOTO_M)
   const H = Math.round((y1 - y0) / FOTO_M)
   const img = Buffer.alloc(W * H * 3)
+  // O verde, para o chão da reconstituição: NDVI (−1…1) guardado em 0…255.
+  const ndvi = Buffer.alloc(W * H, 0)
   let cobertos = 0
   const { folhas } = await ortoDGT(DIR_DEM, caixa)
   for (const q of folhas) {
@@ -295,6 +297,8 @@ async function fotografia(id, caixa, CX, CY) {
         img[k] = r[0][s]
         img[k + 1] = r[1][s]
         img[k + 2] = r[2][s]
+        const vi = r[0][s], iv = r[3]?.[s] ?? 0
+        ndvi[(r0 + j) * W + c0 + i] = Math.round(128 + 127 * (vi + iv ? (iv - vi) / (iv + vi) : 0))
       }
     }
     cobertos += w * h
@@ -308,8 +312,52 @@ async function fotografia(id, caixa, CX, CY) {
     .modulate({ saturation: 1.08 })
     .jpeg({ quality: 86, mozjpeg: true })
     .toFile(join(OUT_DIR, ficheiro))
+  await sharp(ndvi, { raw: { width: W, height: H, channels: 1 } }).png().toFile(join(OUT_DIR, `${id}.ndvi.png`))
   console.log(`  fotografia: ${W}×${H} a ${FOTO_M * 100} cm`)
-  return { ficheiro, x0: x0 - CX, y0: y0 - CY, x1: x1 - CX, y1: y1 - CY }
+  return { ficheiro, ndvi: `${id}.ndvi.png`, x0: x0 - CX, y0: y0 - CY, x1: x1 - CX, y1: y1 - CY }
+}
+
+/**
+ * O CHÃO, PARA A RECONSTITUIÇÃO
+ *
+ * Em vez da ortofoto (carros, sombras de outra hora, borrões), a
+ * reconstituição pinta o chão com texturas desenhadas — mas o que cada sítio
+ * é vem daqui: ruas, praças, escadas, passadeiras, jardins, água, lugares de
+ * estacionamento e muros do OSM, com o pavimento (\`surface\`) e a largura
+ * quando o OSM os tem. O verde que o OSM não desenha vem do NDVI (acima).
+ * Quem pinta é o \`scripts/blender/chao.py\`.
+ */
+const CHAVES_CHAO = ['highway', 'area:highway', 'area', 'surface', 'width', 'lanes', 'crossing', 'tunnel', 'layer',
+  'leisure', 'landuse', 'natural', 'amenity', 'place', 'barrier', 'parking', 'man_made']
+
+async function chaoOSM(bb, local) {
+  const j = await overpass(`[out:json][timeout:120];
+(
+  way["highway"](${bb});
+  way["area:highway"](${bb});
+  nwr["leisure"~"garden|park|playground|pitch"](${bb});
+  nwr["landuse"~"grass|flowerbed|greenfield|village_green"](${bb});
+  nwr["natural"~"water|heath|scrub|grassland"](${bb});
+  nwr["amenity"~"parking|parking_space|fountain"](${bb});
+  nwr["place"="square"](${bb});
+  node["highway"="crossing"](${bb});
+  way["barrier"~"wall|retaining_wall|city_wall|kerb"](${bb});
+);
+out geom;`)
+  const paraLocal = (g) => g.map((p) => local(paraTM06.forward([p.lon, p.lat])))
+  const out = []
+  for (const e of j.elements) {
+    const t = Object.fromEntries(CHAVES_CHAO.filter((k) => e.tags?.[k] != null).map((k) => [k, e.tags[k]]))
+    if (e.type === 'node') out.push({ k: 'n', t, g: paraLocal([{ lat: e.lat, lon: e.lon }]) })
+    else if (e.type === 'way' && e.geometry) out.push({ k: 'w', t, g: paraLocal(e.geometry) })
+    else if (e.type === 'relation') {
+      const exteriores = aneis((e.members ?? []).filter((q) => q.type === 'way' && q.role === 'outer' && q.geometry)
+        .map((q) => q.geometry.map((p) => [p.lon, p.lat])))
+      for (const a of exteriores) out.push({ k: 'w', t: { ...t, area: 'yes' }, g: paraLocal(a.map(([lon, lat]) => ({ lon, lat }))) })
+    }
+  }
+  console.log(`  chão: ${out.length} elementos do OSM`)
+  return out
 }
 
 // --------------------------------------------------------------- monumento --
@@ -578,11 +626,12 @@ out geom;`) // "body": os membros das relações vêm com geometria
 
   // --- a fotografia do chão e dos telhados ---
   const foto = await fotografia(m.id, caixa, CX, CY)
+  const chaoDesenho = await chaoOSM(bb, local)
 
   mkdirSync(OUT_DIR, { recursive: true })
   writeFileSync(
     join(OUT_DIR, `${m.id}.scene.json`),
-    JSON.stringify({ id: m.id, raio: R, dem, buildings: edificios, arvores, pontos, foto })
+    JSON.stringify({ id: m.id, raio: R, dem, buildings: edificios, arvores, pontos, foto, chao: chaoDesenho })
   )
 
   const conj = edificios.filter((b) => b.k === 'conjunto')
@@ -592,6 +641,8 @@ out geom;`) // "body": os membros das relações vêm com geometria
     centro: [m.centro.lat, m.centro.lon],
     raio: R,
     ...(m.vestidos ? { vestidos: m.vestidos } : {}),
+    // A reconstituição pinta o chão a partir destes elementos (ver `chao.py`).
+    chaoDesenhado: chaoDesenho.length > 0,
     edificios: edificios.length,
     doMonumento: conj.length,
     semAltura: conta.semAltura,
@@ -659,6 +710,8 @@ export interface Monumento {
    * \`['rico']\` quando os contornos não foram verificados contra a ortofoto.
    */
   vestidos?: ('foto' | 'rico' | 'cartao')[]
+  /** Na reconstituição, o chão é desenhado a partir do OSM e não a ortofoto. */
+  chaoDesenhado?: boolean
   edificios: number
   doMonumento: number
   semAltura: number

@@ -28,6 +28,8 @@ export interface Monumento {
    * `['rico']` quando os contornos não foram verificados contra a ortofoto.
    */
   vestidos?: ('foto' | 'rico' | 'cartao')[]
+  /** Na reconstituição, o chão é desenhado a partir do OSM e não a ortofoto. */
+  chaoDesenhado?: boolean
   edificios: number
   doMonumento: number
   semAltura: number
@@ -136,6 +138,7 @@ export const MONUMENTOS: Monumento[] = [
     "vestidos": [
       "rico"
     ],
+    "chaoDesenhado": true,
     "edificios": 108,
     "doMonumento": 3,
     "semAltura": 1,
@@ -191,7 +194,7 @@ export const MONUMENTOS: Monumento[] = [
         ]
       }
     ],
-    "lidoEm": "2026-09-23T08:25:09.548Z"
+    "lidoEm": "2026-09-23T11:33:05.275Z"
   }
 ]
 

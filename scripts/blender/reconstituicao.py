@@ -1331,29 +1331,16 @@ def _manga(acc_m, acc, ctx, b):
 
     g = ctx.cota(C.x, C.y)              # o chão do jardim
     Y, W = 'reboco-amarelo', 'pedra-cinza'
-    # --- o tanque: a água em quatro quartos, entre os passadiços dos eixos ---
+    # A água não se modela aqui: são os canais que o OSM desenha, pintados
+    # no chão (ver `chao.py`). Ficam os passadiços dos eixos, com guardas
+    # baixas, e as escadas até ao estrado do templete.
     meio = max((c - C).length for c, _ in cubelos) * 0.72 + 2.6
-    u0, n0 = E[0], E[1]
-    # A água fica abaixo do jardim, mas nunca debaixo do terreno medido: o
-    # MDT de 2 m não sabe se o tanque tem fundo.
-    chao_tanque = max(ctx.cota(*(C + u0 * i + n0 * j)) for i in range(-int(meio), int(meio) + 1, 2)
-                      for j in range(-int(meio), int(meio) + 1, 2))
-    agua = max(g - 0.3, chao_tanque + 0.05)
     fundo = g - 1.1
-    for sx in (-1, 1):
-        for sy in (-1, 1):
-            o = C + u0 * (sx * 1.2) + n0 * (sy * 1.2)
-            q = [o, o + u0 * (sx * (meio - 1.2)), o + u0 * (sx * (meio - 1.2)) + n0 * (sy * (meio - 1.2)), o + n0 * (sy * (meio - 1.2))]
-            acc.face('agua', [Vector((p.x, p.y, agua)) for p in q], Z)
     for q in range(4):
         e, l = E[q], E[(q + 1) % 4]
-        # bordo do tanque
-        acc.caixa('cantaria', C + e * meio, l, e, -meio - 0.35, meio + 0.35, 0, 0.35, fundo, agua + 0.55)
-        # passadiço até ao templete, com guardas baixas
-        acc.caixa('cantaria', C, e, l, rc, meio, -1.2, 1.2, fundo, g)
+        acc.caixa('cantaria', C, e, l, rc, meio, -1.2, 1.2, fundo, g + 0.05)
         for s in (-1, 1):
             acc.caixa('cantaria', C, e, l, rc + 1.8, meio, s * 1.2 - 0.15, s * 1.2 + 0.15, g, g + 0.45)
-        # escada do passadiço ao estrado
         for k in range(6):
             acc.caixa('cantaria', C, e, l, rc + 1.8 - (k + 1) * 0.3, rc + 1.8 - k * 0.3, -0.9, 0.9, g - 0.2, g + (k + 1) * 0.2)
 
