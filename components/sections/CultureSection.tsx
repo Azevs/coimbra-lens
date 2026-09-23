@@ -17,62 +17,50 @@ interface CulturalEvent {
   url: string
 }
 
+/**
+ * Só entra o que se confirmou no organizador ou na Câmara (Setembro de 2026).
+ * `day` serve apenas para ordenar dentro do mês; o que se mostra é o mês.
+ *
+ * Saíram da versão anterior, por não se confirmarem: "Semana Académica" em
+ * março, "Magusto de Coimbra", "BTT Mondego" e "Mercado de Natal" na Praça
+ * 8 de Maio. A "Festa da Cidade" estava a 4 de junho; é a 4 de julho, dia da
+ * Rainha Santa. O Jazz ao Centro estava em junho; é no início do outono.
+ */
 const EVENTS: CulturalEvent[] = [
   {
     name: 'Queima das Fitas',
-    description: 'A maior festa académica do país. Uma semana de cortejo, serenatas e concertos na Alta e Baixa de Coimbra.',
-    month: 5, day: 10,
+    description: 'A festa dos finalistas da universidade. Abre com a Serenata Monumental, à meia-noite, no largo da Sé Velha; segue-se mais de uma semana de cortejo e concertos.',
+    month: 5, day: 21,
     color: 'var(--tone-amber-text)', icon: 'graduation', category: 'Academia',
-    url: 'https://queima.academica.pt',
+    url: 'https://www.cm-coimbra.pt/areas/viver/cultura/eventos-regulares/queima-das-fitas',
+  },
+  {
+    name: 'Festas da Cidade e da Rainha Santa',
+    description: 'A partir de 4 de julho, feriado municipal e dia da padroeira: dez dias de concertos e animação, e as procissões da Rainha Santa entre Santa Clara-a-Nova e Santa Cruz.',
+    month: 7, day: 4,
+    color: 'var(--tone-teal-text)', icon: 'landmark', category: 'Cidade',
+    url: 'https://www.cm-coimbra.pt/areas/viver/cultura/eventos-regulares/festas-da-cidade-de-coimbra',
+  },
+  {
+    name: 'Festival das Artes QuebraJazz',
+    description: 'Música clássica e jazz ao ar livre, no anfiteatro da Colina de Camões, nos jardins da Quinta das Lágrimas. Estende-se por julho e agosto.',
+    month: 7, day: 12,
+    color: 'var(--tone-crimson-text)', icon: 'theatre', category: 'Música',
+    url: 'https://www.festivaldasartes.com/',
+  },
+  {
+    name: 'Festa das Latas',
+    description: 'A Latada recebe os novos estudantes: serenata no Largo da Sé Nova, cortejo pela cidade e concertos na Praça da Canção.',
+    month: 10, day: 1,
+    color: 'var(--tone-violet-text)', icon: 'graduation', category: 'Academia',
+    url: 'https://www.festadaslatas.pt/pt',
   },
   {
     name: 'Jazz ao Centro',
-    description: 'Festival de jazz internacional no coração de Coimbra, com concertos em espaços históricos da cidade.',
-    month: 6, day: 15,
+    description: 'Os encontros internacionais de jazz do Jazz ao Centro Clube, em várias salas da cidade; as noites acabam no Salão Brazil.',
+    month: 10, day: 2,
     color: 'var(--tone-blue-text)', icon: 'music', category: 'Música',
-    url: 'https://jazzaocentro.pt',
-  },
-  {
-    name: 'Festa da Cidade',
-    description: 'Celebração do Dia de Coimbra com espectáculos, exposições e animação de rua em toda a cidade.',
-    month: 6, day: 4,
-    color: 'var(--tone-teal-text)', icon: 'landmark', category: 'Cultura',
-    url: 'https://www.cm-coimbra.pt',
-  },
-  {
-    name: 'BTT Mondego',
-    description: 'Prova de bicicleta de montanha ao longo do vale do Mondego. Um dos maiores eventos de BTT do país.',
-    month: 10, day: 12,
-    color: 'var(--tone-moss-text)', icon: 'bike', category: 'Desporto',
-    url: 'https://www.bttmondego.com',
-  },
-  {
-    name: 'Semana Académica',
-    description: 'Semana cultural da Associação Académica com debates, exposições, workshops e serenatas.',
-    month: 3, day: 20,
-    color: 'var(--tone-violet-text)', icon: 'book', category: 'Academia',
-    url: 'https://www.academica.pt',
-  },
-  {
-    name: 'Festival das Artes',
-    description: 'Programação multidisciplinar de artes performativas, instalações e cinema no Centro de Portugal.',
-    month: 7, day: 1,
-    color: 'var(--tone-crimson-text)', icon: 'theatre', category: 'Arte',
-    url: 'https://www.festivalartes.pt',
-  },
-  {
-    name: 'Magusto de Coimbra',
-    description: 'Celebração de São Martinho com castanhas, jeropiga e animação popular nas ruas da Baixa.',
-    month: 11, day: 11,
-    color: 'var(--tone-clay-text)', icon: 'leaf', category: 'Tradição',
-    url: 'https://www.cm-coimbra.pt',
-  },
-  {
-    name: 'Mercado de Natal',
-    description: 'Mercado natalício na Praça 8 de Maio com artesanato, gastronomia e espectáculos ao vivo.',
-    month: 12, day: 1,
-    color: 'var(--tone-blue-text)', icon: 'star', category: 'Tradição',
-    url: 'https://www.cm-coimbra.pt',
+    url: 'https://www.jazzaocentroclube.pt/',
   },
 ]
 
