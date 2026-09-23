@@ -747,13 +747,13 @@ input[type='range']::-moz-range-thumb {
 /* A manchete: a frase do dia, montada com as leituras desta hora. */
 .hero-headline {
   font-family: var(--font-fraunces), 'Fraunces', Georgia, serif;
-  font-weight: 900;
-  font-size: clamp(2.75rem, 6.6vw, 6.75rem);
-  line-height: 0.95;
-  letter-spacing: -0.045em;
+  font-weight: 800;
+  font-size: clamp(2.25rem, 4.4vw, 4.25rem);
+  line-height: 1;
+  letter-spacing: -0.035em;
   font-variation-settings: 'SOFT' 30, 'WONK' 0;
   text-wrap: balance;
-  max-width: 14ch;
+  max-width: 17ch;
   margin: 0;
   animation: hero-entra 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }

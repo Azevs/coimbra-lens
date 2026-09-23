@@ -5,14 +5,16 @@ import DataTicker from '@/components/hero/DataTicker'
 import SectionReveal from '@/components/ui/SectionReveal'
 import SectionTitle from '@/components/ui/SectionTitle'
 import DataSource from '@/components/ui/DataSource'
-import { BarraRepartida, Barras, ColunasEstrelas, COR } from '@/components/turismo/TurismoCharts'
+import { BarraRepartida, Barras, ColunasAno, ColunasEstrelas, COR } from '@/components/turismo/TurismoCharts'
+import RankedBars from '@/components/charts/RankedBars'
 import {
   PORDATA_META,
   PORDATA_TURISMO as P,
   TURISMO,
   estabelecimentos,
-  evolucaoDisponivel,
   ineMeta,
+  origem,
+  serie,
 } from '@/lib/turismo'
 
 export const metadata: Metadata = {
@@ -44,7 +46,13 @@ function Tile({ label, value, unit, note }: { label: string; value: string; unit
 
 export default function TurismoPage() {
   const est = estabelecimentos()
-  const evolucao = evolucaoDisponivel()
+  const orig = origem()
+  const dormidas = serie('dormidas')
+  const hospedes = serie('hospedes')
+  const estada = serie('estadaMedia')
+  const camas = serie('camas')
+  const [dAnt, dUlt] = dormidas.slice(-2)
+  const ultimoAno = dUlt?.ano
   const outrosDormidas = P.dormidas[2024] - P.dormidasHotelaria2024
   const camasMais = P.camas[2024] - P.camas[2019]
 
@@ -84,17 +92,29 @@ export default function TurismoPage() {
               className="font-display"
               style={{ fontSize: 'clamp(1.25rem, 2.4vw, 1.625rem)', fontWeight: 400, lineHeight: 1.3, maxWidth: '38rem', textWrap: 'pretty' }}
             >
-              Perto de 709 mil dormidas por ano, tantas como antes da pandemia. Quem vem fica, em média, uma noite e meia — no resto do país são duas e meia.
+              Perto de 700 mil dormidas por ano, quase tantas como antes da pandemia. Quem vem fica, em média, uma noite e meia — no resto do país são duas e meia.
             </p>
           </div>
 
           <div className="grid-stats" style={{ marginTop: '2.5rem', columnGap: '2rem', rowGap: '1.5rem' }}>
-            <Tile label="Dormidas" value={fmt(P.dormidas[2024])} note={`2024 · ${signed(P.variacaoDormidas.coimbra)}% face a 2019`} />
-            <Tile label="Turistas por noite" value={fmt(P.turistasPorDia)} unit="em média" note={`2024 · ${fmt(P.turistasPorDiaPct, 1)}% da população`} />
-            <Tile label="Estada média" value={fmt(P.estadaMedia2024.coimbra, 1)} unit="noites" note={`2024 · Portugal: ${fmt(P.estadaMedia2024.portugal, 1)}`} />
-            <Tile label="Camas" value={fmt(P.camas[2024])} note={`2024 · +${fmt(camasMais)} face a 2019`} />
+            {dUlt && (
+              <Tile
+                label="Dormidas"
+                value={fmt(dUlt.valor)}
+                note={dAnt ? `${dUlt.ano} · ${signed(((dUlt.valor - dAnt.valor) / dAnt.valor) * 100)}% face a ${dAnt.ano}` : dUlt.ano}
+              />
+            )}
+            {hospedes.at(-1) && (
+              <Tile
+                label="Hóspedes"
+                value={fmt(hospedes.at(-1)!.valor)}
+                note={orig?.pctEstrangeiros != null ? `${orig.ano} · ${fmt(orig.pctEstrangeiros, 0)}% do estrangeiro` : hospedes.at(-1)!.ano}
+              />
+            )}
+            {estada.at(-1) && <Tile label="Estada média" value={fmt(estada.at(-1)!.valor, 1)} unit="noites" note={estada.at(-1)!.ano} />}
+            {camas.at(-1) && <Tile label="Camas" value={fmt(camas.at(-1)!.valor)} note={camas.at(-1)!.ano} />}
           </div>
-          <DataSource meta={PORDATA_META} />
+          <DataSource meta={ineMeta(TURISMO.dormidas)} />
         </div>
 
         {/* 2019 → 2024 */}
@@ -248,29 +268,66 @@ export default function TurismoPage() {
           </div>
         </SectionReveal>
 
-        {/* Ano a ano — enche-se à medida que o gerador traz as séries do INE */}
-        {!evolucao.pronta && (
+        {/* Ano a ano */}
+        {dormidas.length >= 2 && (
           <SectionReveal id="evolucao" className="page-section">
             <div className="section-container">
               <SectionTitle
-                label="ANO A ANO"
-                title="A série inteira"
-                subtitle="Hóspedes, dormidas, ocupação e proveitos desde 2015, e os últimos três anos mês a mês, para ler a sazonalidade."
+                label={`${dormidas[0].ano} → ${ultimoAno}`}
+                title="As mesmas noites, mais receita"
+                subtitle="Desde 2023 as dormidas andam perto das 700 mil por ano. Os proveitos e o rendimento por quarto subiram cerca de um terço desde 2022."
               />
-              <div style={{ borderTop: '1px solid var(--border-panel)', paddingTop: '1rem', maxWidth: '38rem' }}>
-                <p style={{ fontSize: '0.9375rem', lineHeight: 1.7, color: 'var(--text-secondary)', fontWeight: 300, margin: 0 }}>
-                  Estas séries ainda não estão carregadas. Até lá, estão no INE.
-                </p>
-                <a
-                  href="https://www.ine.pt/xurl/indx/0013214/PT"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ui-mono"
-                  style={{ display: 'inline-block', marginTop: '0.75rem', color: 'var(--accent-text)', textDecoration: 'none' }}
-                >
-                  Dormidas por município no INE →
-                </a>
+              <div className="grid-turismo-3">
+                <ColunasAno titulo="Dormidas" formato="numero" pontos={dormidas} />
+                <ColunasAno titulo="Hóspedes" formato="numero" pontos={hospedes} />
+                <ColunasAno titulo="Ocupação-cama" formato="pct" pontos={serie('ocupacaoCama')} nota="Taxa líquida, média do ano" />
+                <ColunasAno titulo="Proveitos totais" formato="milhares-euros" pontos={serie('proveitos')} />
+                <ColunasAno titulo="Rendimento por quarto disponível" formato="euros" pontos={serie('revpar')} nota="RevPAR" />
+                <ColunasAno titulo="Estabelecimentos" formato="numero" pontos={serie('estabelecimentos')} />
               </div>
+              <DataSource meta={ineMeta(TURISMO.dormidas)} />
+            </div>
+          </SectionReveal>
+        )}
+
+        {/* De onde vêm */}
+        {orig && orig.paises.length > 0 && (
+          <SectionReveal id="origem" className="page-section">
+            <div className="section-container">
+              <SectionTitle
+                label="DE ONDE VÊM"
+                title="Mais de metade de fora"
+                subtitle="Espanha à frente; logo atrás, quase empatados, Estados Unidos, Brasil e Itália."
+              />
+              <div className="grid-split" style={{ alignItems: 'start', gap: '3rem' }}>
+                <div>
+                  {orig.portugal != null && orig.estrangeiros != null && (
+                    <BarraRepartida
+                      titulo={`Hóspedes, ${orig.ano}`}
+                      unidade="hóspedes"
+                      segmentos={[
+                        { nome: 'Residentes em Portugal', valor: orig.portugal, cor: COR.hotelaria },
+                        { nome: 'Do estrangeiro', valor: orig.estrangeiros, cor: COR.outros },
+                      ]}
+                    />
+                  )}
+                </div>
+                <div>
+                  <div style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: 500, marginBottom: '0.75rem' }}>
+                    Hóspedes do estrangeiro por país, {orig.ano}
+                  </div>
+                  <RankedBars
+                    unit="hóspedes"
+                    shareOf={orig.total ?? undefined}
+                    data={orig.paises.slice(0, 10).map((p) => ({
+                      name: p.nome.length > 22 ? p.nome.replace('Estados Unidos da América', 'EUA').replace(/Reino Unido.*/, 'Reino Unido') : p.nome,
+                      full: p.nome,
+                      value: p.valor,
+                    }))}
+                  />
+                </div>
+              </div>
+              <DataSource meta={ineMeta(TURISMO.hospedesOrigem)} />
             </div>
           </SectionReveal>
         )}

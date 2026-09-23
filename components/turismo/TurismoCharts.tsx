@@ -139,13 +139,16 @@ export function BarraRepartida({
  * Como escrever o valor. É um nome e não uma função porque a página é um
  * componente de servidor: funções não atravessam para o cliente.
  */
-export type Formato = 'numero' | 'pct' | 'variacao' | 'noites'
+export type Formato = 'numero' | 'pct' | 'variacao' | 'noites' | 'milhares-euros' | 'euros'
 
 const FORMATOS: Record<Formato, (n: number) => string> = {
   numero: (n) => fmt(n),
   pct: (n) => `${fmt(n, 1)}%`,
   variacao: (n) => `${n > 0 ? '+' : n < 0 ? '−' : ''}${fmt(Math.abs(n), 1)}%`,
   noites: (n) => `${fmt(n, 1)} noites`,
+  // O INE publica os proveitos em milhares de euros.
+  'milhares-euros': (n) => `${fmt(n / 1000, 1)} M€`,
+  euros: (n) => `${fmt(n, 1)} €`,
 }
 
 export interface Termo {
@@ -269,6 +272,77 @@ export function ColunasEstrelas({ dados }: { dados: { estrelas: number; total: n
         {dados.map((d) => (
           <span key={d.estrelas} aria-hidden="true" style={{ textAlign: 'center', fontSize: '12px', color: 'var(--text-tertiary)', letterSpacing: '0.05em' }}>
             {'★'.repeat(d.estrelas)}
+          </span>
+        ))}
+      </div>
+      <ChartTooltip tip={tip} />
+    </div>
+  )
+}
+
+// ─── Colunas por ano ─────────────────────────────────────────────────────
+
+/**
+ * Uma grandeza ao longo dos anos. Poucos anos, por isso o valor vai no topo
+ * de cada coluna; o último ano leva o acento, os anteriores ficam a
+ * cinzento — é o que se compara com o quê. Escala a partir de zero.
+ */
+export function ColunasAno({
+  titulo,
+  pontos,
+  formato,
+  nota,
+}: {
+  titulo: string
+  pontos: { ano: string; valor: number }[]
+  formato: Formato
+  nota?: string
+}) {
+  const { ref, tip, at, hide } = useTip()
+  const escrever = FORMATOS[formato]
+  const max = Math.max(...pontos.map((p) => p.valor), 0)
+  if (!pontos.length || max === 0) return null
+  const ALTURA = 110
+  const ultimo = pontos.length - 1
+
+  return (
+    <div ref={ref} style={{ position: 'relative', borderTop: '1px solid var(--border-panel)', paddingTop: '1rem' }}>
+      <div style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: 500 }}>{titulo}</div>
+      {nota && <div className="ui-mono" style={{ marginTop: '0.25rem' }}>{nota}</div>}
+      <div
+        role="img"
+        aria-label={`${titulo}: ${pontos.map((p) => `${p.ano} ${escrever(p.valor)}`).join(', ')}`}
+        style={{ display: 'grid', gridTemplateColumns: `repeat(${pontos.length}, 1fr)`, gap: '0.5rem', alignItems: 'end', height: ALTURA + 26, marginTop: '0.75rem', borderBottom: '1px solid var(--border-panel)' }}
+      >
+        {pontos.map((p, i) => {
+          const rows = [{ label: titulo, value: escrever(p.valor) }]
+          const anterior = pontos[i - 1]
+          if (anterior) {
+            const v = ((p.valor - anterior.valor) / anterior.valor) * 100
+            rows.push({ label: `face a ${anterior.ano}`, value: `${v > 0 ? '+' : v < 0 ? '−' : ''}${fmt(Math.abs(v), 1)}%` })
+          }
+          return (
+            <div
+              key={p.ano}
+              tabIndex={0}
+              onPointerMove={(e) => at(e, p.ano, rows)}
+              onFocus={(e) => at(e, p.ano, rows)}
+              onPointerLeave={hide}
+              onBlur={hide}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%', outlineOffset: 2 }}
+            >
+              <span style={{ fontFamily: 'var(--font-jetbrains)', fontSize: '11px', color: i === ultimo ? 'var(--text-primary)' : 'var(--text-tertiary)', marginBottom: 4, whiteSpace: 'nowrap' }}>
+                {escrever(p.valor)}
+              </span>
+              <div style={{ width: '100%', maxWidth: 24, height: (p.valor / max) * ALTURA, background: i === ultimo ? COR.destaque : COR.referencia, borderRadius: '4px 4px 0 0' }} />
+            </div>
+          )
+        })}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${pontos.length}, 1fr)`, gap: '0.5rem', marginTop: 6 }}>
+        {pontos.map((p) => (
+          <span key={p.ano} aria-hidden="true" style={{ textAlign: 'center', fontSize: '11px', fontFamily: 'var(--font-jetbrains)', color: 'var(--text-tertiary)' }}>
+            {p.ano}
           </span>
         ))}
       </div>

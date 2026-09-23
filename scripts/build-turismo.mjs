@@ -1,7 +1,7 @@
 /**
  * Gerador dos dados da página de Turismo.
  *
- *   node scripts/build-turismo.mjs --max 10   # pede ao INE no máximo 10 períodos em falta
+ *   node scripts/build-turismo.mjs --max 5    # pede ao INE no máximo 5 indicadores em falta
  *   node scripts/build-turismo.mjs --offline  # não pede nada, só reconstrói
  *
  * Duas fases, separadas de propósito:
@@ -48,7 +48,6 @@ const INDICADORES = {
   dormidas: '0013214',
   hospedes: '0013213',
   proveitos: '0013285',
-  dormidasMes: '0012092',
   hospedesOrigem: '0013212',
   estadaMedia: '0013287',
   ocupacaoCama: '0013288',
@@ -131,7 +130,12 @@ async function pedirUm(varcd, dim1) {
   const r = await fetch(url, { signal: AbortSignal.timeout(60_000), headers: { 'User-Agent': USER_AGENT } })
   if (!r.ok) throw new Error(`HTTP ${r.status}`)
   const json = await r.json()
-  if (!Array.isArray(json) || !json[0]?.Dados) throw new Error('resposta sem "Dados"')
+  if (!Array.isArray(json) || !json[0]?.Dados) {
+    // O INE respondeu, mas recusou o pedido: não é bloqueio, é este pedido.
+    const msg = json?.[0]?.Sucesso?.Falso?.[0]?.Msg
+    if (msg) throw Object.assign(new Error(msg), { recusa: true })
+    throw new Error('resposta sem "Dados"')
+  }
   return json
 }
 
@@ -147,60 +151,40 @@ function guardar(varcd, json) {
 }
 
 /**
- * A fila de pedidos. Uma série de que ainda não se conhece o último período
- * começa por um pedido sem `Dim1`, que devolve precisamente esse período;
- * a partir daí pede-se o histórico, do mais recente para o mais antigo.
+ * A fila de pedidos: um por indicador, com `Dim1=T`, que devolve todos os
+ * períodos de Coimbra de uma vez (testado a 23-09-2026; uma lista de
+ * períodos separados por vírgulas é recusada). Fica em `{varcd}/T.json`.
  */
 async function pedir() {
   let feitos = 0
-  const podeMais = () => !MAX || feitos < MAX
-  const umPedido = async (varcd, dim1) => {
-    if (feitos > 0) await sleep(PAUSA_MS)
-    const json = await pedirUm(varcd, dim1)
-    feitos++
-    return json
-  }
-
   for (const [chave, varcd] of Object.entries(INDICADORES)) {
+    if (existsSync(rawPath(varcd, 'T'))) continue
+    if (MAX && feitos >= MAX) break
     try {
-      let ultimo = ultimoConhecido(varcd)
-      if (!ultimo) {
-        if (!podeMais()) break
-        const json = await umPedido(varcd, null)
-        const dim1 = guardar(varcd, json)
-        ultimo = json[0].UltimoPref ?? Object.keys(json[0].Dados)[0]
-        console.log(`✓ ${chave} (${varcd}) ${dim1} — último publicado`)
-      }
-      for (const dim1 of periodosDesejados(chave, ultimo)) {
-        if (existsSync(rawPath(varcd, dim1))) continue
-        if (!podeMais()) break
-        guardar(varcd, await umPedido(varcd, dim1))
-        console.log(`✓ ${chave} (${varcd}) ${dim1}`)
-      }
+      if (feitos > 0) await sleep(PAUSA_MS)
+      feitos++
+      const json = await pedirUm(varcd, 'T')
+      mkdirSync(dirSerie(varcd), { recursive: true })
+      writeFileSync(rawPath(varcd, 'T'), JSON.stringify(json))
+      console.log(`✓ ${chave} (${varcd}) — ${Object.keys(json[0].Dados).join(', ')}`)
     } catch (e) {
-      console.error(`\n✗ ${chave} (${varcd}): ${e.message}`)
+      if (e.recusa) {
+        console.warn(`– ${chave} (${varcd}): o INE recusou — ${e.message}`)
+        continue
+      }
+      console.error(`
+✗ ${chave} (${varcd}): ${e.message}`)
       console.error('Parado — sem novas tentativas. O que já chegou fica guardado; retoma-se onde parou.')
       process.exitCode = 1
       break
     }
-    if (!podeMais()) break
   }
   console.log(`${feitos} pedido(s) ao INE nesta corrida.`)
 }
 
 /** Quantos pedidos faltam para ter tudo — sem tocar na rede. */
 function emFalta() {
-  let n = 0
-  for (const [chave, varcd] of Object.entries(INDICADORES)) {
-    const ultimo = ultimoConhecido(varcd)
-    if (!ultimo) {
-      // Um pedido para saber o último período, mais o histórico por estimar.
-      n += 1 + (mensal(chave) ? MESES_HISTORICO - 1 : 10)
-      continue
-    }
-    n += periodosDesejados(chave, ultimo).filter((d) => !existsSync(rawPath(varcd, d))).length
-  }
-  return n
+  return Object.values(INDICADORES).filter((v) => !existsSync(rawPath(v, 'T'))).length
 }
 
 // ─── 2. CONSTRUIR ────────────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 import { published, type Sourced } from '@/lib/provenance'
-import { TURISMO, type SerieTurismo } from '@/lib/turismo-coimbra'
+import { TURISMO, type ChaveTurismo, type SerieTurismo } from '@/lib/turismo-coimbra'
 
 /**
  * Turismo em Coimbra — os números da página /turismo.
@@ -102,11 +102,43 @@ export function ineMeta(serie: SerieTurismo | undefined): Sourced {
   )
 }
 
-/** Séries que a secção de evolução precisa para desenhar alguma coisa. */
-export function evolucaoDisponivel() {
-  const anual = TURISMO.dormidas?.pontos.length ?? 0
-  const mensal = TURISMO.dormidasMes?.pontos.length ?? 0
-  return { anual, mensal, pronta: anual >= 3 || mensal >= 12 }
+export interface PontoAno {
+  ano: string
+  valor: number
+}
+
+/**
+ * Uma categoria de uma série anual, ano a ano, só com os anos em que o INE
+ * publica valor. `T` é o total; `01` a hotelaria.
+ */
+export function serie(chave: ChaveTurismo, cod = 'T'): PontoAno[] {
+  return (TURISMO[chave]?.pontos ?? [])
+    .map((p) => ({ ano: p.p, valor: p.v[cod] }))
+    .filter((p): p is PontoAno => p.valor != null)
+}
+
+/** Códigos de agregados na série por país — não são países. */
+const NAO_PAISES = new Set(['T', 'E', 'PT', 'ZZ'])
+
+/** Hóspedes por país de residência, no último ano publicado. */
+export function origem() {
+  const s = TURISMO.hospedesOrigem
+  const ponto = ultimoPonto(s)
+  if (!s || !ponto) return null
+  const total = ponto.v.T ?? null
+  const estrangeiros = ponto.v.E ?? null
+  const paises = Object.entries(ponto.v)
+    .filter(([c, v]) => !NAO_PAISES.has(c) && v != null)
+    .map(([c, v]) => ({ codigo: c, nome: s.categorias[c], valor: v as number }))
+    .sort((a, b) => b.valor - a.valor)
+  return {
+    ano: ponto.p,
+    total,
+    portugal: ponto.v.PT ?? null,
+    estrangeiros,
+    pctEstrangeiros: total && estrangeiros != null ? (estrangeiros / total) * 100 : null,
+    paises,
+  }
 }
 
 export { TURISMO }

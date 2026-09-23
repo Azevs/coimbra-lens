@@ -1,0 +1,799 @@
+[ {
+  "IndicadorCod" : "0013214",
+  "IndicadorDsg" : "Dormidas (N.º) nos estabelecimentos de alojamento turístico por Localização geográfica (NUTS - 2024) e Tipo (alojamento turístico); Anual - INE, Inquérito à permanência de hóspedes na hotelaria e outros alojamentos",
+  "MetaInfUrl" : "https://www.ine.pt/bddXplorer/htdocs/minfo.jsp?var_cd=0013214&lingua=PT",
+  "DataExtracao" : "2026-09-23T14:28:58.184+01:00",
+  "DataUltimoAtualizacao" : "2026-07-09",
+  "UltimoPref" : "2025",
+  "Dados" : {
+    "2022" : [ {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010111",
+      "dim_3_t" : "1 estrela",
+      "ind_string" : "35 158",
+      "valor" : "35158"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010112",
+      "dim_3_t" : "2 estrelas",
+      "ind_string" : "66 292",
+      "valor" : "66292"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010114",
+      "dim_3_t" : "4 estrelas",
+      "ind_string" : "172 812",
+      "valor" : "172812"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "01",
+      "dim_3_t" : "Hotelaria",
+      "ind_string" : "472 610",
+      "valor" : "472610"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "T",
+      "dim_3_t" : "Total",
+      "ind_string" : "652 146",
+      "valor" : "652146"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010212",
+      "dim_3_t" : "2 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010213",
+      "dim_3_t" : "3 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010215",
+      "dim_3_t" : "5 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "0103",
+      "dim_3_t" : "Pousadas/Quintas da Madeira",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "0104",
+      "dim_3_t" : "Apartamentos turísticos",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010402",
+      "dim_3_t" : "2 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010403",
+      "dim_3_t" : "3 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010404",
+      "dim_3_t" : "4 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010405",
+      "dim_3_t" : "5 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "0105",
+      "dim_3_t" : "Aldeamentos turísticos",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010503",
+      "dim_3_t" : "3 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010504",
+      "dim_3_t" : "4 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010505",
+      "dim_3_t" : "5 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "0101",
+      "dim_3_t" : "Hotéis",
+      "sinal_conv" : "…",
+      "sinal_conv_desc" : "Dado confidencial",
+      "ind_string" : "…"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010113",
+      "dim_3_t" : "3 estrelas",
+      "sinal_conv" : "…",
+      "sinal_conv_desc" : "Dado confidencial",
+      "ind_string" : "…"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010115",
+      "dim_3_t" : "5 estrelas",
+      "sinal_conv" : "…",
+      "sinal_conv_desc" : "Dado confidencial",
+      "ind_string" : "…"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "0102",
+      "dim_3_t" : "Hotéis-apartamentos",
+      "sinal_conv" : "…",
+      "sinal_conv_desc" : "Dado confidencial",
+      "ind_string" : "…"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010214",
+      "dim_3_t" : "4 estrelas",
+      "sinal_conv" : "…",
+      "sinal_conv_desc" : "Dado confidencial",
+      "ind_string" : "…"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "02",
+      "dim_3_t" : "Alojamento local",
+      "sinal_conv" : "…",
+      "sinal_conv_desc" : "Dado confidencial",
+      "ind_string" : "…"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "03",
+      "dim_3_t" : "Turismo no espaço rural e de habitação",
+      "sinal_conv" : "…",
+      "sinal_conv_desc" : "Dado confidencial",
+      "ind_string" : "…"
+    } ],
+    "2023" : [ {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010112",
+      "dim_3_t" : "2 estrelas",
+      "ind_string" : "68 599",
+      "valor" : "68599"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010113",
+      "dim_3_t" : "3 estrelas",
+      "ind_string" : "98 865",
+      "valor" : "98865"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010114",
+      "dim_3_t" : "4 estrelas",
+      "ind_string" : "218 771",
+      "valor" : "218771"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "01",
+      "dim_3_t" : "Hotelaria",
+      "ind_string" : "498 153",
+      "valor" : "498153"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "T",
+      "dim_3_t" : "Total",
+      "ind_string" : "683 509",
+      "valor" : "683509"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010212",
+      "dim_3_t" : "2 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010213",
+      "dim_3_t" : "3 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010215",
+      "dim_3_t" : "5 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "0103",
+      "dim_3_t" : "Pousadas/Quintas da Madeira",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "0104",
+      "dim_3_t" : "Apartamentos turísticos",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010402",
+      "dim_3_t" : "2 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010403",
+      "dim_3_t" : "3 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010404",
+      "dim_3_t" : "4 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010405",
+      "dim_3_t" : "5 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "0105",
+      "dim_3_t" : "Aldeamentos turísticos",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010503",
+      "dim_3_t" : "3 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010504",
+      "dim_3_t" : "4 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010505",
+      "dim_3_t" : "5 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "0101",
+      "dim_3_t" : "Hotéis",
+      "sinal_conv" : "…",
+      "sinal_conv_desc" : "Dado confidencial",
+      "ind_string" : "…"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010111",
+      "dim_3_t" : "1 estrela",
+      "sinal_conv" : "…",
+      "sinal_conv_desc" : "Dado confidencial",
+      "ind_string" : "…"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010115",
+      "dim_3_t" : "5 estrelas",
+      "sinal_conv" : "…",
+      "sinal_conv_desc" : "Dado confidencial",
+      "ind_string" : "…"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "0102",
+      "dim_3_t" : "Hotéis-apartamentos",
+      "sinal_conv" : "…",
+      "sinal_conv_desc" : "Dado confidencial",
+      "ind_string" : "…"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010214",
+      "dim_3_t" : "4 estrelas",
+      "sinal_conv" : "…",
+      "sinal_conv_desc" : "Dado confidencial",
+      "ind_string" : "…"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "02",
+      "dim_3_t" : "Alojamento local",
+      "sinal_conv" : "…",
+      "sinal_conv_desc" : "Dado confidencial",
+      "ind_string" : "…"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "03",
+      "dim_3_t" : "Turismo no espaço rural e de habitação",
+      "sinal_conv" : "…",
+      "sinal_conv_desc" : "Dado confidencial",
+      "ind_string" : "…"
+    } ],
+    "2024" : [ {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010112",
+      "dim_3_t" : "2 estrelas",
+      "ind_string" : "66 543",
+      "valor" : "66543"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010113",
+      "dim_3_t" : "3 estrelas",
+      "ind_string" : "98 918",
+      "valor" : "98918"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010114",
+      "dim_3_t" : "4 estrelas",
+      "ind_string" : "220 832",
+      "valor" : "220832"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "01",
+      "dim_3_t" : "Hotelaria",
+      "ind_string" : "509 511",
+      "valor" : "509511"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "T",
+      "dim_3_t" : "Total",
+      "ind_string" : "708 604",
+      "valor" : "708604"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010212",
+      "dim_3_t" : "2 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010213",
+      "dim_3_t" : "3 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010215",
+      "dim_3_t" : "5 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "0103",
+      "dim_3_t" : "Pousadas/Quintas da Madeira",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "0104",
+      "dim_3_t" : "Apartamentos turísticos",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010402",
+      "dim_3_t" : "2 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010403",
+      "dim_3_t" : "3 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010404",
+      "dim_3_t" : "4 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010405",
+      "dim_3_t" : "5 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "0105",
+      "dim_3_t" : "Aldeamentos turísticos",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010503",
+      "dim_3_t" : "3 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010504",
+      "dim_3_t" : "4 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010505",
+      "dim_3_t" : "5 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "0101",
+      "dim_3_t" : "Hotéis",
+      "sinal_conv" : "…",
+      "sinal_conv_desc" : "Dado confidencial",
+      "ind_string" : "…"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010111",
+      "dim_3_t" : "1 estrela",
+      "sinal_conv" : "…",
+      "sinal_conv_desc" : "Dado confidencial",
+      "ind_string" : "…"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010115",
+      "dim_3_t" : "5 estrelas",
+      "sinal_conv" : "…",
+      "sinal_conv_desc" : "Dado confidencial",
+      "ind_string" : "…"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "0102",
+      "dim_3_t" : "Hotéis-apartamentos",
+      "sinal_conv" : "…",
+      "sinal_conv_desc" : "Dado confidencial",
+      "ind_string" : "…"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010214",
+      "dim_3_t" : "4 estrelas",
+      "sinal_conv" : "…",
+      "sinal_conv_desc" : "Dado confidencial",
+      "ind_string" : "…"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "02",
+      "dim_3_t" : "Alojamento local",
+      "sinal_conv" : "…",
+      "sinal_conv_desc" : "Dado confidencial",
+      "ind_string" : "…"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "03",
+      "dim_3_t" : "Turismo no espaço rural e de habitação",
+      "sinal_conv" : "…",
+      "sinal_conv_desc" : "Dado confidencial",
+      "ind_string" : "…"
+    } ],
+    "2025" : [ {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010112",
+      "dim_3_t" : "2 estrelas",
+      "ind_string" : "60 275",
+      "valor" : "60275"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010113",
+      "dim_3_t" : "3 estrelas",
+      "ind_string" : "112 479",
+      "valor" : "112479"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010114",
+      "dim_3_t" : "4 estrelas",
+      "ind_string" : "198 115",
+      "valor" : "198115"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "01",
+      "dim_3_t" : "Hotelaria",
+      "ind_string" : "496 694",
+      "valor" : "496694"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "T",
+      "dim_3_t" : "Total",
+      "ind_string" : "699 087",
+      "valor" : "699087"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010212",
+      "dim_3_t" : "2 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010213",
+      "dim_3_t" : "3 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010215",
+      "dim_3_t" : "5 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "0103",
+      "dim_3_t" : "Pousadas/Quintas da Madeira",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "0104",
+      "dim_3_t" : "Apartamentos turísticos",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010402",
+      "dim_3_t" : "2 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010403",
+      "dim_3_t" : "3 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010404",
+      "dim_3_t" : "4 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010405",
+      "dim_3_t" : "5 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "0105",
+      "dim_3_t" : "Aldeamentos turísticos",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010503",
+      "dim_3_t" : "3 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010504",
+      "dim_3_t" : "4 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010505",
+      "dim_3_t" : "5 estrelas",
+      "sinal_conv" : "-",
+      "sinal_conv_desc" : "Dado nulo ou não aplicável",
+      "ind_string" : "-"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "0101",
+      "dim_3_t" : "Hotéis",
+      "sinal_conv" : "…",
+      "sinal_conv_desc" : "Dado confidencial",
+      "ind_string" : "…"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010111",
+      "dim_3_t" : "1 estrela",
+      "sinal_conv" : "…",
+      "sinal_conv_desc" : "Dado confidencial",
+      "ind_string" : "…"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010115",
+      "dim_3_t" : "5 estrelas",
+      "sinal_conv" : "…",
+      "sinal_conv_desc" : "Dado confidencial",
+      "ind_string" : "…"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "0102",
+      "dim_3_t" : "Hotéis-apartamentos",
+      "sinal_conv" : "…",
+      "sinal_conv_desc" : "Dado confidencial",
+      "ind_string" : "…"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "010214",
+      "dim_3_t" : "4 estrelas",
+      "sinal_conv" : "…",
+      "sinal_conv_desc" : "Dado confidencial",
+      "ind_string" : "…"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "02",
+      "dim_3_t" : "Alojamento local",
+      "sinal_conv" : "…",
+      "sinal_conv_desc" : "Dado confidencial",
+      "ind_string" : "…"
+    }, {
+      "geocod" : "1920603",
+      "geodsg" : "Coimbra",
+      "dim_3" : "03",
+      "dim_3_t" : "Turismo no espaço rural e de habitação",
+      "sinal_conv" : "…",
+      "sinal_conv_desc" : "Dado confidencial",
+      "ind_string" : "…"
+    } ]
+  },
+  "Sucesso" : {
+    "Verdadeiro" : [ {
+      "Msg" : "OK"
+    } ]
+  }
+} ]
