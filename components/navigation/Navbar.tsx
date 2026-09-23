@@ -22,6 +22,7 @@ const AREAS = [
   { label: 'Agora', href: '/' },
   { label: 'Visitar', href: '/visitar' },
   { label: 'Agenda', href: '/agenda' },
+  { label: 'Turismo', href: '/turismo' },
   { label: 'Território', href: '/territorio' },
   { label: 'Zonas verdes', href: '/zonas-verdes' },
   { label: 'Zonas urbanas', href: '/zonas-urbanas' },
@@ -41,12 +42,18 @@ const SECTIONS: Record<string, { label: string; href: string }[]> = {
     { label: 'Explorar', href: '#explorar' },
   ],
   '/visitar': [
+    { label: 'Paço em 3D', href: '#paco-3d' },
     { label: 'Roteiro a pé', href: '#roteiro' },
-    { label: 'Atracções', href: '#atraccoes' },
+    { label: 'Lugares', href: '#lugares' },
   ],
   '/agenda': [
     { label: 'Este mês', href: '#este-mes' },
     { label: 'Todos os anos', href: '#cultura' },
+  ],
+  '/turismo': [
+    { label: '2019 → 2024', href: '#camas' },
+    { label: 'Coimbra e o país', href: '#pais' },
+    { label: 'Onde se dorme', href: '#alojamento' },
   ],
   '/territorio': [
     { label: 'Mapa', href: '#mapa' },
@@ -95,7 +102,7 @@ export default function Navbar() {
         </Link>
 
         {/* Áreas — Fraunces, com o filete terracota na activa */}
-        <div className="hidden md:flex items-center" style={{ gap: '1.875rem' }}>
+        <div className="nav-areas hidden lg:flex items-center">
           {AREAS.map((a) => (
             <Link
               key={a.href}
@@ -118,7 +125,7 @@ export default function Navbar() {
 
       {/* Secções da área activa */}
       {sections.length > 0 && (
-        <div className="nav-sub hidden md:flex">
+        <div className="nav-sub hidden lg:flex">
           {sections.map((link) => (
             <a key={link.href} href={link.href} className="nav-sub-link">
               {link.label}
@@ -141,7 +148,7 @@ export default function Navbar() {
               margin: '0 auto',
               padding: '0.5rem 0',
             }}
-            className="md:hidden"
+            className="lg:hidden"
           >
             {AREAS.map((a) => (
               <Link

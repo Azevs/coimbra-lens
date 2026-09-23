@@ -27,7 +27,7 @@ const GREEN_BOX = {
 const verdesNaCidade = GREEN_SPACES.filter((s) => s.distanceKm <= 3)
 
 const porId = new Map(ATTRACTIONS.map((a) => [a.id, a]))
-const paragens = WALKING_ROUTE.map((p) => porId.get(p.id)?.name).filter((n): n is string => Boolean(n))
+const paragens = WALKING_ROUTE.flatMap((t) => t.paragens).map((p) => porId.get(p.id)?.name).filter((n): n is string => Boolean(n))
 
 const edificios = URBAN_ZONES.reduce((n, z) => n + z.edificios, 0)
 
@@ -144,7 +144,7 @@ export default function Explorar() {
             </ol>
             <span className="porta-texto">
               <span className="porta-linha">
-                {paragens.length} paragens, da Alta à margem esquerda.
+                {paragens.length} paragens, da Baixa à margem esquerda, pela Alta.
               </span>
               <Entrar />
             </span>

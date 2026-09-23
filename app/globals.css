@@ -149,7 +149,7 @@ body {
 section[id] {
   scroll-margin-top: 104px;
 }
-@media (max-width: 767px) {
+@media (max-width: 1023px) {
   .page-section[id],
   section[id] { scroll-margin-top: 64px; }
 }
@@ -431,6 +431,16 @@ input[type='range']::-moz-range-thumb {
 }
 @media (min-width: 900px) { .grid-split { grid-template-columns: 1fr 1fr; } }
 
+/* Turismo — pequenos múltiplos, cada um com a sua escala. */
+.grid-turismo-3,
+.grid-turismo-2 {
+  display: grid;
+  gap: 1.75rem 2.5rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 720px)  { .grid-turismo-2 { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 900px)  { .grid-turismo-3 { grid-template-columns: repeat(3, 1fr); } }
+
 /* Cartões de indicador — nunca menos de dois por linha, nem em telemóvel. */
 .grid-stats {
   display: grid;
@@ -595,7 +605,7 @@ input[type='range']::-moz-range-thumb {
   color: var(--text-primary);
   background: var(--bg-primary);
 }
-@media (min-width: 768px) { .hero { min-height: calc(100svh - 96px); } }
+@media (min-width: 1024px) { .hero { min-height: calc(100svh - 96px); } }
 
 /* Por baixo de tudo, o fundo que fica se o mapa não vier. */
 .hero-fundo {
@@ -991,17 +1001,333 @@ input[type='range']::-moz-range-thumb {
   border-bottom: 1px solid var(--text-primary);
 }
 
+/* ══ Visitar ═══════════════════════════════════════════════════════════
+   Um dia a pé: a maqueta do Paço, o roteiro com mapa e as fichas por zona.
+   A maqueta usa as cores do modelo (papel, terracota das telhas, cartão). */
+
+.visitar-abertura { padding: 0 1.25rem; }
+.visitar-kicker {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-family: var(--font-jetbrains);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  margin-bottom: 1rem;
+}
 .visitar-headline {
   font-family: var(--font-fraunces), 'Fraunces', Georgia, serif;
   font-weight: 900;
-  font-size: clamp(2.75rem, 8vw, 7rem);
-  line-height: 0.9;
+  font-size: clamp(3rem, 9.5vw, 8.5rem);
+  line-height: 0.88;
   letter-spacing: -0.045em;
   margin: 0;
-  padding: 1.5rem 0 1.75rem;
+  padding: 1.75rem 0 2rem;
+  text-wrap: balance;
 }
+.visitar-headline em {
+  font-style: italic;
+  font-weight: 300;
+  color: var(--accent);
+  letter-spacing: -0.03em;
+}
+.visitar-entrada {
+  display: grid;
+  gap: 2rem;
+  border-top: 1px solid var(--border-panel);
+  padding-top: 1.75rem;
+}
+@media (min-width: 900px) {
+  .visitar-entrada { grid-template-columns: 1.6fr 1fr; gap: 4rem; align-items: start; }
+}
+.visitar-lede {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: clamp(1.25rem, 2.4vw, 1.75rem);
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: -0.012em;
+  max-width: 38rem;
+  text-wrap: pretty;
+  margin: 0;
+}
+.visitar-indice { list-style: none; margin: 0; padding: 0; }
+.visitar-indice li { border-top: 1px solid var(--border-subtle); }
+.visitar-indice li:last-child { border-bottom: 1px solid var(--border-subtle); }
+.visitar-indice a {
+  display: flex;
+  gap: 0.875rem;
+  align-items: baseline;
+  padding: 0.7rem 0;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 0.9375rem;
+  transition: color 160ms ease, padding 160ms ease;
+}
+.visitar-indice a span {
+  font-family: var(--font-jetbrains);
+  font-size: 11px;
+  color: var(--accent-text);
+}
+.visitar-indice a:hover { color: var(--accent); padding-left: 0.25rem; }
 
-/* Roteiro — a ordem das paragens, numerada */
+/* O Paço em 3D — uma banda de papel recuado, de ponta a ponta */
+.visitar-3d {
+  margin-top: 4rem;
+  padding: 3.5rem 1.25rem 3rem;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-panel);
+  border-bottom: 1px solid var(--border-panel);
+}
+@media (min-width: 1024px) { .visitar-3d { padding: 4.5rem 2rem 3.5rem; } }
+.visitar-3d-cabeca { max-width: 44rem; margin-bottom: 1.5rem; }
+.visitar-3d-cabeca h2 {
+  font-size: clamp(2.25rem, 5.5vw, 4rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  margin: 0.75rem 0 0.875rem;
+}
+.visitar-3d-cabeca p {
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  font-weight: 300;
+  max-width: 34rem;
+}
+.visitar-3d-rodape {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem 2rem;
+  border-top: 1px solid var(--border-panel);
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+}
+.visitar-3d-chave {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.75rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+.visitar-3d-chave li { display: flex; align-items: center; gap: 0.5rem; }
+.chave-cor {
+  width: 16px;
+  height: 14px;
+  border: 1px solid var(--border-strong);
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+.chave-redonda { border-radius: 50%; width: 14px; }
+
+.visita3d { display: grid; gap: 1.5rem; }
+@media (min-width: 1024px) {
+  .visita3d { grid-template-columns: minmax(0, 1fr) 19rem; gap: 2.5rem; align-items: start; }
+}
+.visita3d-palco { position: relative; width: 100%; }
+@media (max-width: 699px) { .visita3d-palco { aspect-ratio: 1 / 1 !important; } }
+.visita3d-cartaz,
+.visita3d-webgl {
+  position: absolute !important;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  transition: opacity 480ms ease;
+}
+.visita3d-cartaz { object-fit: contain; pointer-events: none; }
+.visita3d-webgl:active { cursor: grabbing !important; }
+
+.visita3d-pino {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--bg-raised);
+  color: var(--accent-text);
+  border: 1.5px solid var(--accent);
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 0 0 3px rgba(242, 238, 230, 0.55), 0 2px 6px rgba(20, 23, 28, 0.18);
+  transition: background 180ms ease, color 180ms ease, width 180ms ease, height 180ms ease;
+  will-change: transform;
+  z-index: 2;
+}
+.visita3d-pino:hover,
+.visita3d-pino:focus-visible { background: var(--accent); color: #fff; z-index: 3; }
+.visita3d-pino.is-escolhido { background: var(--accent); color: #fff; width: 36px; height: 36px; z-index: 4; }
+.visita3d-pino-nome {
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  font-family: var(--font-ibm-plex), sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  padding: 3px 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease;
+}
+.visita3d-pino:hover .visita3d-pino-nome,
+.visita3d-pino:focus-visible .visita3d-pino-nome,
+.visita3d-pino.is-escolhido .visita3d-pino-nome { opacity: 1; }
+@media (max-width: 699px) {
+  .visita3d-pino { width: 26px; height: 26px; font-size: 11px; }
+  .visita3d-pino.is-escolhido { width: 30px; height: 30px; }
+  .visita3d-pino-nome { display: none; }
+}
+.visita3d-pista,
+.visita3d-tudo {
+  position: absolute;
+  font-family: var(--font-jetbrains);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  padding: 0.4rem 0.7rem;
+}
+.visita3d-pista { left: 50%; bottom: 3%; transform: translateX(-50%); color: var(--text-tertiary); pointer-events: none; white-space: nowrap; }
+.visita3d-tudo { right: 0; top: 0; color: var(--text-primary); cursor: pointer; z-index: 5; }
+.visita3d-tudo:hover { border-color: var(--accent); color: var(--accent-text); }
+
+/* Fotografia | Maqueta — dois botões colados, como um separador */
+.visita3d-modo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  border: 1px solid var(--border-panel);
+  background: var(--bg-primary);
+}
+.visita3d-modo button {
+  font-family: var(--font-jetbrains);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 0.45rem 0.75rem;
+  background: none;
+  border: 0;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+.visita3d-modo button + button { border-left: 1px solid var(--border-panel); }
+.visita3d-modo button[aria-pressed='true'] { background: var(--text-primary); color: var(--bg-primary); }
+.visita3d-modo button:not([aria-pressed='true']):hover { color: var(--accent-text); }
+
+.visita3d-coluna { min-width: 0; }
+.visita3d-chave {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  list-style: none;
+  margin: 0.875rem 0 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+.visita3d-chave li { display: flex; align-items: center; gap: 0.5rem; }
+
+.visita3d-lista { list-style: none; margin: 0; padding: 0; }
+.visita3d-lista li { border-top: 1px solid var(--border-panel); }
+.visita3d-lista li:last-child { border-bottom: 1px solid var(--border-panel); }
+.visita3d-item {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  width: 100%;
+  padding: 0.8rem 0;
+  background: none;
+  border: 0;
+  text-align: left;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.visita3d-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent);
+  color: var(--accent-text);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 11px;
+  font-weight: 700;
+  transition: background 160ms ease, color 160ms ease;
+}
+.visita3d-titulo { font-size: 1.1875rem; line-height: 1.2; transition: color 160ms ease; }
+.visita3d-item:hover .visita3d-titulo { color: var(--accent); }
+.is-aberto .visita3d-num { background: var(--accent); color: #fff; }
+.is-aberto .visita3d-titulo { color: var(--accent); }
+.visita3d-texto p {
+  margin: 0;
+  padding: 0 0 1.1rem 2.5rem;
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  font-weight: 300;
+  text-wrap: pretty;
+}
+/* Em ecrã estreito, o texto do ponto escolhido vive por baixo da maqueta, e
+   não na lista — que fica lá em baixo, fora de vista enquanto a câmara voa. */
+.visita3d-legenda {
+  display: flex;
+  gap: 0.875rem;
+  align-items: flex-start;
+  border-top: 2px solid var(--accent);
+  padding-top: 0.875rem;
+}
+.visita3d-legenda .visita3d-num { background: var(--accent); color: #fff; margin-top: 2px; }
+.visita3d-legenda strong { display: block; font-size: 1.25rem; line-height: 1.2; margin-bottom: 0.375rem; }
+.visita3d-legenda p { margin: 0; font-size: 0.9375rem; line-height: 1.6; color: var(--text-secondary); font-weight: 300; }
+@media (max-width: 1023px) {
+  .visita3d-texto { display: none; }
+}
+@media (min-width: 1024px) {
+  .visita3d-legenda { display: none; }
+}
+.visita3d-passos { display: flex; justify-content: space-between; margin-top: 0.875rem; }
+.visita3d-passos button {
+  background: none;
+  border: 0;
+  padding: 0.25rem 0;
+  font-family: var(--font-jetbrains);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  cursor: pointer;
+}
+.visita3d-passos button:hover { color: var(--accent); }
+
+/* Roteiro — três tempos à esquerda, o mapa preso à direita */
+.roteiro { display: grid; gap: 2.5rem; }
+/* No telemóvel o mapa vem primeiro: é o resumo do dia; a lista é o pormenor. */
+@media (max-width: 959px) { .roteiro-lado { order: -1; } }
+@media (min-width: 960px) {
+  .roteiro { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 3.5rem; align-items: start; }
+  .roteiro-lado { position: sticky; top: 112px; }
+}
+.roteiro-tempo + .roteiro-tempo { margin-top: 2.25rem; }
+.roteiro-tempo-cabeca { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.625rem; }
+.roteiro-tempo-cabeca h3 { font-size: 1.75rem; line-height: 1.1; margin: 0; }
 .roteiro-lista {
   list-style: none;
   display: grid;
@@ -1010,29 +1336,140 @@ input[type='range']::-moz-range-thumb {
   margin: 0;
   padding: 0;
 }
-@media (min-width: 900px) { .roteiro-lista { grid-template-columns: 1fr 1fr; column-gap: 2.5rem; } }
-
 .roteiro-item {
   display: grid;
   grid-template-columns: 2.25rem 1fr;
   gap: 0.75rem;
   align-items: baseline;
   border-top: 1px solid var(--border-subtle);
-  padding: 0.875rem 0;
+  padding: 0.8rem 0;
 }
-
 .roteiro-numero {
   font-family: var(--font-jetbrains);
   font-size: 12px;
+  font-weight: 700;
   color: var(--accent-text);
 }
-
 .roteiro-nome {
   font-size: 1.25rem;
   color: var(--text-primary);
   text-decoration: none;
+  transition: color 160ms ease;
 }
-.roteiro-nome:hover { color: var(--accent); }
+.roteiro-nome:hover,
+.roteiro-item.is-activa .roteiro-nome { color: var(--accent); }
+.roteiro-nota {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 300;
+}
+.roteiro-mapa {
+  width: 100%;
+  height: 420px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-panel);
+}
+@media (min-width: 960px) { .roteiro-mapa { height: min(640px, calc(100vh - 180px)); } }
+.roteiro-legenda { margin-top: 0.625rem; }
+.roteiro-pino {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--accent);
+  color: #fff;
+  border: 2px solid #fff;
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(20, 23, 28, 0.3);
+  transition: background 160ms ease, box-shadow 160ms ease;
+}
+.roteiro-pino:hover,
+.roteiro-pino.is-activa { background: var(--text-primary); box-shadow: 0 0 0 5px rgba(176, 58, 11, 0.35); z-index: 2; }
+
+/* Fichas por zona */
+.lugares { padding-top: 1rem; }
+.lugares-area + .lugares-area { margin-top: 4.5rem; }
+.lugares-area-cabeca {
+  display: grid;
+  gap: 0.375rem;
+  border-top: 3px solid var(--text-primary);
+  padding-top: 0.875rem;
+  margin-bottom: 2rem;
+}
+@media (min-width: 900px) {
+  .lugares-area-cabeca { grid-template-columns: 1fr 1.4fr; gap: 3rem; align-items: baseline; }
+}
+.lugares-area-cabeca h3 { font-size: clamp(1.75rem, 3.5vw, 2.5rem); line-height: 1; margin: 0; letter-spacing: -0.02em; }
+.lugares-area-cabeca p { margin: 0; color: var(--text-secondary); font-weight: 300; font-size: 0.9375rem; }
+.lugares-grelha { display: grid; gap: 3rem 2rem; grid-template-columns: 1fr; align-items: start; }
+@media (min-width: 720px) { .lugares-grelha { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1120px) { .lugares-grelha { grid-template-columns: repeat(3, 1fr); } }
+.ficha { border-top: 1px solid var(--border-panel); padding-top: 1.125rem; }
+/* Uma zona com um lugar só: a ficha abre-se ao lado da chapa, em vez de
+   ficar numa coluna sozinha com duas vazias à direita. */
+@media (min-width: 720px) {
+  .lugares-grelha--um { grid-template-columns: 1fr; }
+  .lugares-grelha--um .ficha {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: 'nome chapa' 'texto chapa' 'rodape chapa' 'mais chapa';
+    grid-template-rows: auto auto auto 1fr;
+    column-gap: 2.5rem;
+    max-width: 62rem;
+  }
+  .lugares-grelha--um .ficha-nome { grid-area: nome; }
+  .lugares-grelha--um .ficha-texto { grid-area: texto; }
+  .lugares-grelha--um .ficha-rodape { grid-area: rodape; align-self: start; }
+  .lugares-grelha--um .ficha-chapa { grid-area: chapa; }
+  .lugares-grelha--um .ficha-mais { grid-area: mais; align-self: start; justify-self: start; }
+}
+.ficha-nome { font-size: 1.5rem; line-height: 1.15; margin: 0 0 0.5rem; }
+.ficha-texto { font-size: 0.9375rem; line-height: 1.7; color: var(--text-secondary); font-weight: 300; margin: 0 0 0.875rem; }
+.ficha-rodape {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  font-family: var(--font-jetbrains);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 0.75rem;
+  margin-bottom: 1.125rem;
+}
+.ficha-rodape a { color: var(--accent-text); text-decoration: none; }
+.ficha-rodape a:hover { color: var(--accent); }
+.ficha-chapa { position: relative; }
+.ficha-3d {
+  position: absolute;
+  top: 0.625rem;
+  left: 0.625rem;
+  font-family: var(--font-jetbrains);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  padding: 0.35rem 0.6rem;
+  text-decoration: none;
+}
+.ficha-3d:hover { background: var(--accent); }
+.ficha-mais {
+  display: inline-block;
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--accent-text);
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+}
+.ficha-mais:hover { color: var(--accent); }
 
 /* Agenda — dia a dia */
 .agenda-dia {
@@ -1129,8 +1566,8 @@ input[type='range']::-moz-range-thumb {
 }
 .nav-sub-link:hover { color: var(--accent-text); }
 
-/* A barra inteira (áreas + secções) é pegajosa. Em desktop mede 96px, em
-   telemóvel 56px porque a fila de secções vive dentro do menu. */
+/* A barra inteira (áreas + secções) é pegajosa. A partir de 1024px mede
+   96px; abaixo, 56px, porque a fila de secções vive dentro do menu. */
 .nav-sticky {
   position: sticky;
   top: 0;
@@ -1151,6 +1588,19 @@ input[type='range']::-moz-range-thumb {
   border-bottom: 3px solid transparent;
   white-space: nowrap;
 }
+/* Nove áreas não cabem abaixo de 1024px: aí manda o menu. Acima, o
+   espaço e a letra encolhem com a janela até caberem com folga; se mesmo
+   assim faltar, a fila desliza em vez de passar por cima do logótipo. */
+.nav-areas {
+  gap: clamp(0.875rem, 1.6vw, 1.875rem);
+  margin-left: 1.5rem;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.nav-areas::-webkit-scrollbar { display: none; }
+.nav-areas .nav-area { font-size: clamp(15px, 1.55vw, 17px); }
+
 .nav-area[aria-current='page'] {
   color: var(--text-primary);
   border-bottom-color: var(--accent);
@@ -1242,7 +1692,7 @@ footer a {
   border: 0;
   cursor: pointer;
 }
-@media (min-width: 768px) { .nav-burger { display: none; } }
+@media (min-width: 1024px) { .nav-burger { display: none; } }
 
 /* ── Mapa das freguesias ─────────────────────────────────────────────────
    Um mapa fixo, desenhado em SVG a partir da carta oficial. Não há tiles,
@@ -2506,3 +2956,7 @@ footer a {
   .porta, .porta-imagem, .porta-camadas i, .porta-entrar span { transition: none; }
   .porta:hover { transform: none; }
 }
+
+
+
+

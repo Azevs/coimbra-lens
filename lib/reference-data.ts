@@ -185,6 +185,28 @@ export const TRACKED: TrackedDatum[] = [
     usedIn: 'lib/urban-zones (scripts/build-urban-model.mjs)',
   },
   {
+    id: 'turismo-pordata',
+    label: 'Turismo 2019 e 2024 (dormidas, camas, ocupação, estada média)',
+    // PORDATA_TURISMO em lib/turismo.ts, lido à mão do Retrato do Município.
+    asOf: '2024',
+    source: 'PORDATA · Retrato do Município',
+    // A PORDATA refaz o retrato quando o INE fecha o ano; 2025 já saiu no
+    // INE em Julho de 2026.
+    refreshEvery: 12,
+    usedIn: 'lib/turismo (PORDATA_TURISMO)',
+  },
+  {
+    id: 'turismo-ine',
+    label: 'Séries de turismo do INE (IPHH)',
+    // TURISMO em lib/turismo-coimbra.ts; o gerador só pede o que falta.
+    // Sem ineVarcd de propósito: o check:data não deve pedir nada ao INE
+    // por causa do turismo — o gerador já sabe o último período.
+    asOf: '2025',
+    source: 'INE',
+    refreshEvery: 12,
+    usedIn: 'lib/turismo-coimbra (scripts/build-turismo.mjs)',
+  },
+  {
     id: 'agua-qualidade',
     label: 'Estado da qualidade da água da rede',
     asOf: '2025',

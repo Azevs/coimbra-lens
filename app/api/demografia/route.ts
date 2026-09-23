@@ -188,6 +188,12 @@ const CACHE_MS = 24 * 60 * 60 * 1000
 let lastGood: { payload: DemografiaPayload; at: number } | null = null
 
 export async function GET() {
+  // Em desenvolvimento cada arranque do servidor começa sem cache e volta a
+  // pedir tudo ao INE — é assim que se acumulam pedidos até ele fechar a
+  // porta. `INE_OFFLINE=1` (em .env.development.local) corta isso.
+  if (process.env.INE_OFFLINE === '1') {
+    return Response.json(empty('INE desligado neste ambiente (INE_OFFLINE=1).'))
+  }
   if (lastGood && Date.now() - lastGood.at < CACHE_MS) {
     return Response.json(lastGood.payload)
   }

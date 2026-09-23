@@ -198,6 +198,62 @@ export default function PlacePlate({ kind }: { kind: PlateKind }) {
         </>
       )}
 
+      {/* Santa Cruz — a fachada estreita entre pináculos, o portal ao meio */}
+      {kind === 'mosteiro' && (
+        <>
+          <rect x="0" y="120" width="126" height="86" fill="var(--accent)" fillOpacity="0.45" />
+          <rect x="294" y="130" width="126" height="76" fill="var(--accent)" fillOpacity="0.45" />
+          <rect x="146" y="70" width="128" height="136" fill="var(--accent)" fillOpacity="0.85" />
+          <path d="M146 70 L210 30 L274 70 Z" fill="var(--accent)" fillOpacity="0.85" />
+          <g fill="var(--accent)">
+            <rect x="130" y="52" width="16" height="154" />
+            <path d="M130 52 L138 24 L146 52 Z" />
+            <rect x="274" y="52" width="16" height="154" />
+            <path d="M274 52 L282 24 L290 52 Z" />
+          </g>
+          <g fill="var(--bg-sunken)">
+            <path d="M188 206 v-54 a22 22 0 0 1 44 0 v54 z" />
+            <circle cx="210" cy="100" r="13" />
+            <rect x="20" y="146" width="16" height="24" /><rect x="56" y="146" width="16" height="24" /><rect x="92" y="146" width="16" height="24" />
+            <rect x="312" y="152" width="16" height="22" /><rect x="348" y="152" width="16" height="22" /><rect x="384" y="152" width="16" height="22" />
+          </g>
+          <g stroke="var(--accent)" strokeWidth="2">
+            <line x1="210" y1="87" x2="210" y2="113" />
+            <line x1="197" y1="100" x2="223" y2="100" />
+          </g>
+          <g stroke="var(--bg-sunken)" strokeWidth="2" fill="none">
+            <path d="M180 206 v-56 a30 30 0 0 1 60 0 v56" />
+          </g>
+        </>
+      )}
+
+      {/* Machado de Castro — a varanda de arcos em cima, o criptopórtico romano por baixo do chão */}
+      {kind === 'museu' && (
+        <>
+          <rect x="44" y="96" width="332" height="110" fill="var(--accent)" fillOpacity="0.85" />
+          <path d="M34 96 L210 70 L386 96 Z" fill="var(--accent)" fillOpacity="0.85" />
+          <g fill="var(--bg-sunken)">
+            <path d="M92 150 v-26 a14 14 0 0 1 28 0 v26 z" />
+            <path d="M140 150 v-26 a14 14 0 0 1 28 0 v26 z" />
+            <path d="M188 150 v-26 a14 14 0 0 1 28 0 v26 z" />
+            <path d="M236 150 v-26 a14 14 0 0 1 28 0 v26 z" />
+            <path d="M284 150 v-26 a14 14 0 0 1 28 0 v26 z" />
+            <rect x="92" y="172" width="20" height="34" />
+            <rect x="200" y="172" width="20" height="34" />
+            <rect x="308" y="172" width="20" height="34" />
+          </g>
+          <line x1="44" y1="150" x2="376" y2="150" stroke="var(--bg-sunken)" strokeWidth="3" />
+          <g fill="none" stroke="var(--accent)" strokeOpacity="0.75" strokeWidth="2">
+            <path d="M60 250 v-20 a16 16 0 0 1 32 0 v20" />
+            <path d="M112 250 v-20 a16 16 0 0 1 32 0 v20" />
+            <path d="M164 250 v-20 a16 16 0 0 1 32 0 v20" />
+            <path d="M216 250 v-20 a16 16 0 0 1 32 0 v20" />
+            <path d="M268 250 v-20 a16 16 0 0 1 32 0 v20" />
+            <path d="M320 250 v-20 a16 16 0 0 1 32 0 v20" />
+          </g>
+        </>
+      )}
+
       {/* Portugal dos Pequenitos — o país à escala de uma criança */}
       {kind === 'miniatura' && (
         <>
