@@ -64,12 +64,14 @@ export default function HeroMap({ luz }: { luz: Luz }) {
         },
       },
       ...CAMERA,
-      padding: padding(),
       interactive: false,
       attributionControl: false,
       antialias: true,
       fadeDuration: 0,
     })
+    // `padding` não faz parte do tipo MapOptions do mapbox-gl 3.19: aplica-se
+    // logo a seguir, antes do primeiro desenho.
+    map.setPadding(padding())
     map.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-right')
     map.on('error', (e) => console.warn('[HeroMap]', e.error?.message ?? e))
 
