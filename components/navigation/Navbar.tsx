@@ -42,9 +42,10 @@ const SECTIONS: Record<string, { label: string; href: string }[]> = {
     { label: 'Explorar', href: '#explorar' },
   ],
   '/visitar': [
-    { label: 'Paço em 3D', href: '#paco-3d' },
-    { label: 'Roteiro a pé', href: '#roteiro' },
-    { label: 'Lugares', href: '#lugares' },
+    { label: 'O dia no mapa', href: '#percurso' },
+    { label: 'Manhã', href: '#manha' },
+    { label: 'Meio do dia', href: '#meio-dia' },
+    { label: 'Tarde', href: '#tarde' },
   ],
   '/agenda': [
     { label: 'Este mês', href: '#este-mes' },

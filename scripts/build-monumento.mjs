@@ -70,7 +70,8 @@ const { SkeletonBuilder } = (await import('straight-skeleton')).default
  * outra cor e o resto é contexto. `pontos` são os lugares que a visita
  * aponta; cada um vem de um elemento do OSM, nunca de uma coordenada à mão.
  * `alvo: 'topo'` pousa o ponto no alto do que o laser mediu ali (a torre);
- * `'chao'`, no terreno.
+ * `'chao'`, no terreno; `'face-poente'`, ao meio da face poente do contorno
+ * (a fachada de uma igreja), com a altura medida das torres por trás.
  */
 const MONUMENTOS = [
   {
@@ -95,6 +96,31 @@ const MONUMENTOS = [
       { id: 'torre', osm: 'way/115574903', alvo: 'topo' },
       { id: 'capela', osm: 'way/1315902875', alvo: 'topo' },
       { id: 'joanina', osm: 'way/51293313', alvo: 'topo' },
+    ],
+  },
+  {
+    id: 'santa-cruz',
+    nome: 'Mosteiro de Santa Cruz',
+    // Entre a fachada da igreja e o Jardim da Manga: a poente apanha a Praça
+    // 8 de Maio, a nascente a fonte da Manga inteira.
+    centro: { lat: 40.21107, lon: -8.42821 },
+    raio: 100,
+    // Só a reconstituição: sem fotografia nos telhados, a verificação dos
+    // contornos contra a ortofoto (ver `fotografia`) não é precisa aqui.
+    vestidos: ['rico'],
+    conjunto: [
+      'way/204192080', // Igreja de Santa Cruz
+      'relation/2962560', // o mosteiro, com o Claustro do Silêncio por dentro
+      'way/223328749', // Café Santa Cruz — a antiga igreja de São João de Santa Cruz
+    ],
+    pontos: [
+      // A fachada não tem nó no OSM: o ponto é o meio da face poente do
+      // contorno da igreja.
+      { id: 'fachada', osm: 'way/204192080', alvo: 'face-poente' },
+      { id: 'nave', osm: 'way/204192080', alvo: 'topo' },
+      { id: 'tumulos', osm: 'node/12593540265', alvo: 'topo' },
+      { id: 'claustro', osm: 'way/1349800549', alvo: 'chao' },
+      { id: 'manga', osm: 'way/873267259', alvo: 'chao' },
     ],
   },
 ]
@@ -464,6 +490,7 @@ out geom;`) // "body": os membros das relações vêm com geometria
     const g = tipo === 'node' ? [{ lat: e.lat, lon: e.lon }] : e.geometry
     const XY = g.map((q) => paraTM06.forward([q.lon, q.lat]))
     let X, Y
+    let altura = null
     if (tipo === 'way' && XY.length >= 4) {
       // Centro de massa do contorno; numa linha (escadas), a média dos vértices.
       const a = areaAssinada(XY)
@@ -479,13 +506,37 @@ out geom;`) // "body": os membros das relações vêm com geometria
         Y = cy / (6 * a)
       }
     }
+    if (p.alvo === 'face-poente') {
+      // O meio da aresta mais comprida virada a poente (normal exterior com
+      // x < −0,8): numa igreja orientada, a fachada.
+      const ccw = areaAssinada(XY) > 0
+      let melhor = null
+      for (let i = 0; i < XY.length - 1; i++) {
+        const [a, b] = [XY[i], XY[i + 1]]
+        const L = Math.hypot(b[0] - a[0], b[1] - a[1])
+        if (L < 1) continue
+        const nx = ccw ? (b[1] - a[1]) / L : -(b[1] - a[1]) / L
+        if (nx < -0.8 && (!melhor || L > melhor.L)) melhor = { L, a, b, m: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2] }
+      }
+      if (!melhor) throw new Error(`ponto ${p.id}: ${p.osm} não tem face a poente`)
+      ;[X, Y] = melhor.m
+      // A altura da fachada: o mais alto que o laser mediu na faixa de 5 m
+      // por trás dela (as torres), acima do chão à porta.
+      const xs = XY.map((q) => q[0]), ys = XY.map((q) => q[1])
+      let topo = -Infinity
+      for (let x = Math.floor((Math.min(...xs) - 1) / 2) * 2 + 1; x <= Math.max(...xs); x += 2)
+        for (let y = Math.floor((Math.min(...ys) - 1) / 2) * 2 + 1; y <= Math.max(...ys); y += 2)
+          if (dentroDoPoligono(x, y, XY) && distSegmento([x, y], melhor.a, melhor.b) < 5)
+            topo = Math.max(topo, pixelDGT(mds, x, y) ?? -Infinity)
+      altura = +(topo - chao(X, Y)).toFixed(1)
+    }
     if (X == null) {
       X = XY.reduce((s, q) => s + q[0], 0) / XY.length
       Y = XY.reduce((s, q) => s + q[1], 0) / XY.length
     }
     const g0 = chao(X, Y)
     let z = g0
-    let altura = null
+
     if (p.alvo === 'topo') {
       // O ponto mais alto que o laser mediu no contorno (ou à volta do nó).
       let topo = -Infinity
@@ -540,6 +591,7 @@ out geom;`) // "body": os membros das relações vêm com geometria
     nome: m.nome,
     centro: [m.centro.lat, m.centro.lon],
     raio: R,
+    ...(m.vestidos ? { vestidos: m.vestidos } : {}),
     edificios: edificios.length,
     doMonumento: conj.length,
     semAltura: conta.semAltura,
@@ -601,6 +653,12 @@ export interface Monumento {
   nome: string
   centro: [number, number]
   raio: number
+  /**
+   * As versões que existem do modelo. Sem o campo, as três: fotografia
+   * (\`<id>.glb\`), reconstituição (\`<id>-rico.glb\`) e cartão. Só
+   * \`['rico']\` quando os contornos não foram verificados contra a ortofoto.
+   */
+  vestidos?: ('foto' | 'rico' | 'cartao')[]
   edificios: number
   doMonumento: number
   semAltura: number

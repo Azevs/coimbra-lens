@@ -142,12 +142,16 @@ def tex_reboco(rng, cor_hex, nome, n=512):
     return _imagem(nome, cor), altura
 
 
-def tex_cantaria(rng, n=512):
-    """Cantaria de pedra de Ançã: fiadas de 0,5 m (4 em 2 m), juntas finas, pátina."""
+def tex_cantaria(rng, n=512, base_hex='D8C7A0', nome='cantaria', sujidade=0.18):
+    """Cantaria de pedra de Ançã: fiadas de 0,5 m (4 em 2 m), juntas finas, pátina.
+
+    `sujidade` é o escorrido escuro da chuva: a fachada de Santa Cruz, virada
+    à praça, tem-no muito mais do que o pátio do Paço.
+    """
     fiada = n // 4
     cor = np.zeros((n, n, 3))
     altura = np.ones((n, n))
-    base = _hex('D8C7A0')
+    base = _hex(base_hex)
     comprimentos = (128, 160, 192, 256)       # 0,5 a 1 m de pedra
     for f in range(4):
         y0 = f * fiada
@@ -164,9 +168,9 @@ def tex_cantaria(rng, n=512):
         altura[y0:y0 + 2, :] = 0.2                  # junta horizontal
     patina = _fbm(n, rng)
     escorrido = np.repeat(_ruido(n, 40, rng)[:1, :], n, axis=0) * np.linspace(0.3, 1, n)[:, None]
-    cor = cor * (0.82 + 0.25 * patina[..., None]) * (1 - 0.18 * escorrido[..., None])
+    cor = cor * (0.82 + 0.25 * patina[..., None]) * (1 - sujidade * escorrido[..., None])
     cor = np.where((altura < 0.5)[..., None], cor * 0.7, cor)
-    return _imagem('cantaria', cor), _imagem('cantaria-relevo', _normal(altura, 1.5), dados=True)
+    return _imagem(nome, cor), _imagem(nome + '-relevo', _normal(altura, 1.5), dados=True)
 
 
 def tex_janela(rng, w=256, h=512):
@@ -245,6 +249,42 @@ def tex_grade_porta(rng, w=256, h=512):
     fundo = _hex('4B4640') * (0.6 + 0.6 * (1 - y / h))[..., None]
     cor = np.where((l1 | l2)[..., None], _hex('1B1A18'), fundo)
     return _imagem('grade-porta', cor)
+
+
+def tex_lavrado(rng, n=512):
+    """Pedra lavrada: a massa de relevo do portal manuelino, vista de longe.
+
+    Não copia nenhum motivo real — é um tecido de rosetas, cordas em
+    diagonal e folhagem em ruído, com as covas escurecidas, que à escala da
+    maqueta se lê como pedra muito trabalhada e gasta. 1 repetição = 1,5 m.
+    """
+    y, x = np.mgrid[0:n, 0:n] / n
+    c = 8                                            # 8 × 8 células de ~19 cm
+    fx, fy = (x * c) % 1 - 0.5, (y * c) % 1 - 0.5
+    r = np.hypot(fx, fy)
+    th = np.arctan2(fy, fx)
+    roseta = np.clip(1 - r * 2.4, 0, 1) * (0.6 + 0.4 * np.cos(6 * th))
+    corda = np.abs(np.sin((x + y) * np.pi * c)) ** 6 * 0.5 + np.abs(np.sin((x - y) * np.pi * c)) ** 6 * 0.5
+    folha = _fbm(n, rng, ((16, 0.4), (32, 0.35), (64, 0.25)))
+    h = np.clip(0.45 * roseta + 0.3 * corda + 0.5 * folha, 0, 1)
+    base = _hex('C9B48C')
+    cor = base[None, None, :] * (0.55 + 0.6 * h[..., None])
+    sujo = _fbm(n, rng, ((3, 0.6), (7, 0.4)))
+    cor = cor * (0.8 + 0.3 * sujo[..., None])
+    return _imagem('lavrado', cor), _imagem('lavrado-relevo', _normal(h, 4.0), dados=True)
+
+
+def tex_platibanda(rng, w=256, h=256):
+    """Platibanda de cruzes vazadas: 1,2 m × 1,2 m, uma cruz por módulo, com transparência."""
+    y, x = np.mgrid[0:h, 0:w]
+    u, v = x / w, 1 - y / h                          # v = 0 em baixo
+    a = np.ones((h, w))
+    cruz = ((np.abs(u - 0.5) < 0.075) & (v > 0.24) & (v < 0.84)) | \
+           ((np.abs(u - 0.5) < 0.22) & (np.abs(v - 0.62) < 0.07))
+    a[cruz] = 0
+    cor = np.ones((h, w, 3)) * _hex('C4AE85') * (0.85 + 0.2 * _fbm(w, rng)[..., None])
+    cor[(v < 0.2) | (v > 0.9)] *= 0.9
+    return _imagem('platibanda', cor, alpha=a)
 
 
 # ============================================================ materiais =====
@@ -326,6 +366,21 @@ class Materiais:
         reg('ferro', _material('ferro', cor='22201E', aspereza=0.5), 2.0)
         reg('bandeira-verde', _material('bandeira-verde', cor='0B6A2E', aspereza=0.8), 2.0)
         reg('bandeira-vermelha', _material('bandeira-vermelha', cor='C8102E', aspereza=0.8), 2.0)
+
+        # --- Santa Cruz (depois dos do Paço: a mesma semente dá-lhes as mesmas texturas) ---
+        # A pedra da fachada, mais dourada e mais suja do que a do Paço.
+        dour, dour_n = tex_cantaria(rng, base_hex='C8B084', nome='cantaria-dourada', sujidade=0.4)
+        reg('pedra-igreja', _material('igreja-parede', img=dour, normal=dour_n, forca_normal=0.8, aspereza=0.85), 2.0)
+        lav, lav_n = tex_lavrado(rng)
+        reg('lavrado', _material('lavrado', img=lav, normal=lav_n, forca_normal=1.0, aspereza=0.9), 1.5)
+        reg('platibanda', _material('platibanda', img=tex_platibanda(rng), aspereza=0.85, alpha=True), 1.2)
+        # A Manga: reboco amarelo e coberturas de pedra cinzenta. 'parede' no
+        # nome, para a visita a poder acender.
+        am, _h = tex_reboco(rng, 'D6BC5E', 'reboco-amarelo')
+        reg('reboco-amarelo', _material('manga-parede', img=am, normal=reb_n, forca_normal=0.4), 3.0)
+        cz, cz_n = tex_cantaria(rng, base_hex='A89E84', nome='cantaria-cinza', sujidade=0.35)
+        reg('pedra-cinza', _material('manga-cobertura', img=cz, normal=cz_n, forca_normal=0.7), 2.0)
+        reg('agua', _material('agua', cor='4C6660', aspereza=0.06), 2.0)
 
 
 # ============================================================ geometria =====
@@ -451,6 +506,36 @@ class Acumulador:
             dirf = u * meio.x + Z * meio.z
             self.face(mat, [p(xa, y0, za), p(xb, y0, zb), p(xb, y1, zb), p(xa, y1, za)], dirf)
 
+    def arco_anel(self, mat, o, u, n, xc, r0, r1, zc, y0, y1, seg=12):
+        """Arco de aduelas de volta perfeita (a moldura de um vão), de y0 a y1 para fora."""
+        o, u, n = Vector((o[0], o[1], 0)), Vector((u[0], u[1], 0)), Vector((n[0], n[1], 0))
+        p = lambda x, y, z: o + u * x + n * y + Z * z
+        for k in range(seg):
+            t0, t1 = math.pi * k / seg, math.pi * (k + 1) / seg
+            c0, s0, c1, s1 = math.cos(t0), math.sin(t0), math.cos(t1), math.sin(t1)
+            q = lambda r, c, s, y: p(xc + r * c, y, zc + r * s)
+            rad = u * math.cos((t0 + t1) / 2) + Z * math.sin((t0 + t1) / 2)
+            self.face(mat, [q(r0, c0, s0, y1), q(r1, c0, s0, y1), q(r1, c1, s1, y1), q(r0, c1, s1, y1)], n)
+            self.face(mat, [q(r0, c0, s0, y0), q(r1, c0, s0, y0), q(r1, c1, s1, y0), q(r0, c1, s1, y0)], -n)
+            self.face(mat, [q(r1, c0, s0, y0), q(r1, c1, s1, y0), q(r1, c1, s1, y1), q(r1, c0, s0, y1)], rad)
+            self.face(mat, [q(r0, c0, s0, y0), q(r0, c1, s1, y0), q(r0, c1, s1, y1), q(r0, c0, s0, y1)], -rad)
+
+    def cupula(self, mat, c, r, rz, seg=16, aneis=6):
+        """Meia esfera (achatada por `rz`) assente em `c`, virada para cima."""
+        C = Vector(c)
+        pts = []
+        for i in range(aneis + 1):
+            f = (math.pi / 2) * i / aneis
+            rr, z = r * math.cos(f), C.z + rz * math.sin(f)
+            pts.append([Vector((C.x + rr * math.cos(2 * math.pi * k / seg), C.y + rr * math.sin(2 * math.pi * k / seg), z))
+                        for k in range(seg)])
+        for i in range(aneis):
+            for k in range(seg):
+                j = (k + 1) % seg
+                q = [pts[i][k], pts[i][j], pts[i + 1][j], pts[i + 1][k]] if i < aneis - 1 else [pts[i][k], pts[i][j], pts[i + 1][k]]
+                centro = sum(q, Vector()) / len(q)
+                self.face(mat, q, centro - Vector((C.x, C.y, C.z - rz * 0.3)))
+
     def criar(self, prefixo):
         obs = []
         for mat, (V, F, U) in self.g.items():
@@ -463,6 +548,9 @@ class Acumulador:
                     uv.data[li].uv = (s, t)
             me.validate()
             ob = bpy.data.objects.new(prefixo + mat, me)
+            # As coordenadas de textura já vêm certas daqui: o `uv_planar` do
+            # monumento.py não lhes toca (janelas e portas perdiam o desenho).
+            ob['acc'] = 1
             ob.data.materials.append(self.mats.m[mat])
             bpy.context.collection.objects.link(ob)
             obs.append(ob)
@@ -573,9 +661,24 @@ REITORIA = 'way/201989127'
 CAPELA = 'way/1315902875'
 JOANINA = 'way/51293313'
 
+IGREJA = 'way/204192080'        # Igreja de Santa Cruz
+MOSTEIRO = 'relation/2962560'   # o mosteiro, com o Claustro do Silêncio por dentro
+CAFE = 'way/223328749'          # Café Santa Cruz, a antiga igreja de São João
+MANGA = 'way/873267259'         # a fonte do Claustro da Manga
+
+# Os que são pedra à vista e não reboco caiado.
+PEDRA = {IGREJA, CAFE}
+
+
+def a_parte(id_):
+    """Os edifícios que a reconstituição modela peça a peça, em vez do volume do gerador."""
+    return {'paco-das-escolas': {TORRE}, 'santa-cruz': {MANGA}}.get(id_, set())
+
 
 def reboco_de(b):
     """O tom de cal de cada edifício: fixo pelo id, para não mudar a cada geração."""
+    if b['osm'] in PEDRA:
+        return 'pedra-igreja'
     if b['k'] == 'conjunto':
         return 'reboco-monumento'
     return 'reboco-%d' % (sum(ord(c) for c in b['osm']) % 4)
@@ -947,29 +1050,18 @@ def _d_joao_iii(acc, ctx, ponto):
     acc.esfera('cantaria', (x, y, g + 6.05), 0.22, seg=10)
 
 
-def pormenores(ctx, mats):
-    """Tudo o que se desenha por cima dos volumes. Devolve os objectos criados."""
-    acc = Acumulador(mats)
-    pontos = {p['id']: p['p'] for p in ctx.cena['pontos']}
-    por_osm = {b['osm']: b for b in ctx.edificios}
-    obs = []
+def _fachadas(acc, ctx, saltar=(), sem_cornija=(), sem_janelas=(), PE=None, MERLOES=(), evitar=None):
+    """Soco, cunhais, cornija, merlões e janelas em todas as fachadas livres.
 
-    vl_aresta = _via_latina(acc, ctx, por_osm[NORTE], pontos['via-latina'])
-    corpo_torre, acc_torre = _torre(ctx, por_osm[TORRE], mats)
-    obs += corpo_torre
-    pf = _porta_ferrea(acc, ctx, por_osm[REITORIA], pontos['porta-ferrea'])
-    cap_aresta = _portal_capela(acc, ctx, por_osm[CAPELA])
-    joa_aresta = _portal_joanina(acc, ctx, por_osm[JOANINA])
-    _d_joao_iii(acc, ctx, pontos['d-joao-iii'])
-
-    sem_cornija = {(NORTE, 0, vl_aresta)}
-    sem_janelas = {(JOANINA, 0, joa_aresta), (CAPELA, 0, cap_aresta)}
-    PE = {NORTE: 4.6, REITORIA: 3.8, JOANINA: 4.4, CAPELA: None}
-    MERLOES = {NORTE, CAPELA}
+    `sem_cornija` e `sem_janelas` levam (osm, anel, aresta) ou (osm, anel), o
+    anel inteiro; `PE` é o pé-direito de cada edifício do monumento (None =
+    sem janelas); `evitar` dá, por edifício, os pontos a não tapar.
+    """
+    PE = PE or {}
+    evitar = evitar or {}
     janelas = 0
-
     for b in ctx.edificios:
-        if b['k'] == 'sem-altura' or 'beirado' not in b or b['osm'] == TORRE or b.get('_perdido'):
+        if b['k'] == 'sem-altura' or 'beirado' not in b or b['osm'] in saltar or b.get('_perdido'):
             continue
         mon = b['k'] == 'conjunto'
         beirado = b['beirado']
@@ -1002,7 +1094,8 @@ def pormenores(ctx, mats):
                     if sal and L > 2 * larg:
                         acc.caixa('cantaria', a, u, n, x0, x0 + larg, 0, 0.1 if mon else 0.06,
                                   max(ga, gb) + 0.8, beirado - (0.75 if mon else 0.35))
-                if (b['osm'], ri, i) not in sem_cornija:
+                chave = (b['osm'], ri, i)
+                if chave not in sem_cornija and (b['osm'], ri) not in sem_cornija:
                     if mon:
                         acc.caixa('cantaria', a, u, n, -0.1, L + 0.1, 0, 0.14, beirado - 0.75, beirado - 0.5)
                         acc.caixa('cantaria', a, u, n, -0.25, L + 0.25, 0, 0.32, beirado - 0.5, beirado - 0.28)
@@ -1015,9 +1108,327 @@ def pormenores(ctx, mats):
                             acc.caixa('reboco-monumento', a, u, n, x - 0.22, x + 0.22, 0.06, 0.5,
                                       beirado + 0.06, beirado + 0.68)
                             x += 1.15
-                if hf and (b['osm'], ri, i) not in sem_janelas:
-                    janelas += _janelas(acc, ctx, a, u, n, L, hf, beirado, mon, evitar=pf if b['osm'] == REITORIA else ())
+                if hf and chave not in sem_janelas and (b['osm'], ri) not in sem_janelas:
+                    janelas += _janelas(acc, ctx, a, u, n, L, hf, beirado, mon, evitar=evitar.get(b['osm'], ()))
+    return janelas
+
+
+# ============================================================ Paço ===========
+
+
+def _pormenores_paco(ctx, mats):
+    acc = Acumulador(mats)
+    pontos = {p['id']: p['p'] for p in ctx.cena['pontos']}
+    por_osm = {b['osm']: b for b in ctx.edificios}
+    obs = []
+
+    vl_aresta = _via_latina(acc, ctx, por_osm[NORTE], pontos['via-latina'])
+    corpo_torre, acc_torre = _torre(ctx, por_osm[TORRE], mats)
+    obs += corpo_torre
+    pf = _porta_ferrea(acc, ctx, por_osm[REITORIA], pontos['porta-ferrea'])
+    cap_aresta = _portal_capela(acc, ctx, por_osm[CAPELA])
+    joa_aresta = _portal_joanina(acc, ctx, por_osm[JOANINA])
+    _d_joao_iii(acc, ctx, pontos['d-joao-iii'])
+
+    janelas = _fachadas(
+        acc, ctx,
+        saltar={TORRE},
+        sem_cornija={(NORTE, 0, vl_aresta)},
+        sem_janelas={(JOANINA, 0, joa_aresta), (CAPELA, 0, cap_aresta)},
+        PE={NORTE: 4.6, REITORIA: 3.8, JOANINA: 4.4, CAPELA: None},
+        MERLOES={NORTE, CAPELA},
+        evitar={REITORIA: pf},
+    )
     obs += acc.criar('Rico_')
     obs += acc_torre.criar('Rico_torre_')
     print('reconstituição: %d janelas' % janelas)
     return obs
+
+
+# ====================================================== Santa Cruz ===========
+#
+# Desenhado a partir de fotografias da Wikimedia Commons (a fachada de frente,
+# a fonte da Manga de três lados) e das descrições do guia de Pedro Dias
+# (Coimbra, 2002) reproduzidas no roteiro da Presidência da República: a
+# fachada de 1507–1513 com as duas torres, o portal de 1522–1526, as três
+# figuras sobre a porta, o arco do início do século XIX à frente; o claustro
+# de cinco tramos por lado e dois pisos, com o tanque ao centro; a fonte da
+# Manga com o templete e os quatro cubelos. A altura da fachada é a do LiDAR
+# (`altura` do ponto 'fachada'); as proporções entre as partes, das fotografias.
+
+
+def _cruz(acc, mat, c, u, n, z0, h):
+    """Cruz de pedra: haste e braço, de frente para `n`."""
+    acc.caixa(mat, c, u, n, -0.08, 0.08, -0.08, 0.08, z0, z0 + h)
+    acc.caixa(mat, c, u, n, -h * 0.28, h * 0.28, -0.08, 0.08, z0 + h * 0.62, z0 + h * 0.74)
+
+
+def _fachada_igreja(acc_ig, acc, ctx, b, H):
+    """A frontaria: duas torres com coruchéus, a platibanda de cruzes, o janelão, o portal e o arco."""
+    a, bb, u, n, L, idx = _face_para(b, Vector((-1, 0)))
+    g = ctx.cota(*(a + u * (L / 2) + n * 3.0))
+    k = L / 18.3                    # as proporções das fotografias, à largura medida
+    T = 4.2 * k                     # largura de cada torre
+    P, K = 'pedra-igreja', 'lavrado'
+    Ht = g + H                      # topo das torres: o medido
+    Hc = g + 0.69 * H               # o cordão a meio das torres
+    xc = L / 2
+
+    # --- as torres ---
+    for (x0, x1) in ((0, T), (L - T, L)):
+        xt = (x0 + x1) / 2
+        acc_ig.caixa(P, a, u, n, x0 - 0.15, x1 + 0.15, -3.6, 0.75, g - 1.5, g + 1.2)
+        acc_ig.caixa(P, a, u, n, x0, x1, -3.5, 0.6, g + 1.2, Hc)
+        acc_ig.caixa(P, a, u, n, x0 - 0.12, x1 + 0.12, -3.62, 0.74, Hc, Hc + 0.45)
+        acc_ig.caixa(P, a, u, n, x0 + 0.2, x1 - 0.2, -3.3, 0.4, Hc + 0.45, Ht - 0.6)
+        acc_ig.caixa(P, a, u, n, x0 - 0.05, x1 + 0.05, -3.7, 0.62, Ht - 0.6, Ht)
+        c = a + u * xt + n * (-1.45)
+        acc_ig.cilindro(P, (c.x, c.y), T / 2 - 0.35, 0.0, Ht, Ht + 4.0, seg=8, tampa=False)
+        for sx in (-1, 1):
+            for sy in (-1, 1):
+                p = c + u * (sx * (T / 2 - 0.3)) + n * (sy * 1.75)
+                acc.cilindro(K, (p.x, p.y), 0.2, 0.0, Ht, Ht + 1.5, seg=6, tampa=False)
+        _cruz(acc, P, c, u, n, Ht + 3.9, 0.9)
+        # uma fresta por andar, na frente
+        for z0 in (g + 0.45 * H, Hc + 1.6):
+            acc.caixa(K, a, u, n, xt - 0.45, xt + 0.45, 0.6, 0.7, z0 - 0.2, z0 + 1.9)
+            acc.plano('escuro', a, u, n, xt - 0.28, xt + 0.28, z0, z0 + 1.7, 0.71)
+
+    # --- o pano do meio, mais alto do que a nave ---
+    acc_ig.caixa(P, a, u, n, T, L - T, -0.9, 0.2, g - 1.5, g + 20.8 * k)
+    zp = g + 20.8 * k
+    acc.plano('platibanda', a, u, n, T, L - T, zp, zp + 1.2, 0.0,
+              uvs=((0, 0), ((L - 2 * T) / 1.2, 0), ((L - 2 * T) / 1.2, 1), (0, 1)))
+    acc.caixa(P, a, u, n, T, L - T, -0.25, 0.25, zp + 1.2, zp + 1.35)
+    # o corpo central, ainda mais alto, com a cruz grande
+    m = 3.2 * k
+    acc_ig.caixa(P, a, u, n, xc - m, xc + m, -0.9, 0.2, zp, zp + 1.6)
+    acc.plano('platibanda', a, u, n, xc - m, xc + m, zp + 1.6, zp + 2.6, 0.0,
+              uvs=((0, 0), (2 * m / 1.2, 0), (2 * m / 1.2, 0.83), (0, 0.83)))
+    acc.caixa(P, a, u, n, xc - m - 0.1, xc + m + 0.1, -0.3, 0.3, zp + 2.6, zp + 2.8)
+    c = a + u * xc + n * (-0.1)
+    _cruz(acc, P, c, u, n, zp + 2.8, 3.2)
+    for s in (-1, 1):
+        p = a + u * (xc + s * m) + n * (-0.1)
+        acc.cilindro(K, (p.x, p.y), 0.28, 0.0, zp + 2.8, zp + 4.6, seg=6, tampa=False)
+        _cruz(acc, P, p, u, n, zp + 4.5, 0.6)
+
+    # --- o janelão, na sua moldura lavrada ---
+    zj = g + 12.2 * k
+    acc.caixa(K, a, u, n, xc - 1.9, xc + 1.9, 0.2, 0.55, zj - 1.0, zj + 5.9)
+    acc.frontao(K, a, u, n, xc, 4.0, zj + 5.9, 1.9, 0.2, 0.55)
+    p = a + u * xc + n * 0.4
+    acc.cilindro(K, (p.x, p.y), 0.22, 0.0, zj + 7.7, zj + 8.8, seg=6, tampa=False)
+    acc.arco('escuro', a, u, n, xc, 2.1, zj, zj + 4.7, 0.56)
+    acc.arco('grade-porta', a, u, n, xc, 2.0, zj, zj + 4.6, 0.57)
+
+    # --- o portal: o retábulo de pedra, entre dois pilares com pináculos ---
+    for s in (-1, 1):
+        x0 = xc + s * (xc - T + 0.45)            # à face de dentro das torres
+        xa, xb = min(x0, x0 - s * 1.8), max(x0, x0 - s * 1.8)
+        acc.caixa(K, a, u, n, xa, xb, 0, 1.3, g - 0.5, g + 15.6 * k)
+        p = a + u * ((xa + xb) / 2) + n * 0.65
+        acc.cilindro(K, (p.x, p.y), 0.7, 0.0, g + 15.6 * k, g + 18.6 * k, seg=8, tampa=False)
+        _estatua(acc, p.x + n.x * 0.75, p.y + n.y * 0.75, g + 9.8 * k, 1.7, mat=K)
+    acc.caixa(K, a, u, n, T + 1.3, L - T - 1.3, 0, 0.5, g - 0.3, g + 11.2 * k)
+    acc.caixa(K, a, u, n, T + 1.3, L - T - 1.3, 0, 1.1, g + 11.2 * k, g + 11.7 * k)
+    # as três figuras sobre a porta
+    for dx in (-2.1, 0, 2.1):
+        acc.arco('escuro', a, u, n, xc + dx, 1.0, g + 9.2 * k, g + 11.1 * k, 0.51)
+        p = a + u * (xc + dx) + n * 0.8
+        _estatua(acc, p.x, p.y, g + 9.2 * k, 1.75, mat=K)
+
+    # --- o arco do início do século XIX, à frente da porta ---
+    ys = (0.5, 2.3)
+    for s in (-1, 1):
+        acc.caixa(P, a, u, n, xc + min(s * 1.8, s * 3.0), xc + max(s * 1.8, s * 3.0), *ys, g - 0.4, g + 5.9)
+        p = a + u * (xc + s * 2.4) + n * (ys[1] + 0.25)
+        acc.cilindro(K, (p.x, p.y), 0.26, 0.24, g + 0.6, g + 5.9, seg=10)
+    acc.arco_anel(P, a, u, n, xc, 1.8, 3.0, g + 5.9, *ys)
+    acc.caixa(P, a, u, n, xc - 3.3, xc + 3.3, ys[0], ys[1] + 0.3, g + 8.9, g + 9.4)
+    # a porta, no fundo do arco
+    acc.arco('escuro', a, u, n, xc, 3.6, g, g + 7.7, 0.51)
+    acc.plano('porta', a, u, n, xc - 1.3, xc + 1.3, g, g + 5.0, 0.53)
+    return idx
+
+
+def _fachada_cafe(acc, ctx, b):
+    """A antiga igreja de São João: o arco grande envidraçado e as janelas por cima."""
+    a, bb, u, n, L, idx = _face_para(b, Vector((-1, 0)))
+    g = ctx.cota(*(a + u * (L / 2) + n * 2.0))
+    xc = L / 2
+    K = 'lavrado'
+    acc.arco('janela', a, u, n, xc, 6.0, g, g + 8.0, 0.02)
+    acc.arco_anel(K, a, u, n, xc, 3.0, 3.55, g + 5.0, 0, 0.35)
+    for s in (-1, 1):
+        acc.caixa(K, a, u, n, xc + s * 3.0, xc + s * 3.55, 0, 0.35, g - 0.3, g + 5.0)
+    acc.caixa('pedra-igreja', a, u, n, 0, L, 0, 0.3, g + 8.7, g + 9.1)
+    for dx in (-3.2, -1.9, 2.6):
+        acc.caixa(K, a, u, n, xc + dx - 0.75, xc + dx + 0.75, 0, 0.12, g + 9.5, g + 12.5)
+        acc.arco('janela', a, u, n, xc + dx, 1.1, g + 9.8, g + 12.2, 0.13)
+    return idx
+
+
+def _claustro(acc, ctx, b, centro):
+    """O Claustro do Silêncio: cinco tramos por lado, dois pisos, contrafortes, e o tanque ao centro."""
+    g = ctx.cota(*centro[:2])
+    for (a, bb, u, n, L, i) in arestas(b['aneis'][1]):
+        N = 5
+        v = L / N
+        for k in range(N):
+            x = (k + 0.5) * v
+            r = 0.33 * v
+            acc.arco('escuro', a, u, n, x, 2 * r, g, g + 4.4, 0.03)
+            acc.arco_anel('cantaria', a, u, n, x, r, r + 0.22, g + 4.4 - r, 0, 0.14)
+            for s in (-1, 1):       # ombreiras
+                acc.caixa('cantaria', a, u, n, x + s * r - 0.11, x + s * r + 0.11, 0, 0.14, g, g + 4.4 - r)
+            c = a + u * x + n * 0.1
+            acc.cilindro('cantaria', (c.x, c.y), 0.1, 0.1, g, g + 3.3, seg=8)       # mainel
+            for s in (-0.22, 0.22):
+                acc.arco('escuro', a, u, n, x + s * v, 0.28 * v, g + 6.0, g + 8.3, 0.03)
+                acc.arco_anel('cantaria', a, u, n, x + s * v, 0.14 * v, 0.14 * v + 0.15, g + 8.3 - 0.14 * v, 0, 0.1)
+        for k in range(N + 1):
+            x = k * v
+            acc.caixa('cantaria', a, u, n, x - 0.32, x + 0.32, 0, 0.95, g - 0.2, g + 4.9)
+            acc.caixa('cantaria', a, u, n, x - 0.26, x + 0.26, 0, 0.55, g + 4.9, g + 5.6)
+        acc.caixa('cantaria', a, u, n, 0, L, 0, 0.28, g + 5.2, g + 5.5)
+    # o tanque com o chafariz, de 1639
+    x, y = centro[0], centro[1]
+    acc.cilindro('cantaria', (x, y), 2.2, 2.2, g - 0.3, g + 0.55, seg=8)
+    acc.cilindro('agua', (x, y), 1.95, 1.95, g + 0.5, g + 0.57, seg=8)
+    acc.cilindro('cantaria', (x, y), 0.35, 0.3, g + 0.5, g + 1.7, seg=8)
+    acc.cilindro('cantaria', (x, y), 0.3, 0.95, g + 1.7, g + 2.0, seg=10)
+    acc.cilindro('cantaria', (x, y), 0.14, 0.12, g + 2.0, g + 2.7, seg=8)
+    acc.esfera('cantaria', (x, y, g + 2.85), 0.2, seg=8)
+
+
+def _manga(acc_m, acc, ctx, b):
+    """A fonte da Manga: o templete de oito colunas, os quatro cubelos na água, os arcos que os ligam.
+
+    As posições e os raios dos cubelos e do templete saem do contorno do OSM
+    (cinco círculos ligados); as alturas, das fotografias, escaladas ao
+    diâmetro dos cubelos.
+    """
+    anel = [Vector(p) for p in b['aneis'][0]]
+    C = sum(anel, Vector((0, 0))) / len(anel)
+    d = [(p - C).length for p in anel]
+    rc = sorted(x for x in d if x < 3.4)[len([x for x in d if x < 3.4]) // 2]     # o templete
+    grupos = {}
+    for p, dist in zip(anel, d):
+        if dist > 4.2:
+            grupos.setdefault(((p - C).x > 0, (p - C).y > 0), []).append(p)
+    cubelos = []
+    for pts in grupos.values():
+        xs, ys = [p.x for p in pts], [p.y for p in pts]
+        c = Vector(((min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2))
+        r = max((max(xs) - min(xs)), (max(ys) - min(ys))) / 2
+        cubelos.append((c, min(max(r, 1.4), 2.0)))
+    # Os eixos das escadas são as bissectrizes entre cubelos.
+    # Média circular de 4θ: os quatro ângulos são o mesmo a menos de 90°.
+    ang = [math.atan2((c - C).y, (c - C).x) - math.pi / 4 for c, _ in cubelos]
+    eixo = math.atan2(sum(math.sin(4 * x) for x in ang), sum(math.cos(4 * x) for x in ang)) / 4
+    E = [Vector((math.cos(eixo + q * math.pi / 2), math.sin(eixo + q * math.pi / 2))) for q in range(4)]
+
+    g = ctx.cota(C.x, C.y)              # o chão do jardim
+    Y, W = 'reboco-amarelo', 'pedra-cinza'
+    # --- o tanque: a água em quatro quartos, entre os passadiços dos eixos ---
+    meio = max((c - C).length for c, _ in cubelos) * 0.72 + 2.6
+    u0, n0 = E[0], E[1]
+    # A água fica abaixo do jardim, mas nunca debaixo do terreno medido: o
+    # MDT de 2 m não sabe se o tanque tem fundo.
+    chao_tanque = max(ctx.cota(*(C + u0 * i + n0 * j)) for i in range(-int(meio), int(meio) + 1, 2)
+                      for j in range(-int(meio), int(meio) + 1, 2))
+    agua = max(g - 0.3, chao_tanque + 0.05)
+    fundo = g - 1.1
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            o = C + u0 * (sx * 1.2) + n0 * (sy * 1.2)
+            q = [o, o + u0 * (sx * (meio - 1.2)), o + u0 * (sx * (meio - 1.2)) + n0 * (sy * (meio - 1.2)), o + n0 * (sy * (meio - 1.2))]
+            acc.face('agua', [Vector((p.x, p.y, agua)) for p in q], Z)
+    for q in range(4):
+        e, l = E[q], E[(q + 1) % 4]
+        # bordo do tanque
+        acc.caixa('cantaria', C + e * meio, l, e, -meio - 0.35, meio + 0.35, 0, 0.35, fundo, agua + 0.55)
+        # passadiço até ao templete, com guardas baixas
+        acc.caixa('cantaria', C, e, l, rc, meio, -1.2, 1.2, fundo, g)
+        for s in (-1, 1):
+            acc.caixa('cantaria', C, e, l, rc + 1.8, meio, s * 1.2 - 0.15, s * 1.2 + 0.15, g, g + 0.45)
+        # escada do passadiço ao estrado
+        for k in range(6):
+            acc.caixa('cantaria', C, e, l, rc + 1.8 - (k + 1) * 0.3, rc + 1.8 - k * 0.3, -0.9, 0.9, g - 0.2, g + (k + 1) * 0.2)
+
+    # --- o templete ---
+    acc_m.cilindro('pedra-cinza', (C.x, C.y), rc, rc, fundo, g + 1.2, seg=24)
+    ri = rc - 0.4
+    for k in range(8):
+        t = eixo + math.pi / 8 + k * math.pi / 4
+        p = C + Vector((math.cos(t), math.sin(t))) * ri
+        acc.cilindro('cantaria', (p.x, p.y), 0.2, 0.2, g + 1.2, g + 1.45, seg=8)
+        acc.cilindro('cantaria', (p.x, p.y), 0.16, 0.14, g + 1.45, g + 4.3, seg=10)
+        acc.cilindro('cantaria', (p.x, p.y), 0.2, 0.22, g + 4.3, g + 4.5, seg=8)
+    acc_m.cilindro('cantaria', (C.x, C.y), rc, rc, g + 4.5, g + 5.1, seg=24)
+    acc_m.cupula(W, (C.x, C.y, g + 5.1), rc - 0.15, 1.9, seg=20)
+    acc_m.cilindro(Y, (C.x, C.y), 0.6, 0.6, g + 6.9, g + 8.0, seg=12)
+    acc_m.cilindro('cantaria', (C.x, C.y), 0.72, 0.72, g + 8.0, g + 8.15, seg=12)
+    acc_m.cilindro(W, (C.x, C.y), 0.7, 0.0, g + 8.15, g + 9.0, seg=12, tampa=False)
+    acc.esfera('cantaria', (C.x, C.y, g + 9.1), 0.12, seg=8)
+
+    # --- os cubelos ---
+    for c, r in cubelos:
+        topo = g + 5.2 * r / 1.7
+        acc_m.cilindro(Y, (c.x, c.y), r, r, fundo, topo, seg=20)
+        acc_m.cilindro('cantaria', (c.x, c.y), r + 0.18, r + 0.18, topo, topo + 0.3, seg=20)
+        acc_m.cilindro(W, (c.x, c.y), r + 0.12, 0.72, topo + 0.3, topo + 1.8, seg=20, tampa=False)
+        acc_m.cilindro(Y, (c.x, c.y), 0.62, 0.62, topo + 1.7, topo + 2.9, seg=12)
+        acc_m.cilindro('cantaria', (c.x, c.y), 0.78, 0.78, topo + 2.9, topo + 3.05, seg=12)
+        acc_m.cilindro(W, (c.x, c.y), 0.72, 0.0, topo + 3.05, topo + 3.9, seg=12, tampa=False)
+        acc.esfera('cantaria', (c.x, c.y, topo + 3.98), 0.1, seg=8)
+        # a fresta, virada para fora
+        f = (c - C).normalized()
+        t = Vector((-f.y, f.x))
+        acc.caixa('cantaria', c + f * (r - 0.05), t, f, -0.42, 0.42, 0, 0.14, g + 1.6, g + 3.9)
+        acc.plano('escuro', c + f * (r - 0.05), t, f, -0.22, 0.22, g + 1.8, g + 3.7, 0.15)
+        # o arco que sobe do cubelo ao templete
+        ini = c - f * r
+        fim = C + f * rc
+        comp = (fim - ini).length
+        z0, z1 = topo - 0.3, g + 5.0
+        seg = 8
+        for s in range(seg):
+            t0, t1 = s / seg, (s + 1) / seg
+            za = z0 + (z1 - z0) * t0 + 1.1 * math.sin(math.pi * t0)
+            zb = z0 + (z1 - z0) * t1 + 1.1 * math.sin(math.pi * t1)
+            acc.caixa('cantaria', ini, -f, t, comp * t0, comp * t1, -0.18, 0.18, za - 0.35, za, z1b=zb, z0b=zb - 0.35)
+
+
+def _pormenores_santa_cruz(ctx, mats):
+    acc = Acumulador(mats)
+    pontos = {p['id']: p for p in ctx.cena['pontos']}
+    por_osm = {b['osm']: b for b in ctx.edificios}
+    obs = []
+
+    # O que acende com a igreja (as torres, o pano da fachada) e com a Manga.
+    acc_ig = Acumulador(mats)
+    acc_m = Acumulador(mats)
+    fa = _fachada_igreja(acc_ig, acc, ctx, por_osm[IGREJA], pontos['fachada']['altura'])
+    ca = _fachada_cafe(acc, ctx, por_osm[CAFE])
+    _claustro(acc, ctx, por_osm[MOSTEIRO], pontos['claustro']['p'])
+    _manga(acc_m, acc, ctx, por_osm[MANGA])
+
+    janelas = _fachadas(
+        acc, ctx,
+        saltar={MANGA},
+        sem_cornija={(IGREJA, 0, fa), (MOSTEIRO, 1)},
+        sem_janelas={(MOSTEIRO, 1)},
+        PE={MOSTEIRO: 4.5, IGREJA: None, CAFE: None},
+    )
+    obs += acc.criar('Rico_')
+    obs += acc_ig.criar('Edif_conjunto_' + IGREJA.replace('/', '_') + '_')
+    obs += acc_m.criar('Edif_conjunto_' + MANGA.replace('/', '_') + '_')
+    print('reconstituição: %d janelas' % janelas)
+    return obs
+
+
+def pormenores(ctx, mats):
+    """Tudo o que se desenha por cima dos volumes, conforme o monumento. Devolve os objectos criados."""
+    return {'paco-das-escolas': _pormenores_paco, 'santa-cruz': _pormenores_santa_cruz}[ctx.cena['id']](ctx, mats)

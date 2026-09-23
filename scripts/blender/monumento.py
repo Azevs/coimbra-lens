@@ -287,8 +287,8 @@ for b in CENA['buildings']:
     # Os do monumento ficam objectos à parte, com o id do OSM no nome: a
     # página acende um deles quando a visita aponta para lá.
     nome = 'Edif_conjunto_' + b['osm'].replace('/', '_') if dentro else 'Edif_contexto'
-    if RICO and b['osm'] == rc.TORRE:
-        continue                     # a torre é modelada à parte, peça a peça
+    if RICO and b['osm'] in rc.a_parte(ID):
+        continue                     # a torre do Paço, a fonte da Manga: modeladas à parte, peça a peça
     ob = objecto(nome, edificio(b), mats)
     if RICO:
         rc.vestir(ob, b, CTX, MATS)
@@ -361,7 +361,7 @@ bpy.context.preferences.filepaths.save_version = 0
 if RICO:
     # Paredes e telhados dos edifícios: textura à escala real, face a face.
     for ob in bpy.data.objects:
-        if ob.type == 'MESH' and ob.name.startswith('Edif_') and '_way_115574903' not in ob.name:
+        if ob.type == 'MESH' and ob.name.startswith('Edif_') and not ob.get('acc'):
             rc.uv_planar(ob, MATS)
 
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(AQUI, ID + SUF + '.blend'))
@@ -527,19 +527,29 @@ def enquadrar(alvo, azimute, elevacao, lente, pts, folga=1.03):
 # O azimute é a direcção de onde a câmara olha, a partir de nascente, no
 # sentido directo — os mesmos números entram no 3D da página.
 VISTAS = {
-    # De sul-sudoeste, a vista de quem sobe da Couraça: o pátio aberto, a
-    # Via Latina em frente, a torre no canto.
-    'conjunto': (None, -112, 30, 60, (2000, 1250)),
+    # Paço: de sul-sudoeste, a vista de quem sobe da Couraça: o pátio
+    # aberto, a Via Latina em frente, a torre no canto.
+    # Santa Cruz: de poente-sudoeste, da Praça 8 de Maio: a fachada de
+    # frente, o mosteiro por trás e a Manga ao fundo.
+    'conjunto': (None, {'paco-das-escolas': -112, 'santa-cruz': -160}.get(ID, -112), 30, 60, (2000, 1250)),
 }
 
 # Vistas de perto, para conferir pormenores. Só saem quando pedidas com
 # --vista=<nome>; não vão para o site.
 INSPECCAO = {
-    'torre': ((-34, 31, 118), -125, 12, 70, (1600, 1000)),
-    'via-latina': ((-2, 36, 106), -95, 14, 60, (1600, 1000)),
-    'porta-ferrea': ((40, 30, 104), 10, 10, 60, (1600, 1000)),
-    'nordeste': ((95, 75, 105), -120, 30, 50, (1600, 1000)),
-}
+    'paco-das-escolas': {
+        'torre': ((-34, 31, 118), -125, 12, 70, (1600, 1000)),
+        'via-latina': ((-2, 36, 106), -95, 14, 60, (1600, 1000)),
+        'porta-ferrea': ((40, 30, 104), 10, 10, 60, (1600, 1000)),
+        'nordeste': ((95, 75, 105), -120, 30, 50, (1600, 1000)),
+    },
+    'santa-cruz': {
+        'fachada': ((-64, -17, 31), -171, 17, 45, (1600, 1000)),
+        'claustro': ((-14, 16, 23), -120, 42, 45, (1600, 1000)),
+        'manga': ((32, 21, 27), 35, 28, 45, (1600, 1000)),
+        'cafe': ((-58, -30, 26), -165, 8, 50, (1600, 1000)),
+    },
+}.get(ID, {})
 for _v in SO_VISTAS:
     if _v in INSPECCAO:
         VISTAS[_v] = INSPECCAO[_v]

@@ -3,39 +3,69 @@ import Link from 'next/link'
 import Navbar from '@/components/navigation/Navbar'
 import SiteFooter from '@/components/navigation/SiteFooter'
 import DataTicker from '@/components/hero/DataTicker'
-import SectionReveal from '@/components/ui/SectionReveal'
-import SectionTitle from '@/components/ui/SectionTitle'
 import DataSource from '@/components/ui/DataSource'
+import SectionTitle from '@/components/ui/SectionTitle'
 import PlacePlate from '@/components/visitar/PlacePlate'
 import VisitaMonumento from '@/components/visitar/VisitaMonumento'
 import Roteiro from '@/components/visitar/Roteiro'
-import { ATTRACTIONS, AREAS, type Area } from '@/lib/attractions'
-import { monumentoPorId } from '@/lib/monumentos'
-import { textosPorId } from '@/lib/monumentos-textos'
+import { ATTRACTIONS, AREAS, WALKING_ROUTE, type Attraction } from '@/lib/attractions'
+import { monumentoPorId, type Monumento } from '@/lib/monumentos'
+import { textosPorId, type TextoMonumento } from '@/lib/monumentos-textos'
 import { estimate } from '@/lib/provenance'
 
 export const metadata: Metadata = {
   title: 'Visitar',
   description:
-    'Um dia em Coimbra a pé: subir da Baixa à Alta, descer pelo Jardim Botânico, atravessar o Mondego. Com o Paço das Escolas em três dimensões.',
+    'Um dia em Coimbra a pé, lugar a lugar: da Baixa à Alta, pelo Jardim Botânico, até à outra margem. Com o Mosteiro de Santa Cruz e o Paço das Escolas em três dimensões.',
 }
 
 /**
  * Visitar.
  *
- * Página editorial (sem manifesto de frescura), com uma excepção: a maqueta
- * do Paço é modelo medido e leva o seu selo, como as zonas urbanas.
+ * A página é o percurso. Primeiro o dia inteiro no mapa, de relance; depois
+ * um capítulo por lugar, pela ordem em que se chega lá, agrupados pelos
+ * três tempos do dia. Cada lugar com maqueta tem a sua visita em 3D no
+ * próprio capítulo; os que ainda não a têm ficam com a chapa desenhada, e
+ * ganham a maqueta quando ela existir — sem mudar a arrumação.
  *
- * A ordem é a de quem vai lá: primeiro o lugar que mais se quer ver, de
- * perto e em volta; depois o dia inteiro, no mapa; no fim, as fichas por
- * zona da cidade, para consultar.
+ * Página editorial (sem manifesto de frescura), com uma excepção: cada
+ * maqueta é modelo medido e leva o seu selo, como as zonas urbanas.
  */
 
-const PACO = monumentoPorId('paco-das-escolas')!
-const PACO_TEXTOS = textosPorId('paco-das-escolas')!
-const torre = PACO.pontos.find((p) => p.id === 'torre')
+const porId = new Map(ATTRACTIONS.map((a) => [a.id, a]))
 
-const ORDEM_AREAS: Area[] = ['baixa', 'alta', 'margem']
+/** Âncora de cada tempo do dia (índice da abertura e barra de navegação). */
+const ANCORA: Record<string, string> = { Manhã: 'manha', 'Meio do dia': 'meio-dia', Tarde: 'tarde' }
+
+/** A altura que cada maqueta mostra no rodapé: o ponto e o que se diz dele. */
+const DESTAQUE: Record<string, { ponto: string; nome: string }> = {
+  'paco-das-escolas': { ponto: 'torre', nome: 'torre' },
+  'santa-cruz': { ponto: 'fachada', nome: 'fachada' },
+}
+
+/** As paragens numeradas de seguida, através dos três tempos. */
+const TEMPOS = (() => {
+  let n = 0
+  return WALKING_ROUTE.map((t) => ({
+    ...t,
+    ancora: ANCORA[t.tempo] ?? t.tempo,
+    paragens: t.paragens
+      .map((p) => {
+        const a = porId.get(p.id)
+        return a ? { a, nota: p.note, n: ++n } : null
+      })
+      .filter((p): p is NonNullable<typeof p> => p !== null),
+  }))
+})()
+
+/**
+ * A maqueta de um lugar mostra-se no primeiro lugar do percurso que a usa;
+ * os seguintes que caem dentro dela (a Joanina, no Paço) apontam para lá.
+ */
+const primeiroCom = new Map<string, string>()
+for (const t of TEMPOS) for (const { a } of t.paragens) if (a.em3d && !primeiroCom.has(a.em3d)) primeiroCom.set(a.em3d, a.id)
+
+const dois = (n: number) => String(n).padStart(2, '0')
 
 export default function VisitarPage() {
   return (
@@ -69,122 +99,173 @@ export default function VisitarPage() {
             </p>
             <ol className="visitar-indice" aria-label="Nesta página">
               <li>
-                <a href="#paco-3d">
-                  <span>01</span> O Paço das Escolas, em 3D
+                <a href="#percurso">
+                  <span>00</span> O dia no mapa
                 </a>
               </li>
-              <li>
-                <a href="#roteiro">
-                  <span>02</span> O dia, paragem a paragem
-                </a>
-              </li>
-              <li>
-                <a href="#lugares">
-                  <span>03</span> Os lugares, por zona
-                </a>
-              </li>
+              {TEMPOS.map((t, i) => (
+                <li key={t.tempo}>
+                  <a href={`#${t.ancora}`}>
+                    <span>{dois(i + 1)}</span> {t.tempo} · {t.titulo}
+                  </a>
+                </li>
+              ))}
             </ol>
           </div>
         </header>
 
-        {/* O Paço em três dimensões */}
-        <section id="paco-3d" className="visitar-3d" aria-labelledby="paco-3d-titulo">
-          <div className="section-container">
-            <div className="visitar-3d-cabeca">
-              <span className="ui-label ui-label-accent">Em três dimensões</span>
-              <h2 id="paco-3d-titulo" className="font-display">
-                O Paço das Escolas
-              </h2>
-              <p>
-                O alto da colina, à escala, vestido com a fotografia aérea e com a Alta à volta serrada em
-                disco. Rode a maqueta e escolha um número: a visita vai até lá.
-              </p>
-            </div>
-
-            <VisitaMonumento monumento={PACO} textos={PACO_TEXTOS} largura={1800} altura={1125} />
-
-            <div className="visitar-3d-rodape">
-              <span className="ui-note">
-                {PACO.raio * 2} m de diâmetro
-                {torre?.altura != null && <> · torre com {Math.round(torre.altura)} m</>}
-              </span>
-            </div>
-            <DataSource
-              meta={estimate('OpenStreetMap · LiDAR DGT (MDT e MDS 2 m) · ortofoto DGT 2025', '', PACO.lidoEm, 'Modelo')}
-              showNote={false}
-            />
-          </div>
+        {/* O dia inteiro, de relance */}
+        <section id="percurso" className="section-container visitar-percurso" aria-label="O dia no mapa">
+          <SectionTitle
+            label="O DIA NO MAPA"
+            title={`${TEMPOS.reduce((s, t) => s + t.paragens.length, 0)} paragens, três tempos`}
+            subtitle="De manhã sobe-se, porque a subir cansa menos com o dia fresco. Desce-se pelo jardim à hora do almoço e atravessa-se o rio à tarde, quando o sol bate na Alta."
+          />
+          <Roteiro />
         </section>
 
-        {/* O dia a pé */}
-        <SectionReveal id="roteiro" className="page-section">
-          <div className="section-container">
-            <SectionTitle
-              label="UM DIA A PÉ"
-              title="Da Baixa à outra margem"
-              subtitle="De manhã sobe-se, porque a subir cansa menos com o dia fresco. Desce-se pelo jardim à hora do almoço e atravessa-se o rio à tarde, quando o sol bate na Alta."
-            />
-            <Roteiro />
-          </div>
-        </SectionReveal>
+        {/* Os lugares, pela ordem do dia */}
+        {TEMPOS.map((t) => (
+          <section key={t.tempo} id={t.ancora} className="tempo" aria-labelledby={`${t.ancora}-titulo`}>
+            <header className="section-container tempo-cabeca">
+              <span className="ui-label ui-label-accent">{t.tempo}</span>
+              <h2 id={`${t.ancora}-titulo`} className="font-display">
+                {t.titulo}
+              </h2>
+            </header>
 
-        {/* Os lugares */}
-        <SectionReveal id="lugares" className="page-section lugares">
-          <div className="section-container">
-            <SectionTitle
-              label="FICHAS DE LUGAR"
-              title="Os lugares"
-              subtitle="O que cada lugar é, e o sítio oficial onde os horários e os bilhetes estão sempre certos."
-            />
-
-            {ORDEM_AREAS.map((area) => {
-              const lugares = ATTRACTIONS.filter((a) => a.area === area)
-              return (
-                <section key={area} className="lugares-area" aria-labelledby={`area-${area}`}>
-                  <header className="lugares-area-cabeca">
-                    <h3 id={`area-${area}`} className="font-display">
-                      {AREAS[area].nome}
-                    </h3>
-                    <p>{AREAS[area].frase}</p>
-                  </header>
-                  <div className={`lugares-grelha${lugares.length === 1 ? ' lugares-grelha--um' : ''}`}>
-                    {lugares.map((a) => (
-                      // O título e o texto vêm ANTES da chapa: com a imagem em
-                      // cima, o texto de cada ficha encostava à imagem da linha
-                      // seguinte e lia-se como legenda dela.
-                      <article key={a.id} id={a.id} className="ficha">
-                        <h4 className="font-display ficha-nome">{a.name}</h4>
-                        <p className="ficha-texto">{a.blurb}</p>
-                        <div className="ficha-rodape">
-                          <span>{a.fact}</span>
-                          <a href={a.href} target="_blank" rel="noopener noreferrer">
-                            {a.hrefLabel} →
-                          </a>
-                        </div>
-                        <div className="ficha-chapa">
-                          <PlacePlate kind={a.plate} />
-                          {a.em3d && (
-                            <a href="#paco-3d" className="ficha-3d">
-                              Ver em 3D ↑
-                            </a>
-                          )}
-                        </div>
-                        {a.mais && (
-                          <Link href={a.mais.href} className="ficha-mais">
-                            {a.mais.label} →
-                          </Link>
-                        )}
-                      </article>
-                    ))}
-                  </div>
-                </section>
-              )
+            {t.paragens.map(({ a, nota, n }) => {
+              const id3d = a.em3d
+              const monumento = id3d ? monumentoPorId(id3d) : undefined
+              const textos = id3d ? textosPorId(id3d) : undefined
+              if (monumento && textos && primeiroCom.get(id3d!) === a.id) {
+                return <LugarEm3D key={a.id} a={a} n={n} nota={nota} monumento={monumento} textos={textos} />
+              }
+              const dentro = monumento && textos ? { casa: porId.get(primeiroCom.get(id3d!)!)!, textos } : undefined
+              return <Lugar key={a.id} a={a} n={n} nota={nota} dentro={dentro} />
             })}
-          </div>
-        </SectionReveal>
+          </section>
+        ))}
       </main>
 
       <SiteFooter />
     </>
+  )
+}
+
+function Cabeca({ a, n, nota }: { a: Attraction; n: number; nota: string }) {
+  return (
+    <div className="lugar-cabeca">
+      <span className="lugar-num font-display" aria-hidden>
+        {dois(n)}
+      </span>
+      <div>
+        <span className="lugar-onde">
+          {AREAS[a.area].nome} · {nota}
+        </span>
+        <h3 id={`${a.id}-nome`} className="font-display lugar-nome">
+          {a.name}
+        </h3>
+      </div>
+    </div>
+  )
+}
+
+function Sobre({ a }: { a: Attraction }) {
+  return (
+    <div className="lugar-sobre">
+      <p className="lugar-texto">{a.blurb}</p>
+      <div className="lugar-rodape">
+        <span>{a.fact}</span>
+        <a href={a.href} target="_blank" rel="noopener noreferrer">
+          {a.hrefLabel} →
+        </a>
+      </div>
+      {a.mais && (
+        <Link href={a.mais.href} className="lugar-mais">
+          {a.mais.label} →
+        </Link>
+      )}
+    </div>
+  )
+}
+
+/** Um lugar com maqueta: a visita em 3D ocupa o capítulo. */
+function LugarEm3D({
+  a,
+  n,
+  nota,
+  monumento,
+  textos,
+}: {
+  a: Attraction
+  n: number
+  nota: string
+  monumento: Monumento
+  textos: TextoMonumento
+}) {
+  const d = DESTAQUE[monumento.id]
+  const alto = d && monumento.pontos.find((p) => p.id === d.ponto)?.altura
+  return (
+    <article id={a.id} className="lugar lugar--3d" aria-labelledby={`${a.id}-nome`}>
+      <div className="section-container">
+        <div className="lugar-topo">
+          <Cabeca a={a} n={n} nota={nota} />
+          <Sobre a={a} />
+        </div>
+
+        <VisitaMonumento monumento={monumento} textos={textos} largura={1800} altura={1125} />
+
+        <div className="visitar-3d-rodape">
+          <span className="ui-note">
+            {monumento.raio * 2} m de diâmetro
+            {alto != null && (
+              <>
+                {' '}
+                · {d.nome} com {Math.round(alto)} m
+              </>
+            )}
+          </span>
+        </div>
+        <DataSource
+          meta={estimate('OpenStreetMap · LiDAR DGT (MDT e MDS 2 m) · ortofoto DGT 2025', '', monumento.lidoEm, 'Modelo')}
+          showNote={false}
+        />
+      </div>
+    </article>
+  )
+}
+
+/** Um lugar sem maqueta própria: texto e chapa, ou a ligação à maqueta onde ele está. */
+function Lugar({
+  a,
+  n,
+  nota,
+  dentro,
+}: {
+  a: Attraction
+  n: number
+  nota: string
+  dentro?: { casa: Attraction; textos: TextoMonumento }
+}) {
+  const ponto = dentro ? dentro.textos.pontos.findIndex((p) => p.id === a.id) : -1
+  return (
+    <article id={a.id} className="lugar section-container" aria-labelledby={`${a.id}-nome`}>
+      <div className="lugar-grelha">
+        <div>
+          <Cabeca a={a} n={n} nota={nota} />
+          <Sobre a={a} />
+        </div>
+        <div className="lugar-chapa">
+          <PlacePlate kind={a.plate} />
+          {dentro && (
+            <a href={`#${dentro.casa.id}`} className="lugar-3d">
+              Na maqueta do {dentro.casa.name}
+              {ponto >= 0 && <>, ponto {ponto + 1}</>} ↑
+            </a>
+          )}
+        </div>
+      </div>
+    </article>
   )
 }

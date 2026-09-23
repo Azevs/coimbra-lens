@@ -19,6 +19,11 @@ import type { TextoMonumento } from '@/lib/monumentos-textos'
  *
  * A câmara não roda sozinha (ver `MaquetaViva`). Só se move quando alguém
  * escolhe um ponto, e com movimento reduzido salta em vez de voar.
+ *
+ * A página tem uma maqueta por lugar. O three.js arranca quando uma se
+ * aproxima e larga tudo (contexto WebGL incluído) quando ela fica longe:
+ * os browsers só dão uma dúzia de contextos por página, e um telemóvel
+ * menos.
  */
 
 interface Props {
@@ -63,11 +68,14 @@ export default function VisitaMonumento({ monumento, textos, largura, altura }: 
   const [escolhido, setEscolhido] = useState<string | null>(null)
   const [mexeu, setMexeu] = useState(false)
   const [perto, setPerto] = useState(false)
-  const [modo, setModo] = useState<Modo>('foto')
+  // Nem todos os monumentos têm as três versões (ver `vestidos`).
+  const vestidos: Modo[] = monumento.vestidos ?? ['foto', 'rico', 'cartao']
+  const soRico = vestidos.length === 1 && vestidos[0] === 'rico'
+  const [modo, setModo] = useState<Modo>(vestidos[0])
   const [aCarregarRico, setACarregarRico] = useState(false)
   // O modelo pode chegar depois de se ter carregado no botão: arranca já no
   // vestido escolhido.
-  const modoInicial = useRef<Modo>('foto')
+  const modoInicial = useRef<Modo>(vestidos[0])
 
   // Os pontos com texto, pela ordem da visita, cada um com a sua posição.
   const pontos = textos.pontos
@@ -77,6 +85,8 @@ export default function VisitaMonumento({ monumento, textos, largura, altura }: 
     })
     .filter((p): p is NonNullable<typeof p> => p !== null)
 
+  // Carrega a 400 px de chegar ao ecrã; larga a mais de 1600 px. A folga
+  // entre os dois evita carregar e largar ao rolar para cá e para lá.
   useEffect(() => {
     const el = caixa.current
     if (!el) return
@@ -84,21 +94,27 @@ export default function VisitaMonumento({ monumento, textos, largura, altura }: 
       setPerto(true)
       return
     }
-    const obs = new IntersectionObserver(
-      (es) => {
-        if (es.some((e) => e.isIntersecting)) {
-          setPerto(true)
-          obs.disconnect()
-        }
-      },
-      { rootMargin: '400px' }
-    )
-    obs.observe(el)
-    return () => obs.disconnect()
+    const chegar = new IntersectionObserver((es) => {
+      if (es.some((e) => e.isIntersecting)) setPerto(true)
+    }, { rootMargin: '400px' })
+    const largar = new IntersectionObserver((es) => {
+      if (es.every((e) => !e.isIntersecting)) setPerto(false)
+    }, { rootMargin: '1600px' })
+    chegar.observe(el)
+    largar.observe(el)
+    return () => {
+      chegar.disconnect()
+      largar.disconnect()
+    }
   }, [])
 
   useEffect(() => {
-    if (!perto) return
+    if (!perto) {
+      setEstado('cartaz')
+      setEscolhido(null)
+      setMexeu(false)
+      return
+    }
     if (!temWebGL()) {
       setEstado('sem-webgl')
       return
@@ -117,7 +133,9 @@ export default function VisitaMonumento({ monumento, textos, largura, altura }: 
         ])
         if (!vivo) return
         const draco = new DRACOLoader().setDecoderPath('/draco/')
-        const gltf = await new GLTFLoader().setDRACOLoader(draco).loadAsync(`/maquetas/${monumento.id}.glb`)
+        const gltf = await new GLTFLoader()
+          .setDRACOLoader(draco)
+          .loadAsync(`/maquetas/${monumento.id}${soRico ? '-rico' : ''}.glb`)
         draco.dispose()
         if (!vivo || !montagem.current) return
 
@@ -191,7 +209,8 @@ export default function VisitaMonumento({ monumento, textos, largura, altura }: 
           malhas.push({ m, foto, cartao })
           if (osm && foto.name.includes('parede')) acesos.set(osm, [...(acesos.get(osm) ?? []), foto, cartao])
           const eEdificio = osm != null || /^Edif_/.test(m.name) || /^Edif_/.test(m.parent?.name ?? '')
-          if (!eEdificio) return
+          // A reconstituição desenha-se com materiais, sem traço (como a do Paço).
+          if (!eEdificio || soRico) return
           const linha = new THREE.LineBasicMaterial({ color: corTinta, transparent: true, opacity: 0.5 })
           m.add(new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry, 30), linha))
           linhas.push({ l: linha, osm })
@@ -302,8 +321,11 @@ export default function VisitaMonumento({ monumento, textos, largura, altura }: 
 
         // --- a reconstituição: outro .glb, só pedido quando alguém a escolhe ---
         // São 1,2 MB de texturas e pormenores; quem fica na fotografia não os paga.
-        let rico: { modelo: import('three').Object3D; acesos: Map<string, Mat[]> } | null = null
-        let pedidoRico: Promise<void> | null = null
+        // Num monumento só com reconstituição, o modelo que chegou já é ela.
+        let rico: { modelo: import('three').Object3D; acesos: Map<string, Mat[]> } | null = soRico
+          ? { modelo, acesos }
+          : null
+        let pedidoRico: Promise<void> | null = soRico ? Promise.resolve() : null
         const carregarRico = () => {
           if (pedidoRico) return pedidoRico
           setACarregarRico(true)
@@ -366,8 +388,10 @@ export default function VisitaMonumento({ monumento, textos, largura, altura }: 
             if (modoActual !== 'rico' || !rico) return
             acender(ligados)
           }
-          modelo.visible = modo !== 'rico'
-          if (rico) rico.modelo.visible = modo === 'rico'
+          if (rico && rico.modelo !== modelo) {
+            modelo.visible = modo !== 'rico'
+            rico.modelo.visible = modo === 'rico'
+          }
           for (const { m, foto, cartao } of malhas) m.material = modo === 'cartao' ? cartao : foto
           // A fotografia já traz as cores do dia: tom neutro e luz mais baixa,
           // senão a telha sai cor-de-rosa e o pátio estoura. O cartão fica
@@ -389,7 +413,7 @@ export default function VisitaMonumento({ monumento, textos, largura, altura }: 
             const t = pontos.find((p) => p.id === id)
             let alvo: import('three').Vector3, pos: import('three').Vector3
             if (t) {
-              alvo = noModelo(t.pos)
+              alvo = noModelo(t.pos).add(new THREE.Vector3(0, t.camara.subir ?? 0, 0))
               pos = deOnde(alvo, t.camara.azimute, t.camara.elevacao, t.camara.distancia)
               acender(t.acende)
             } else {
@@ -486,7 +510,11 @@ export default function VisitaMonumento({ monumento, textos, largura, altura }: 
               m.geometry?.dispose()
               const mat = m.material
               if (Array.isArray(mat)) mat.forEach((x) => x.dispose())
-              else mat?.dispose()
+              else {
+                ;(mat as Mat)?.map?.dispose()
+                ;(mat as Mat)?.normalMap?.dispose()
+                mat?.dispose()
+              }
             }
           })
           malhas.forEach(({ foto, cartao }) => {
@@ -494,7 +522,7 @@ export default function VisitaMonumento({ monumento, textos, largura, altura }: 
             cartao.dispose()
           })
           cacheCartao.forEach((m) => m.dispose())
-          rico?.modelo.traverse((o) => {
+          if (rico && rico.modelo !== modelo) rico.modelo.traverse((o) => {
             const m = o as import('three').Mesh
             if (!m.isMesh) return
             m.geometry.dispose()
@@ -554,10 +582,10 @@ export default function VisitaMonumento({ monumento, textos, largura, altura }: 
         style={{ aspectRatio: `${largura} / ${altura}`, touchAction: interactivo ? 'none' : undefined }}
       >
         <Image
-          src={`/maquetas/${monumento.id}-conjunto.webp`}
+          src={`/maquetas/${monumento.id}-conjunto${soRico ? '-rico' : ''}.webp`}
           width={largura}
           height={altura}
-          alt={`Maqueta do ${monumento.nome} e da Alta à volta, vista de sudoeste: o pátio aberto para o vale, a torre no canto.`}
+          alt={textos.alt}
           // O optimizador reconverte e perde o canal alfa (ver `Maqueta`).
           unoptimized
           className="visita3d-cartaz"
@@ -597,17 +625,23 @@ export default function VisitaMonumento({ monumento, textos, largura, altura }: 
             Arraste para rodar · toque num número
           </span>
         )}
-        {interactivo && (
+        {interactivo && vestidos.length > 1 && (
           <div className="visita3d-modo" role="group" aria-label="Aspecto da maqueta">
-            <button type="button" aria-pressed={modo === 'foto'} onClick={() => mudarModo('foto')}>
-              Fotografia
-            </button>
-            <button type="button" aria-pressed={modo === 'rico'} onClick={() => mudarModo('rico')} aria-busy={aCarregarRico}>
-              {aCarregarRico ? 'A carregar…' : 'Reconstituição'}
-            </button>
-            <button type="button" aria-pressed={modo === 'cartao'} onClick={() => mudarModo('cartao')}>
-              Maqueta
-            </button>
+            {vestidos.includes('foto') && (
+              <button type="button" aria-pressed={modo === 'foto'} onClick={() => mudarModo('foto')}>
+                Fotografia
+              </button>
+            )}
+            {vestidos.includes('rico') && (
+              <button type="button" aria-pressed={modo === 'rico'} onClick={() => mudarModo('rico')} aria-busy={aCarregarRico}>
+                {aCarregarRico ? 'A carregar…' : 'Reconstituição'}
+              </button>
+            )}
+            {vestidos.includes('cartao') && (
+              <button type="button" aria-pressed={modo === 'cartao'} onClick={() => mudarModo('cartao')}>
+                Maqueta
+              </button>
+            )}
           </div>
         )}
         {interactivo && escolhido && (
@@ -624,7 +658,7 @@ export default function VisitaMonumento({ monumento, textos, largura, altura }: 
           <>
             <li>
               <span className="chave-cor" style={{ background: 'linear-gradient(90deg, #EFEAE0 50%, #D8C7A0 50%)' }} />
-              fachadas, cantarias e torre: desenhadas a partir de fotografias
+              fachadas e pormenores: desenhados a partir de fotografias
             </li>
             <li>
               <span className="chave-cor" style={{ background: 'linear-gradient(90deg, #A8573A 50%, #8D979C 50%)' }} />

@@ -22,6 +22,12 @@ export interface Monumento {
   nome: string
   centro: [number, number]
   raio: number
+  /**
+   * As versões que existem do modelo. Sem o campo, as três: fotografia
+   * (`<id>.glb`), reconstituição (`<id>-rico.glb`) e cartão. Só
+   * `['rico']` quando os contornos não foram verificados contra a ortofoto.
+   */
+  vestidos?: ('foto' | 'rico' | 'cartao')[]
   edificios: number
   doMonumento: number
   semAltura: number
@@ -118,6 +124,74 @@ export const MONUMENTOS: Monumento[] = [
       }
     ],
     "lidoEm": "2026-09-22T20:38:54.804Z"
+  },
+  {
+    "id": "santa-cruz",
+    "nome": "Mosteiro de Santa Cruz",
+    "centro": [
+      40.21107,
+      -8.42821
+    ],
+    "raio": 100,
+    "vestidos": [
+      "rico"
+    ],
+    "edificios": 108,
+    "doMonumento": 3,
+    "semAltura": 1,
+    "arvores": 13,
+    "cotaMin": 18.9,
+    "cotaMax": 40.5,
+    "pontos": [
+      {
+        "id": "fachada",
+        "osm": "way/204192080",
+        "p": [
+          -64.05,
+          -17.26,
+          19.23
+        ],
+        "altura": 22.1
+      },
+      {
+        "id": "nave",
+        "osm": "way/204192080",
+        "p": [
+          -45.31,
+          -14.28,
+          41.34
+        ],
+        "altura": 20.7
+      },
+      {
+        "id": "tumulos",
+        "osm": "node/12593540265",
+        "p": [
+          -30.67,
+          -10.61,
+          39.14
+        ]
+      },
+      {
+        "id": "claustro",
+        "osm": "way/1349800549",
+        "p": [
+          -14.36,
+          15.77,
+          20.23
+        ]
+      },
+      {
+        "id": "manga",
+        "osm": "way/873267259",
+        "p": [
+          32.07,
+          21.67,
+          25.14
+        ]
+      }
+    ],
+    "lidoEm": "2026-09-23T08:25:09.548Z"
   }
 ]
 

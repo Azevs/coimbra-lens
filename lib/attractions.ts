@@ -73,6 +73,7 @@ export const ATTRACTIONS: Attraction[] = [
     plate: 'mosteiro',
     pos: [40.21121, -8.42831],
     osm: 'relation/2962560',
+    em3d: 'santa-cruz',
     href: 'https://www.turismodecoimbra.pt',
     hrefLabel: 'Turismo de Coimbra',
   },

@@ -1002,8 +1002,8 @@ input[type='range']::-moz-range-thumb {
 }
 
 /* ══ Visitar ═══════════════════════════════════════════════════════════
-   Um dia a pé: a maqueta do Paço, o roteiro com mapa e as fichas por zona.
-   A maqueta usa as cores do modelo (papel, terracota das telhas, cartão). */
+   Um dia a pé: o dia no mapa, e depois um capítulo por lugar, pela ordem
+   do percurso — com a maqueta 3D do lugar quando ela existe. */
 
 .visitar-abertura { padding: 0 1.25rem; }
 .visitar-kicker {
@@ -1072,29 +1072,6 @@ input[type='range']::-moz-range-thumb {
 }
 .visitar-indice a:hover { color: var(--accent); padding-left: 0.25rem; }
 
-/* O Paço em 3D — uma banda de papel recuado, de ponta a ponta */
-.visitar-3d {
-  margin-top: 4rem;
-  padding: 3.5rem 1.25rem 3rem;
-  background: var(--bg-secondary);
-  border-top: 1px solid var(--border-panel);
-  border-bottom: 1px solid var(--border-panel);
-}
-@media (min-width: 1024px) { .visitar-3d { padding: 4.5rem 2rem 3.5rem; } }
-.visitar-3d-cabeca { max-width: 44rem; margin-bottom: 1.5rem; }
-.visitar-3d-cabeca h2 {
-  font-size: clamp(2.25rem, 5.5vw, 4rem);
-  line-height: 1;
-  letter-spacing: -0.03em;
-  margin: 0.75rem 0 0.875rem;
-}
-.visitar-3d-cabeca p {
-  color: var(--text-secondary);
-  font-size: 0.9375rem;
-  line-height: 1.7;
-  font-weight: 300;
-  max-width: 34rem;
-}
 .visitar-3d-rodape {
   display: flex;
   flex-wrap: wrap;
@@ -1391,46 +1368,68 @@ input[type='range']::-moz-range-thumb {
 .roteiro-pino:hover,
 .roteiro-pino.is-activa { background: var(--text-primary); box-shadow: 0 0 0 5px rgba(176, 58, 11, 0.35); z-index: 2; }
 
-/* Fichas por zona */
-.lugares { padding-top: 1rem; }
-.lugares-area + .lugares-area { margin-top: 4.5rem; }
-.lugares-area-cabeca {
-  display: grid;
-  gap: 0.375rem;
+/* O percurso: o dia no mapa, logo a seguir à abertura */
+.visitar-percurso { padding-top: 5rem; padding-bottom: 1rem; }
+
+/* Os três tempos do dia: cada um abre com uma régua grossa */
+.tempo { margin-top: 5.5rem; }
+.tempo-cabeca {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   border-top: 3px solid var(--text-primary);
-  padding-top: 0.875rem;
-  margin-bottom: 2rem;
+  padding-top: 1rem;
+  margin-bottom: 2.5rem;
 }
+.tempo-cabeca h2 {
+  font-size: clamp(2.25rem, 6vw, 4.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.035em;
+  margin: 0;
+}
+
+/* Um lugar. Os de maqueta são uma banda de papel recuado, de ponta a ponta;
+   os outros, uma linha de texto e chapa. */
+.lugar + .lugar { margin-top: 3.5rem; }
+.lugar--3d {
+  padding: 3rem 1.25rem 2.75rem;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-panel);
+  border-bottom: 1px solid var(--border-panel);
+}
+@media (min-width: 1024px) { .lugar--3d { padding: 3.75rem 2rem 3rem; } }
+.lugar--3d + .lugar, .lugar + .lugar--3d { margin-top: 4rem; }
+.lugar-topo { display: grid; gap: 1.25rem; margin-bottom: 2rem; }
 @media (min-width: 900px) {
-  .lugares-area-cabeca { grid-template-columns: 1fr 1.4fr; gap: 3rem; align-items: baseline; }
+  .lugar-topo { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 3.5rem; align-items: end; }
 }
-.lugares-area-cabeca h3 { font-size: clamp(1.75rem, 3.5vw, 2.5rem); line-height: 1; margin: 0; letter-spacing: -0.02em; }
-.lugares-area-cabeca p { margin: 0; color: var(--text-secondary); font-weight: 300; font-size: 0.9375rem; }
-.lugares-grelha { display: grid; gap: 3rem 2rem; grid-template-columns: 1fr; align-items: start; }
-@media (min-width: 720px) { .lugares-grelha { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 1120px) { .lugares-grelha { grid-template-columns: repeat(3, 1fr); } }
-.ficha { border-top: 1px solid var(--border-panel); padding-top: 1.125rem; }
-/* Uma zona com um lugar só: a ficha abre-se ao lado da chapa, em vez de
-   ficar numa coluna sozinha com duas vazias à direita. */
-@media (min-width: 720px) {
-  .lugares-grelha--um { grid-template-columns: 1fr; }
-  .lugares-grelha--um .ficha {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-areas: 'nome chapa' 'texto chapa' 'rodape chapa' 'mais chapa';
-    grid-template-rows: auto auto auto 1fr;
-    column-gap: 2.5rem;
-    max-width: 62rem;
-  }
-  .lugares-grelha--um .ficha-nome { grid-area: nome; }
-  .lugares-grelha--um .ficha-texto { grid-area: texto; }
-  .lugares-grelha--um .ficha-rodape { grid-area: rodape; align-self: start; }
-  .lugares-grelha--um .ficha-chapa { grid-area: chapa; }
-  .lugares-grelha--um .ficha-mais { grid-area: mais; align-self: start; justify-self: start; }
+.lugar-cabeca { display: flex; gap: 1.125rem; align-items: flex-start; }
+.lugar-num {
+  font-size: clamp(2.5rem, 5vw, 3.75rem);
+  line-height: 0.85;
+  font-weight: 300;
+  color: var(--accent);
+  letter-spacing: -0.04em;
+  flex-shrink: 0;
 }
-.ficha-nome { font-size: 1.5rem; line-height: 1.15; margin: 0 0 0.5rem; }
-.ficha-texto { font-size: 0.9375rem; line-height: 1.7; color: var(--text-secondary); font-weight: 300; margin: 0 0 0.875rem; }
-.ficha-rodape {
+.lugar-onde {
+  display: block;
+  font-family: var(--font-jetbrains);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+  margin-bottom: 0.5rem;
+}
+.lugar-nome {
+  font-size: clamp(1.75rem, 3.6vw, 2.75rem);
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  margin: 0;
+}
+.lugar--3d .lugar-nome { font-size: clamp(2.25rem, 5vw, 3.75rem); }
+.lugar-sobre { max-width: 36rem; }
+.lugar-texto { font-size: 0.9375rem; line-height: 1.7; color: var(--text-secondary); font-weight: 300; margin: 0 0 0.875rem; }
+.lugar-rodape {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
@@ -1441,12 +1440,26 @@ input[type='range']::-moz-range-thumb {
   color: var(--text-tertiary);
   border-top: 1px solid var(--border-subtle);
   padding-top: 0.75rem;
-  margin-bottom: 1.125rem;
 }
-.ficha-rodape a { color: var(--accent-text); text-decoration: none; }
-.ficha-rodape a:hover { color: var(--accent); }
-.ficha-chapa { position: relative; }
-.ficha-3d {
+.lugar-rodape a { color: var(--accent-text); text-decoration: none; }
+.lugar-rodape a:hover { color: var(--accent); }
+.lugar-mais {
+  display: inline-block;
+  margin-top: 0.875rem;
+  font-size: 0.875rem;
+  color: var(--accent-text);
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+}
+.lugar-mais:hover { color: var(--accent); }
+.lugar:not(.lugar--3d) { border-top: 1px solid var(--border-panel); padding-top: 1.5rem; }
+.lugar-grelha { display: grid; gap: 1.5rem; }
+.lugar-grelha .lugar-sobre { margin-top: 1.25rem; }
+@media (min-width: 820px) {
+  .lugar-grelha { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 3rem; align-items: start; }
+}
+.lugar-chapa { position: relative; max-width: 30rem; }
+.lugar-3d {
   position: absolute;
   top: 0.625rem;
   left: 0.625rem;
@@ -1460,16 +1473,7 @@ input[type='range']::-moz-range-thumb {
   padding: 0.35rem 0.6rem;
   text-decoration: none;
 }
-.ficha-3d:hover { background: var(--accent); }
-.ficha-mais {
-  display: inline-block;
-  margin-top: 0.75rem;
-  font-size: 0.875rem;
-  color: var(--accent-text);
-  text-decoration: none;
-  border-bottom: 1px solid currentColor;
-}
-.ficha-mais:hover { color: var(--accent); }
+.lugar-3d:hover { background: var(--accent); }
 
 /* Agenda — dia a dia */
 .agenda-dia {
