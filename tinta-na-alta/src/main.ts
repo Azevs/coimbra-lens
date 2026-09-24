@@ -29,6 +29,8 @@ const aCarregar = document.querySelector('#carregar') as HTMLElement
 botao.disabled = true
 
 const nivel: Nivel = await (await fetch(import.meta.env.BASE_URL + 'nivel.json')).json()
+// As placas das ruas são desenhadas num canvas com a letra do HUD: esperar por ela.
+await Promise.race([document.fonts.load('64px "Patrick Hand"'), new Promise((r) => setTimeout(r, 2500))]).catch(() => {})
 const mundo = new Mundo(nivel)
 mundo.construir()
 cena.add(mundo.cena)
@@ -40,6 +42,13 @@ const efeitos = new Efeitos()
 cena.add(efeitos.grupo)
 const som = new Som()
 som.legenda = (q, t) => hud.legenda(q, t)
+// Oclusão: um raio da fonte ao ouvinte que bate numa parede antes de lá chegar.
+som.ocluido = (de) => {
+  const d = som.ouvinte.clone().sub(de)
+  const L = d.length()
+  const r = octree.rayIntersect(new THREE.Ray(de, d.normalize()))
+  return !!r && r.distance < L - 0.5
+}
 const arma = new Arma(efeitos.claroes[0])
 arma.redimensionar(innerWidth / innerHeight)
 const jog = new Jogador(camera, P.inicio)
@@ -88,6 +97,14 @@ function telhadoPerto(p: THREE.Vector3, ja: Set<string>) {
 // ----------------------------------------------------------- inimigos --
 const inimigos: Inimigo[] = []
 function criar(pos: THREE.Vector3, olhar: THREE.Vector3, opt: { telhado?: boolean; patrulha?: THREE.Vector3[]; alerta?: THREE.Vector3 } = {}) {
+  // Nunca dois no mesmo sítio: afasta-se em espiral até achar chão livre.
+  if (!opt.telhado) {
+    for (let k = 0; k < 12 && inimigos.some((e) => e.corpo.pes.distanceTo(pos) < 1.4); k++) {
+      const a = k * 2.4, r = 1.5 + k * 0.25
+      const x = pos.x + Math.cos(a) * r, yN = -pos.z + Math.sin(a) * r
+      if (!mundo.edificioEm(x, yN)) pos = new THREE.Vector3(x, mundo.chao(x, yN), -yN)
+    }
+  }
   const d = olhar.clone().sub(pos)
   const e = new Inimigo(pos.clone().add(new THREE.Vector3(0, 0.1, 0)), Math.atan2(-d.x, -d.z), !!opt.telhado)
   if (opt.patrulha) e.patrulha = opt.patrulha
@@ -120,7 +137,41 @@ function povoar() {
   criar(naRota(dentro, patio, 0.35, -5), dentro)
   criar(naRota(dentro, patio, 0.75, 4), dentro)
   criar(naRota(dentro, patio, 1.05, -3), dentro, { patrulha: [naRota(dentro, patio, 1.05, -3), naRota(dentro, patio, 1.05, 4)] })
+  guardasDoFadista()
   void barba
+}
+
+/** Guardas em roda do banco do fadista, dentro do pátio e longe do fontanário. */
+function guardasDoFadista() {
+  const patio = nivel.edificios.find((b) => b.osm === 'relation/3475986')?.furos[0]
+  if (!patio) return
+  const cx = P.patio.x, cy = -P.patio.z
+  const fonte: [number, number] = [cx + 3, cy - 2]
+  const noPatio = (x: number, y: number) => {
+    let d = false
+    for (let i = 0, j = patio.length - 1; i < patio.length; j = i++) {
+      const [xi, yi] = patio[i], [xj, yj] = patio[j]
+      if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) d = !d
+    }
+    return d && Math.hypot(x - fonte[0], y - fonte[1]) > 2.4
+  }
+  const ponto = (ang: number, r0: number) => {
+    for (let r = r0; r > 1.6; r -= 0.4) {
+      const x = cx + Math.cos(ang) * r, y = cy + Math.sin(ang) * r
+      if (noPatio(x, y)) return new THREE.Vector3(x, mundo.chao(x, y), -y)
+    }
+    return null
+  }
+  // A entrada do pátio vem da galeria do lado da porta: um olha para lá, os outros cobrem as arcadas.
+  const entrada = Math.atan2(-P.dentroClaustro.z - cy, P.dentroClaustro.x - cx)
+  for (const da of [0, 2.1, -2.1]) {
+    const p = ponto(entrada + da, 3.2)
+    if (p) criar(p, p.clone().add(p.clone().sub(P.patio).setY(0).multiplyScalar(4)))
+  }
+  const ronda = [0, 1, 2, 3].map((k) => ponto(entrada + 0.8 + (k * Math.PI) / 2, 5.5)).filter((p): p is THREE.Vector3 => !!p)
+  if (ronda.length >= 2) criar(ronda[0], P.patio, { patrulha: ronda })
+  const arcada = ponto(entrada + Math.PI, 7)
+  if (arcada) criar(arcada, P.dentroClaustro)
 }
 
 function reforcos() {

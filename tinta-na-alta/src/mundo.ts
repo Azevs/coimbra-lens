@@ -22,6 +22,34 @@ export type Nivel = {
 export const v3 = (x: number, yNorte: number, cota: number) => new THREE.Vector3(x, cota, -yNorte)
 const p3 = (x: number, yNorte: number, cota: number): P3 => [x, cota, -yNorte]
 
+/** Placa toponímica desenhada à mão: moldura dupla e letras de caneta. */
+function placa(texto: string) {
+  const c = document.createElement('canvas')
+  const g = c.getContext('2d')!
+  const fonte = '600 64px "Patrick Hand", "Segoe Print", cursive'
+  g.font = fonte
+  c.width = Math.ceil(g.measureText(texto.toUpperCase()).width) + 90
+  c.height = 130
+  g.fillStyle = '#fff'
+  g.fillRect(0, 0, c.width, c.height)
+  g.strokeStyle = '#111'
+  g.lineWidth = 5
+  g.strokeRect(8, 8, c.width - 16, c.height - 16)
+  g.lineWidth = 2
+  g.strokeRect(20, 20, c.width - 40, c.height - 40)
+  g.font = fonte
+  g.fillStyle = '#111'
+  g.textAlign = 'center'
+  g.textBaseline = 'middle'
+  g.fillText(texto.toUpperCase(), c.width / 2, c.height / 2 + 3)
+  const t = new THREE.CanvasTexture(c)
+  t.colorSpace = THREE.SRGBColorSpace
+  t.anisotropy = 4
+  const h = 0.5
+  return new THREE.Mesh(new THREE.PlaneGeometry((h * c.width) / c.height, h),
+    new THREE.MeshBasicMaterial({ map: t, polygonOffset: true, polygonOffsetFactor: -2 }))
+}
+
 /** Parâmetro t em [0,1] ao longo de AB onde este cruza CD, ou null. */
 function cruzamento(A: [number, number], B: [number, number], C: [number, number], D: [number, number]) {
   const rx = B[0] - A[0], ry = B[1] - A[1], sx = D[0] - C[0], sy = D[1] - C[1]
@@ -41,7 +69,11 @@ export function dentro(x: number, y: number, pol: Anel) {
   return d
 }
 
-const IDS_PASSAGEM = new Set(['way/246397825', 'way/1165517467']) // Torre de Almedina, Porta da Barbacã
+/** Portas da cerca e a rua que passa por cada uma. */
+const PORTAS: Record<string, string> = {
+  'way/246397825': 'way/121298535', // Torre de Almedina
+  'way/1165517467': 'way/1165517464', // Porta da Barbacã
+}
 export const ID_SE = 'way/41222810'
 export const ID_CLAUSTRO = 'relation/3475986'
 
@@ -104,6 +136,7 @@ export class Mundo {
     for (const esc of this.quadriculas.values()) this.cena.add(esc.acabar('mundo', papel, true))
     this.limites()
     this.marcarPontos()
+    this.mobiliario()
   }
 
   private terreno() {
@@ -174,20 +207,11 @@ export class Mundo {
   }
 
   private edificio(b: Edificio, esc: Esboco) {
-    const passagem = IDS_PASSAGEM.has(b.osm)
-    let fundo: (i: number) => number = () => b.base - 0.8
-    if (passagem) {
-      // O arco: o volume começa acima do chão mais alto da passagem.
-      const cotas = this.n.vias.filter((v) => v.passagem).flatMap((v) => v.g)
-        .filter(([x, y]) => dentro(x, y, b.anel)).map(([x, y]) => this.chao(x, y))
-      const z = (cotas.length ? Math.max(...cotas) : b.base) + 4.2
-      fundo = () => z
-      this.tampa(b.anel, [], z, esc)
-    }
-    this.paredes(b.anel, fundo, b.topo, esc)
+    const via = PORTAS[b.osm]
+    if (via) return this.portaDaCidade(b, via, esc)
+    this.paredes(b.anel, () => b.base - 0.8, b.topo, esc)
     this.tampa(b.anel, b.furos, b.topo, esc)
     for (const f of b.furos) this.paredes(f, () => b.base - 0.8, b.topo, esc)
-    if (passagem) this.arcoPassagem(b, fundo(0), esc)
     const se = b.osm === ID_SE
     if (b.cumeeira - b.topo > 1.5 && !se) this.telhado(b, esc)
     this.fachadas(b, esc, se)
@@ -208,23 +232,131 @@ export class Mundo {
     }
   }
 
-  private arcoPassagem(b: Edificio, z: number, esc: Esboco) {
-    for (const v of this.n.vias.filter((v) => v.passagem)) {
-      for (let i = 1; i < v.g.length; i++) {
-        for (const p of [v.g[i - 1], v.g[i]]) {
-          if (dentro(p[0], p[1], b.anel)) continue
-          // Onde a via entra no edifício, desenha-se o arco na face.
-          const q = p === v.g[i] ? v.g[i - 1] : v.g[i]
-          const dx = q[0] - p[0], dy = q[1] - p[1], L = Math.hypot(dx, dy)
-          const nx = -dy / L, ny = dx / L
-          const pts: P3[] = []
-          const raio = 1.8, base = z - 1.2
-          for (let k = 0; k <= 16; k++) {
-            const t = Math.PI * (k / 16)
-            pts.push(p3(p[0] + (dx / L) * 0.5 + nx * Math.cos(t) * raio, p[1] + (dy / L) * 0.5 + ny * Math.cos(t) * raio, base + Math.sin(t) * 1.2))
-          }
-          esc.linha(pts, 'aresta')
+  /**
+   * Pedra de uma torre, desenhada como num esboço: cunhais alternados nas
+   * esquinas, uma cornija debaixo dos merlões e fiadas soltas aqui e ali.
+   */
+  private pedra(anel: Anel, b: Edificio, esc: Esboco) {
+    const r = aleatorio(semente(b.osm + ':pedra'))
+    for (let i = 0; i < anel.length; i++) {
+      const a = anel[i], c = anel[(i + 1) % anel.length], ant = anel[(i - 1 + anel.length) % anel.length]
+      const L = Math.hypot(c[0] - a[0], c[1] - a[1])
+      const ux = (c[0] - a[0]) / L, uy = (c[1] - a[1]) / L, nx = uy, ny = -ux
+      const La = Math.hypot(a[0] - ant[0], a[1] - ant[1])
+      const vx = (ant[0] - a[0]) / La, vy = (ant[1] - a[1]) / La // ao longo da face anterior
+      const F = (t: number, z: number, sx = ux, sy = uy, fx = nx, fy = ny): P3 => p3(a[0] + sx * t + fx * 0.05, a[1] + sy * t + fy * 0.05, z)
+      const z0 = Math.max(this.chao(a[0] + nx, a[1] + ny), b.base)
+      // Cunhais: blocos alternados, compridos numa face e curtos na outra.
+      let alt = 0
+      for (let z = z0 + 0.1; z + 0.5 < b.topo - 0.6; z += 0.52, alt ^= 1) {
+        const w1 = alt ? 0.75 : 0.4, w2 = alt ? 0.4 : 0.75
+        esc.linha([F(0, z + 0.5), F(w1, z + 0.5), F(w1, z)], 'pormenor')
+        esc.linha([F(0, z + 0.5, vx, vy, -vy, vx), F(w2, z + 0.5, vx, vy, -vy, vx), F(w2, z, vx, vy, -vy, vx)], 'pormenor')
+      }
+      // Cornija por baixo dos merlões.
+      esc.linha([F(0, b.topo - 0.45), F(L, b.topo - 0.45)], 'pormenor')
+      // Fiadas soltas: poucas, como quem sugere a pedra sem a desenhar toda.
+      for (let k = 0; k < L * (b.topo - z0) * 0.05; k++) {
+        const t = 1 + r() * Math.max(0.1, L - 2), z = z0 + 1 + r() * (b.topo - z0 - 3)
+        const w = 0.5 + r() * 0.5
+        esc.linha([F(t, z), F(t + w, z)], 'sombra')
+        if (r() < 0.6) esc.linha([F(t + w, z), F(t + w, z + 0.32)], 'sombra')
+        if (r() < 0.4) esc.linha([F(t + w * 0.4, z - 0.32), F(t + w * 0.4 + w, z - 0.32)], 'sombra')
+      }
+    }
+  }
+
+  /**
+   * Porta medieval da cerca (Torre de Almedina, Barbacã): paredes até ao chão,
+   * arco de volta perfeita onde a rua entra e sai, e túnel abobadado por dentro.
+   */
+  private portaDaCidade(b: Edificio, viaId: string, esc: Esboco) {
+    const g = this.n.vias.find((v) => v.osm === viaId)?.g
+    if (!g) return
+    // A via do OSM começa e acaba em cima do contorno: prolonga-se para cruzar de certeza.
+    const pr = (p: [number, number], q: [number, number]): [number, number] => {
+      const L = Math.hypot(p[0] - q[0], p[1] - q[1]) || 1
+      return [p[0] + ((p[0] - q[0]) / L) * 3, p[1] + ((p[1] - q[1]) / L) * 3]
+    }
+    const via: [number, number][] = [pr(g[0], g[1]), ...g.slice(1, -1), pr(g[g.length - 1], g[g.length - 2])]
+    const NASCENCA = 2.9
+    const vaos = new Map<number, [number, number, number][]>()
+    const bocas: [number, number][] = []
+    // Contorno sem os vértices a meio de paredes rectas (o OSM parte a Barbacã em bocados de 1 m).
+    const anel = b.anel.filter((p, i, A) => {
+      const q = A[(i - 1 + A.length) % A.length], r = A[(i + 1) % A.length]
+      if (Math.hypot(p[0] - q[0], p[1] - q[1]) < 0.05) return false
+      const d1 = Math.atan2(p[1] - q[1], p[0] - q[0]), d2 = Math.atan2(r[1] - p[1], r[0] - p[0])
+      return Math.abs(Math.atan2(Math.sin(d2 - d1), Math.cos(d2 - d1))) > 0.12
+    })
+    const cruzes: { i: number; t: number; L: number }[] = []
+    for (let i = 0; i < anel.length; i++) {
+      const a = anel[i], c = anel[(i + 1) % anel.length]
+      const L = Math.hypot(c[0] - a[0], c[1] - a[1])
+      for (let k = 1; k < via.length; k++) {
+        const t = cruzamento(a, c, via[k - 1], via[k])
+        if (t !== null) cruzes.push({ i, t, L })
+      }
+    }
+    // O arco cabe na parede mais estreita por onde a rua passa (a Barbacã tem 4 m).
+    const W = Math.min(3.6, ...cruzes.map((c) => c.L - 0.8)), R = W / 2
+    for (const { i, t, L } of cruzes) {
+      if (W < 2) continue
+      const a = anel[i], c = anel[(i + 1) % anel.length]
+      // Vão centrado no cruzamento, sem sair da aresta.
+      const tm = THREE.MathUtils.clamp(t * L, R + 0.35, L - R - 0.35)
+      vaos.set(i, [...(vaos.get(i) ?? []), [tm - R, tm + R, NASCENCA + R]])
+      bocas.push([a[0] + ((c[0] - a[0]) * tm) / L, a[1] + ((c[1] - a[1]) * tm) / L])
+    }
+    this.paredesComAberturas(anel, b.base - 0.8, b.topo, vaos, esc, 0.7, 'real')
+    this.tampa(anel, [], b.topo, esc)
+    this.ameias({ ...b, anel }, esc)
+    this.pedra(anel, b, esc)
+    // Túnel entre as duas bocas: paredes laterais e abóbada de berço.
+    if (bocas.length >= 2) {
+      const [e1, e2] = bocas
+      const dx = e2[0] - e1[0], dy = e2[1] - e1[1], L = Math.hypot(dx, dy)
+      const ux = dx / L, uy = dy / L, lx = -uy, ly = ux
+      const z1 = this.chao(...e1), z2 = this.chao(...e2)
+      for (const s of [-1, 1]) {
+        const o = s * (R + 0.35)
+        const zb = Math.min(z1, z2) - 1, zt = Math.max(z1, z2) + NASCENCA + R + 0.5
+        const gg = new THREE.BoxGeometry(L, zt - zb, 0.7)
+        gg.rotateY(Math.atan2(dy, dx))
+        gg.translate((e1[0] + e2[0]) / 2 + lx * o, (zb + zt) / 2, -((e1[1] + e2[1]) / 2 + ly * o))
+        this.colisao.add(new THREE.Mesh(gg.clone()))
+        esc.solido(gg, false)
+        // Linha de nascença da abóbada e o rodapé, nas duas paredes do túnel.
+        const x0 = e1[0] + lx * s * R, y0 = e1[1] + ly * s * R, x1 = e2[0] + lx * s * R, y1 = e2[1] + ly * s * R
+        esc.linha([p3(x0, y0, z1 + NASCENCA), p3(x1, y1, z2 + NASCENCA)], 'pormenor')
+        esc.linha([p3(x0, y0, this.chao(x0, y0) + 0.03), p3(x1, y1, this.chao(x1, y1) + 0.03)], 'aresta')
+      }
+      const n = 16, pos: number[] = []
+      const arco = (e: [number, number], z: number, k: number): P3 => {
+        const a = Math.PI * (k / n)
+        return p3(e[0] + lx * Math.cos(a) * R, e[1] + ly * Math.cos(a) * R, z + NASCENCA + Math.sin(a) * R)
+      }
+      for (let k = 0; k < n; k++) {
+        pos.push(...arco(e1, z1, k), ...arco(e2, z2, k), ...arco(e2, z2, k + 1), ...arco(e1, z1, k), ...arco(e2, z2, k + 1), ...arco(e1, z1, k + 1))
+      }
+      const v = new THREE.BufferGeometry()
+      v.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3))
+      esc.solido(v, false)
+      // Juntas das aduelas ao longo da abóbada: três riscos finos.
+      for (const k of [4, 8, 12]) esc.linha([arco(e1, z1, k), arco(e2, z2, k)], 'sombra')
+      // Uma janela por cima de cada boca.
+      for (const e of [e1, e2]) {
+        const z = this.chao(...e) + NASCENCA + R + 3
+        if (z + 2 > b.topo - 1.5) continue
+        const pts: P3[] = []
+        for (let k = 0; k <= 10; k++) {
+          const a = Math.PI * (k / 10)
+          pts.push(p3(e[0] + lx * Math.cos(a) * 0.5, e[1] + ly * Math.cos(a) * 0.5, z + 1.2 + Math.sin(a) * 0.5))
         }
+        const sx = e === e1 ? -ux : ux, sy = e === e1 ? -uy : uy
+        const fora = (p: P3): P3 => [p[0] + sx * 0.06, p[1], p[2] - sy * 0.06]
+        esc.linha([fora(p3(e[0] + lx * 0.5, e[1] + ly * 0.5, z)), ...pts.map(fora), fora(p3(e[0] - lx * 0.5, e[1] - ly * 0.5, z))], 'pormenor')
+        esc.linha([fora(p3(e[0] + lx * 0.5, e[1] + ly * 0.5, z)), fora(p3(e[0] - lx * 0.5, e[1] - ly * 0.5, z))], 'pormenor')
       }
     }
   }
@@ -481,7 +613,7 @@ export class Mundo {
    * vãos e um lintel por cima de cada vão (com arco desenhado).
    */
   private paredesComAberturas(anel: Anel, fundo: number, topo: number,
-    vaos: Map<number, [number, number, number][]>, esc: Esboco, esp: number, arcos: boolean) {
+    vaos: Map<number, [number, number, number][]>, esc: Esboco, esp: number, arcos: boolean | 'real') {
     for (let i = 0; i < anel.length; i++) {
       const a = anel[i], c = anel[(i + 1) % anel.length]
       const dx = c[0] - a[0], dy = c[1] - a[1], L = Math.hypot(dx, dy)
@@ -489,7 +621,7 @@ export class Mundo {
       const ux = dx / L, uy = dy / L
       const ang = Math.atan2(dy, dx)
       const lista = (vaos.get(i) ?? []).filter(([t0, t1]) => t0 > 0.3 && t1 < L - 0.3)
-      const bloco = (t0: number, t1: number, z0: number, z1: number) => {
+      const bloco = (t0: number, t1: number, z0: number, z1: number, arestas = true) => {
         if (t1 - t0 < 0.05 || z1 - z0 < 0.05) return
         const tm = (t0 + t1) / 2
         // As paredes ficam para dentro do anel (esquerda do sentido de percurso).
@@ -498,12 +630,49 @@ export class Mundo {
         g.rotateY(ang)
         g.translate(x, (z0 + z1) / 2, -y)
         this.colisao.add(new THREE.Mesh(g.clone()))
-        esc.solido(g, 'aresta')
+        esc.solido(g, arestas ? 'aresta' : false)
       }
+      // Ponto na parede: t ao longo da aresta, o para dentro, z cota.
+      const W = (t: number, o: number, z: number): P3 => p3(a[0] + ux * t - uy * o, a[1] + uy * t + ux * o, z)
       let t = 0
       for (const [t0, t1, h] of lista) {
         bloco(t, t0, fundo, topo)
         const zc = Math.min(this.chao(a[0] + ux * t0, a[1] + uy * t0), this.chao(a[0] + ux * t1, a[1] + uy * t1))
+        if (arcos === 'real') {
+          // Arco de volta perfeita: tímpanos cheios nas duas faces, intradorso, aduelas.
+          const R = (t1 - t0) / 2, tm = (t0 + t1) / 2, zn = zc + h - R, zt = zc + h
+          bloco(t0, t1, fundo, zc - 0.05, false)
+          bloco(t0, t1, zt, topo, false)
+          esc.linha([W(t0, -0.01, topo), W(t1, -0.01, topo)], 'aresta')
+          esc.linha([W(t0, esp + 0.01, topo), W(t1, esp + 0.01, topo)], 'aresta')
+          const n = 18
+          const P = (k: number, o: number, r = R): P3 => {
+            const q = Math.PI * (1 - k / n)
+            return W(tm + Math.cos(q) * r, o, zn + Math.sin(q) * r)
+          }
+          const pos: number[] = []
+          for (const o of [-0.01, esp + 0.01]) {
+            for (let k = 0; k < n; k++) {
+              const canto = k < n / 2 ? W(t0, o, zt) : W(t1, o, zt)
+              pos.push(...canto, ...P(k, o), ...P(k + 1, o))
+            }
+            pos.push(...W(t0, o, zt), ...P(n / 2, o), ...W(t1, o, zt))
+          }
+          for (let k = 0; k < n; k++) pos.push(...P(k, 0), ...P(k, esp), ...P(k + 1, esp), ...P(k, 0), ...P(k + 1, esp), ...P(k + 1, 0))
+          const gg = new THREE.BufferGeometry()
+          gg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3))
+          esc.solido(gg, false)
+          for (const o of [-0.02, esp + 0.02]) {
+            esc.linha(Array.from({ length: n + 1 }, (_, k) => P(k, o)), 'aresta')
+            esc.linha(Array.from({ length: n + 1 }, (_, k) => P(k, o, R + 0.5)), 'pormenor')
+            // Aduelas: raios entre o intradorso e o extradorso; a do meio é o fecho.
+            for (let k = 1; k < 9; k++) esc.linha([P((k * n) / 9, o), P((k * n) / 9, o, R + 0.5)], 'pormenor')
+            esc.linha([W(t0, o, zc), W(t0, o, zn)], 'aresta')
+            esc.linha([W(t1, o, zc), W(t1, o, zn)], 'aresta')
+          }
+          t = t1
+          continue
+        }
         bloco(t0, t1, fundo, zc - 0.05)
         bloco(t0, t1, zc + h, topo)
         if (arcos) {
@@ -657,6 +826,80 @@ export class Mundo {
     let acc = 0
     this.comprimentos = this.percurso.map((p, k) => (acc += k ? p.distanceTo(this.percurso[k - 1]) : 0))
     this.caminhoRota = this.percurso
+  }
+
+  /** A fachada mais perto de um ponto: onde, e para onde está virada. */
+  private paredePerto(x: number, y: number, max = 8) {
+    let melhor: { x: number; y: number; nx: number; ny: number; ux: number; uy: number; d: number } | null = null
+    const vistos = new Set<Edificio>()
+    for (let gx = Math.floor((x - max) / 10); gx <= Math.floor((x + max) / 10); gx++)
+      for (let gy = Math.floor((y - max) / 10); gy <= Math.floor((y + max) / 10); gy++)
+        for (const b of this.grelha.get(gx + ',' + gy) ?? []) {
+          if (vistos.has(b) || b.osm === ID_SE || b.osm === ID_CLAUSTRO) continue
+          vistos.add(b)
+          for (let i = 0; i < b.anel.length; i++) {
+            const a = b.anel[i], c = b.anel[(i + 1) % b.anel.length]
+            const vx = c[0] - a[0], vy = c[1] - a[1], L = Math.hypot(vx, vy)
+            if (L < 2.5) continue
+            const t = THREE.MathUtils.clamp(((x - a[0]) * vx + (y - a[1]) * vy) / (L * L), 0.15, 0.85)
+            const px = a[0] + vx * t, py = a[1] + vy * t, d = Math.hypot(x - px, y - py)
+            const nx = vy / L, ny = -vx / L
+            if (d < max && (!melhor || d < melhor.d) && (x - px) * nx + (y - py) * ny > 0)
+              melhor = { x: px, y: py, nx, ny, ux: vx / L, uy: vy / L, d }
+          }
+        }
+    return melhor
+  }
+
+  /**
+   * Candeeiros de braço nas fachadas e placas com o nome das ruas, ao longo do
+   * percurso — o que faz uma rua desenhada parecer habitada.
+   */
+  private mobiliario() {
+    const esc = new Esboco('mobiliario', 0.4, 0.3)
+    const fimRua = this.comprimentos[this.percurso.indexOf(this.pontos.portaClaustro)] ?? this.comprimentos[this.comprimentos.length - 1]
+    let lado = 1
+    for (let s = 6; s < fimRua - 4; s += 13) {
+      const p = this.noPercurso(s)
+      const k = Math.min(this.percurso.length - 1, this.comprimentos.findIndex((c) => c >= s) || 1)
+      const q = this.percurso[k], a = this.percurso[k - 1] ?? q
+      const dx = q.x - a.x, dy = -(q.z - a.z), L = Math.hypot(dx, dy) || 1
+      lado = -lado
+      const x = p.x - (dy / L) * 3 * lado, y = -p.z + (dx / L) * 3 * lado
+      const w = this.paredePerto(x, y, 7)
+      if (!w) continue
+      const z = this.chao(w.x + w.nx, w.y + w.ny) + 4.3
+      const P = (fora: number, dz: number, lat = 0): P3 => p3(w.x + w.nx * fora + w.ux * lat, w.y + w.ny * fora + w.uy * lat, z + dz)
+      // Braço de ferro com volta, e o candeeiro pendurado.
+      esc.linha([P(0.02, 0), P(0.75, 0)], 'aresta')
+      esc.linha([P(0.02, -0.45), P(0.3, -0.15), P(0.55, -0.02)], 'pormenor')
+      esc.linha(Array.from({ length: 9 }, (_, i) => { const t = (i / 8) * Math.PI * 1.6; return P(0.3 + Math.cos(t) * 0.1, 0.12 + Math.sin(t) * 0.1) }), 'pormenor')
+      const lanterna = new THREE.CylinderGeometry(0.2, 0.13, 0.42, 6)
+      const [lx, ly, lz] = P(0.75, -0.35)
+      lanterna.translate(lx, ly, lz)
+      esc.solido(lanterna, 'aresta', 30)
+      const tecto = new THREE.ConeGeometry(0.26, 0.2, 6)
+      tecto.translate(lx, ly + 0.31, lz)
+      esc.solido(tecto, 'aresta', 30)
+      esc.linha([P(0.75, 0), P(0.75, -0.04)], 'aresta')
+    }
+    this.cena.add(esc.acabar())
+    const placas: [string, [number, number]][] = [
+      ['Rua Ferreira Borges', [-106, 15]],
+      ['Arco de Almedina', [-72, -1]],
+      ['Rua de Quebra-Costas', [-56, 6]],
+      ['Largo da Sé Velha', [20, 19]],
+    ]
+    for (const [texto, [x, y]] of placas) {
+      const w = this.paredePerto(x, y, 9)
+      if (!w) continue
+      const z = this.chao(w.x + w.nx, w.y + w.ny) + 3.1
+      const m = placa(texto)
+      const [px, py, pz] = p3(w.x + w.nx * 0.05, w.y + w.ny * 0.05, z)
+      m.position.set(px, py, pz)
+      m.lookAt(px + w.nx, py, pz - w.ny)
+      this.cena.add(m)
+    }
   }
 
   /** Distância ao longo do percurso do vértice mais perto de um ponto. */

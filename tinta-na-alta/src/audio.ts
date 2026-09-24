@@ -90,8 +90,15 @@ export class Som {
     return b
   }
 
-  /** Posição → ganho, filtro de distância e panorâmica. */
-  private espacial(pos: THREE.Vector3 | null, alcance = 60, eco = 1) {
+  /** Há parede entre o som e o ouvinte? (o jogo liga isto à octree) */
+  ocluido: (de: THREE.Vector3) => boolean = () => false
+
+  /**
+   * Posição → ganho, filtro de distância, oclusão e panorâmica. As vozes seguem
+   * a lei da distância a sério (quem grita a 30 m ouve-se, mas longe), perdem
+   * graves e agudos ao longe, e trazem o ressalto da fachada da frente.
+   */
+  private espacial(pos: THREE.Vector3 | null, alcance = 60, eco = 1, voz = false) {
     const entrada = this.ctx.createGain()
     if (!pos) {
       entrada.connect(this.mestre)
@@ -99,19 +106,37 @@ export class Som {
     }
     const rel = pos.clone().sub(this.ouvinte)
     const dist = rel.length()
+    const tapado = dist > 2 && this.ocluido(pos)
     const g = this.ctx.createGain()
-    g.gain.value = 1 / (1 + Math.pow(dist / (alcance * 0.18), 1.4))
+    g.gain.value = (voz ? Math.pow(Math.min(1, 3.5 / Math.max(dist, 0.1)), 1.15) : 1 / (1 + Math.pow(dist / (alcance * 0.18), 1.4))) * (tapado ? 0.55 : 1)
     const lp = this.ctx.createBiquadFilter()
     lp.type = 'lowpass'
-    lp.frequency.value = Math.max(700, 18000 / (1 + dist / 18))
+    const corte = voz ? Math.max(1100, 9000 / (1 + dist / 10)) : Math.max(700, 18000 / (1 + dist / 18))
+    lp.frequency.value = tapado ? Math.max(350, corte * 0.3) : corte
+    let cadeia: AudioNode = entrada
+    if (voz) {
+      // Ao longe a voz fica fina: o chão e o ar comem os graves.
+      const hp = this.ctx.createBiquadFilter()
+      hp.type = 'highpass'
+      hp.frequency.value = Math.min(450, 90 + dist * 8)
+      cadeia = cadeia.connect(hp)
+    }
     const pan = this.ctx.createStereoPanner()
     const f = this.frenteOuvinte
     const dir = new THREE.Vector3(-f.z, 0, f.x)
-    pan.pan.value = dist > 0.5 ? THREE.MathUtils.clamp(rel.clone().normalize().dot(dir), -1, 1) * 0.8 : 0
-    entrada.connect(lp).connect(g).connect(pan).connect(this.mestre)
-    // Quanto mais longe, mais eco em proporção: o tiro distante é quase só ruela.
+    pan.pan.value = dist > 0.5 ? THREE.MathUtils.clamp(rel.clone().normalize().dot(dir), -1, 1) * (tapado ? 0.5 : 0.8) : 0
+    cadeia.connect(lp).connect(g).connect(pan).connect(this.mestre)
+    if (voz && dist > 5) {
+      // Ressalto na fachada do outro lado da rua: um eco só, curto.
+      const atraso = this.ctx.createDelay(0.3)
+      atraso.delayTime.value = Math.min(0.12, 0.025 + dist * 0.0018)
+      const ag = this.ctx.createGain()
+      ag.gain.value = Math.min(0.35, 0.1 + dist / 120)
+      g.connect(atraso).connect(ag).connect(pan)
+    }
+    // Quanto mais longe (ou mais escondido), mais o que chega é ruela.
     const envio = this.ctx.createGain()
-    envio.gain.value = Math.min(0.75, 0.15 + dist / 90) * eco
+    envio.gain.value = (voz ? 0.05 + Math.min(0.35, dist / 55) : Math.min(0.75, 0.15 + dist / 90) * eco) * (tapado ? 1.8 : 1)
     pan.connect(envio).connect(this.ecoEnvio)
     return { entrada, dist }
   }
@@ -427,7 +452,7 @@ export class Som {
       saida = g
     } else if (quem === 'fadista') {
       s.playbackRate.value = 0.86 // um pouco mais grave que a voz original
-      const { entrada } = this.espacial(pos, 40, 0.1)
+      const { entrada } = this.espacial(pos, 40, 1, true)
       const g = this.ctx.createGain(); g.gain.value = 1.6
       s.connect(g).connect(entrada)
       saida = g
@@ -435,12 +460,13 @@ export class Som {
       // Borrões: cada um com o seu grave, e a garganta de quem fuma.
       const semente = quem.inimigo
       s.playbackRate.value = 0.7 + (semente % 5) * 0.035
-      // Vozes quase secas: é gente na rua, o eco afastava-as.
-      const { entrada } = this.espacial(pos, 70, 0.1)
+      const { entrada } = this.espacial(pos, 70, 1, true)
       const sat = this.ctx.createWaveShaper(); sat.curve = curvaSaturacao(2)
       const peito = this.ctx.createBiquadFilter(); peito.type = 'peaking'; peito.frequency.value = 220; peito.gain.value = 6
-      const g = this.ctx.createGain(); g.gain.value = 1.9
-      s.connect(sat).connect(peito).connect(g).connect(entrada)
+      // Voz de quem grita na rua: presença nos médios-agudos.
+      const grito = this.ctx.createBiquadFilter(); grito.type = 'peaking'; grito.frequency.value = 1700; grito.Q.value = 0.8; grito.gain.value = 5
+      const g = this.ctx.createGain(); g.gain.value = 2.2
+      s.connect(sat).connect(peito).connect(grito).connect(g).connect(entrada)
       saida = g
     }
     void saida
