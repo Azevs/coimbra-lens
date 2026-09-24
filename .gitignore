@@ -53,3 +53,6 @@ scripts/blender/*-orto-*.png
 
 # vídeo: frames, vozes e misturas intermédias
 /scripts/video/.cache/
+
+# trilhos: respostas em bruto e janelas do DEM Copernicus (~70 MB)
+/scripts/data/trilhos/cache/

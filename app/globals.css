@@ -3153,3 +3153,361 @@ footer a {
 .falta-texto { font-family: var(--font-ibm-plex), sans-serif; font-size: 0.875rem; line-height: 1.65; color: var(--text-secondary); margin: 0; }
 .falta-texto a { color: var(--accent-text); }
 
+
+/* ══ Trilhos ═══════════════════════════════════════════════════════════
+   Uma carta de caminhar impressa: papel pardo, relevo a sépia, os trilhos
+   a tinta. O painel senta-se no papel à esquerda, onde a carta se lava
+   para a cor da página — sem caixa, como o resto do site. */
+
+.trilhos-palco {
+  position: relative;
+  height: calc(100svh - 97px);
+  min-height: 640px;
+  background: var(--bg-primary);
+  overflow: hidden;
+}
+.trilhos-carta { position: absolute; inset: 0; }
+/* O CSS do Mapbox chega depois deste e põe `position: relative`. */
+.trilhos-carta .trilhos-carta-mapa.mapboxgl-map,
+.trilhos-carta-mapa { position: absolute; inset: 0; }
+.trilhos-carta .mapboxgl-canvas { outline: none; }
+
+.trilhos-carta-papel {
+  position: absolute; inset: 0; pointer-events: none; z-index: 1;
+  background:
+    linear-gradient(90deg, var(--bg-primary) 0, rgba(242, 238, 230, 0.9) 22%, rgba(242, 238, 230, 0) 42%),
+    radial-gradient(ellipse 80% 90% at 64% 52%, rgba(242, 238, 230, 0) 58%, rgba(242, 238, 230, 0.7) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)' opacity='0.09'/%3E%3C/svg%3E");
+}
+@media (max-width: 1023px) {
+  .trilhos-carta-papel {
+    background:
+      radial-gradient(ellipse 90% 90% at 50% 50%, rgba(242, 238, 230, 0) 62%, rgba(242, 238, 230, 0.6) 100%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)' opacity='0.09'/%3E%3C/svg%3E");
+  }
+}
+.trilhos-carta .mapboxgl-ctrl-bottom-right { z-index: 3; }
+.trilhos-carta .mapboxgl-ctrl-group {
+  border-radius: 2px; box-shadow: none; border: 1px solid var(--border-strong);
+  background: rgba(242, 238, 230, 0.92);
+}
+
+/* A rosa dos ventos gira com a carta. */
+.trilhos-rosa {
+  position: absolute; top: 1.25rem; right: 1.25rem; z-index: 2;
+  color: #3E3024; opacity: 0.72; pointer-events: none;
+}
+.trilhos-rosa text { font-family: var(--font-fraunces), Georgia, serif; }
+
+.trilhos-dica {
+  position: absolute; z-index: 4; pointer-events: none;
+  transform: translate(-50%, calc(-100% - 16px));
+  display: flex; align-items: baseline; gap: 0.5rem;
+  background: var(--text-primary); color: var(--bg-primary);
+  padding: 6px 10px; border-radius: 2px; white-space: nowrap;
+  font-family: var(--font-ibm-plex), sans-serif; font-size: 13px;
+  box-shadow: 0 6px 20px rgba(20, 23, 28, 0.25);
+}
+.trilhos-dica::after {
+  content: ""; position: absolute; left: 50%; bottom: -5px; width: 10px; height: 10px;
+  background: var(--text-primary); transform: translateX(-50%) rotate(45deg);
+}
+.trilhos-dica-codigo { font-family: var(--font-jetbrains), monospace; font-size: 11px; font-weight: 700; color: #F2A33A; }
+.trilhos-dica-nome { font-weight: 500; }
+.trilhos-dica-km { font-family: var(--font-jetbrains), monospace; font-size: 11px; opacity: 0.75; }
+
+.trilhos-carta-falha {
+  position: absolute; z-index: 3; right: 1.25rem; bottom: 3rem;
+  background: var(--bg-primary); padding: 0.5rem 0.75rem; border: 1px solid var(--border-panel);
+}
+
+/* ── O painel ── */
+.trilhos-painel {
+  position: absolute; z-index: 3;
+  top: 1.75rem; bottom: 1.75rem;
+  left: max(1.25rem, calc((100vw - 1280px) / 2 + 1.25rem));
+  width: min(440px, 36vw);
+  overflow-y: auto; overscroll-behavior: contain;
+  scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent;
+  display: flex; flex-direction: column;
+}
+.trilhos-abertura { margin: auto 0; padding-right: 0.5rem; animation: trilhos-surgir 0.9s 0.2s both cubic-bezier(0.2, 0.7, 0.2, 1); }
+.trilhos-painel.tem-ficha {
+  background: rgba(242, 238, 230, 0.97);
+  border-top: 3px solid var(--text-primary);
+  box-shadow: 0 18px 50px rgba(20, 23, 28, 0.16);
+  padding: 1.1rem 1.25rem 1.25rem;
+  bottom: auto; max-height: calc(100% - 3.5rem);
+}
+@keyframes trilhos-surgir {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trilhos-abertura, .trilho-ficha { animation: none !important; }
+}
+
+.trilhos-kicker {
+  display: flex; justify-content: space-between; gap: 1rem;
+  font-family: var(--font-jetbrains), monospace; font-size: 11px;
+  letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent-text);
+  margin-bottom: 0.875rem;
+}
+.trilhos-regua { height: 3px; background: var(--text-primary); }
+.trilhos-titulo {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-weight: 900;
+  font-size: clamp(3.25rem, 6.2vw, 6rem);
+  line-height: 0.86;
+  letter-spacing: -0.045em;
+  margin: 0; padding: 1.25rem 0 1.25rem;
+}
+.trilhos-titulo em {
+  display: block;
+  font-style: italic; font-weight: 300; color: var(--accent);
+  letter-spacing: -0.03em;
+}
+.trilhos-lede {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: clamp(1.1rem, 1.5vw, 1.3rem);
+  line-height: 1.32; letter-spacing: -0.01em;
+  border-top: 1px solid var(--border-panel);
+  padding-top: 1rem; margin: 0 0 1.25rem;
+  text-wrap: pretty;
+}
+
+/* ── Filtros ── */
+.trilhos-filtros { display: flex; flex-direction: column; gap: 0.5rem; }
+.trilhos-filtros-linha, .trilhos-ordem { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+.trilhos-chip {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  min-height: 34px; padding: 0.3rem 0.65rem;
+  background: rgba(242, 238, 230, 0.85);
+  border: 1px solid var(--border-strong); border-radius: 2px;
+  color: var(--text-secondary); cursor: pointer;
+  font-family: var(--font-ibm-plex), sans-serif; font-size: 13px;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.trilhos-chip:hover { border-color: var(--text-primary); color: var(--text-primary); }
+.trilhos-chip.is-on { background: var(--text-primary); border-color: var(--text-primary); color: var(--bg-primary); }
+.trilhos-chip:not(.is-on) .trilho-marca-barras { opacity: 0.45; }
+.trilhos-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.trilhos-chip-n { font-family: var(--font-jetbrains), monospace; font-size: 11px; opacity: 0.7; }
+.trilhos-chip .trilho-marca-codigo { font-family: var(--font-ibm-plex), sans-serif; font-size: 13px; font-weight: 500; letter-spacing: 0; }
+.trilhos-contagem { color: var(--text-secondary); margin-top: 0.375rem; }
+.trilhos-contagem-dica { color: var(--text-tertiary); }
+
+/* ── A marca da sinalética ── */
+.trilho-marca { display: inline-flex; align-items: center; gap: 0.45rem; }
+.trilho-marca-barras {
+  display: inline-flex; flex-direction: column; flex-shrink: 0;
+  width: 16px; box-shadow: 0 0 0 1px rgba(20, 23, 28, 0.28);
+}
+.trilho-marca-barras span { display: block; height: 4px; }
+.trilho-marca-traco {
+  width: 16px; height: 0; flex-shrink: 0;
+  border-top: 2.5px dashed #3A4F4A;
+}
+.trilho-marca-codigo {
+  font-family: var(--font-jetbrains), monospace; font-size: 11px; font-weight: 700;
+  letter-spacing: 0.06em; color: inherit;
+}
+.trilho-marca-grande .trilho-marca-barras { width: 24px; }
+.trilho-marca-grande .trilho-marca-barras span { height: 6px; }
+.trilho-marca-grande .trilho-marca-codigo { font-size: 13px; }
+
+.trilho-selo {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--font-jetbrains), monospace; font-size: 10px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--tone-teal-text);
+  border: 1px solid color-mix(in srgb, var(--tone-teal) 40%, transparent);
+  background: color-mix(in srgb, var(--tone-teal) 8%, transparent);
+  padding: 2px 7px; border-radius: 2px; white-space: nowrap;
+}
+.trilho-selo::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--tone-teal); }
+.trilho-selo-pequeno { font-size: 9px; padding: 1px 5px; }
+
+/* ── A ficha ── */
+.trilho-ficha { animation: trilhos-surgir 0.5s both cubic-bezier(0.2, 0.7, 0.2, 1); }
+.trilho-ficha-topo { display: flex; align-items: center; gap: 0.625rem; flex-wrap: wrap; }
+.trilho-fechar {
+  margin-left: auto; display: grid; place-items: center;
+  width: 36px; height: 36px; border: 1px solid var(--border-panel); border-radius: 2px;
+  background: transparent; color: var(--text-primary); cursor: pointer;
+}
+.trilho-fechar:hover { border-color: var(--text-primary); }
+.trilho-ficha-titulo {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: clamp(1.5rem, 2.3vw, 2rem); font-weight: 700; line-height: 1.05; letter-spacing: -0.025em;
+  margin: 0.875rem 0 0.375rem; text-wrap: balance;
+}
+.trilho-ficha-onde { font-size: 0.875rem; color: var(--text-secondary); margin: 0 0 1rem; }
+
+.trilho-factos {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid var(--border-panel); margin: 0;
+}
+.trilho-facto { padding: 0.625rem 0.5rem 0.625rem 0; border-bottom: 1px solid var(--border-subtle); }
+.trilho-facto dt {
+  font-family: var(--font-jetbrains), monospace; font-size: 10px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text-tertiary);
+  display: flex; align-items: baseline; gap: 5px; flex-wrap: wrap;
+}
+.trilho-facto dd { margin: 0.2rem 0 0; font-size: 1.05rem; color: var(--text-primary); line-height: 1.2; }
+.trilho-origem { font-size: 8.5px; letter-spacing: 0.06em; text-transform: lowercase; }
+.trilho-origem-guia { color: var(--tone-teal-text); }
+.trilho-origem-medido { color: var(--tone-amber-text); }
+
+.trilho-aviso {
+  margin: 0.875rem 0 0; padding: 0.5rem 0.75rem;
+  border-left: 3px solid var(--tone-amber); background: color-mix(in srgb, var(--tone-amber) 8%, transparent);
+  font-size: 0.8125rem; line-height: 1.5; color: var(--text-secondary);
+}
+
+.trilho-dificuldade {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem 1rem;
+  margin-top: 1rem;
+}
+.trilho-escala { display: flex; flex-direction: column; gap: 4px; }
+.trilho-escala-nome { font-size: 0.75rem; color: var(--text-secondary); }
+.trilho-escala-pontos { display: flex; gap: 3px; }
+.trilho-escala-pontos span { width: 100%; max-width: 28px; height: 6px; background: var(--border-panel); }
+.trilho-escala-pontos span.is-cheio { background: var(--text-primary); }
+
+.trilho-ficha-perfil { margin-top: 1.125rem; }
+.trilho-ficha-perfil-topo {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 0.25rem; color: var(--text-secondary);
+}
+.trilho-perfil { display: block; width: 100%; height: auto; overflow: visible; touch-action: none; cursor: crosshair; }
+.trilho-perfil-mini { height: 44px; cursor: inherit; touch-action: auto; }
+.trilho-perfil-grelha { stroke: var(--border-subtle); stroke-width: 1; }
+.trilho-perfil-chao { stroke: var(--border-strong); stroke-width: 1; }
+.trilho-perfil-texto { font-family: var(--font-jetbrains), monospace; font-size: 10px; fill: var(--text-secondary); }
+.trilho-perfil-cota { fill: var(--text-primary); }
+.trilho-perfil-cursor line { stroke: var(--text-primary); stroke-width: 1; stroke-dasharray: 3 3; }
+.trilho-perfil-cursor circle { fill: #F2A33A; stroke: var(--text-primary); stroke-width: 1.5; }
+.trilho-perfil-leitura { fill: var(--text-primary); font-weight: 700; paint-order: stroke; stroke: var(--bg-primary); stroke-width: 3px; }
+
+.trilho-accoes { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem; }
+.trilho-percorrer {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem;
+  min-height: 46px; padding: 0.7rem 1.1rem;
+  background: var(--text-primary); color: var(--bg-primary);
+  border: 0; border-radius: 2px; cursor: pointer;
+  font-family: var(--font-jetbrains), monospace; font-size: 12px; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  transition: background 0.2s;
+}
+.trilho-percorrer:hover { background: var(--accent-dim); }
+.trilho-percorrer.is-activo { background: var(--accent); }
+.trilho-percorrer:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.trilho-percorrer-icone { font-size: 10px; }
+.trilho-ligacoes { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; font-size: 0.8125rem; }
+.trilho-ligacoes a { color: var(--accent-text); text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); }
+.trilho-ligacoes a:hover { border-bottom-color: var(--accent); }
+
+.trilhos-palco-selo {
+  max-width: 1280px; margin: 0 auto; padding: 0 1.25rem 0.5rem;
+}
+
+/* ── Telemóvel e tablet: carta em cima, painel por baixo ── */
+@media (max-width: 1023px) {
+  .trilhos-palco { height: auto; min-height: 0; overflow: visible; }
+  .trilhos-carta { position: relative; height: 66svh; min-height: 380px; }
+  .trilhos-painel {
+    position: static; width: auto; max-height: none; overflow: visible;
+    padding: 1.5rem 1.25rem 0.5rem;
+  }
+  .trilhos-painel.tem-ficha {
+    max-height: none; box-shadow: none; background: transparent;
+    margin: 0; padding: 1.25rem 1.25rem 0.5rem;
+  }
+  .trilhos-titulo { font-size: clamp(3rem, 15vw, 5rem); }
+  .trilhos-rosa { top: 0.75rem; right: 0.75rem; }
+  .trilhos-rosa svg { width: 42px; height: 42px; }
+  .trilhos-contagem-dica { display: none; }
+}
+@media (max-width: 420px) {
+  .trilho-factos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ── A lista ── */
+.trilhos-ordem { align-items: center; margin-bottom: 1.5rem; }
+.trilhos-ordem-n { margin-left: auto; color: var(--text-tertiary); }
+.trilhos-grelha {
+  list-style: none; margin: 0 0 1rem; padding: 0;
+  display: grid; gap: 0 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+}
+.trilho-cartao {
+  all: unset; box-sizing: border-box; cursor: pointer;
+  display: flex; flex-direction: column; gap: 0.45rem; width: 100%; height: 100%;
+  padding: 0.875rem 0.25rem 1.375rem;
+  border-top: 2px solid var(--cor-trilho, var(--text-primary));
+  transition: background 0.15s;
+}
+.trilho-cartao:hover { background: color-mix(in srgb, var(--cor-trilho) 5%, transparent); }
+.trilho-cartao:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.trilho-cartao-topo { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; color: var(--text-primary); }
+.trilho-cartao-nome {
+  font-family: var(--font-fraunces), Georgia, serif; font-weight: 600;
+  font-size: 1.15rem; line-height: 1.15; letter-spacing: -0.015em; color: var(--text-primary);
+  text-wrap: balance;
+}
+.trilho-cartao-onde { font-size: 0.8125rem; color: var(--text-secondary); }
+.trilho-cartao .trilho-perfil-mini { margin-top: auto; }
+.trilho-cartao-numeros {
+  display: flex; flex-wrap: wrap; gap: 0.25rem 0.875rem;
+  font-size: 0.8125rem; color: var(--text-primary);
+}
+
+/* ── A rede ── */
+.trilhos-rede { background: var(--bg-secondary); }
+.trilhos-rede-legenda {
+  list-style: none; margin: -1.5rem 0 1.75rem; padding: 0;
+  display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem;
+  font-size: 0.8125rem; color: var(--text-secondary);
+}
+.trilhos-rede-legenda li { display: inline-flex; align-items: center; gap: 0.5rem; }
+.trilhos-rede-ponto {
+  display: inline-block; flex-shrink: 0; width: 9px; height: 9px; border-radius: 50%;
+  border: 1.5px solid var(--accent);
+}
+.trilhos-rede-ponto.is-carta { background: var(--accent); }
+.trilhos-rede-ponto.is-nome { border-color: var(--text-tertiary); border-style: dashed; }
+.trilhos-rede-grelha {
+  display: grid; gap: 1.75rem 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+}
+.trilhos-rede-concelho h3 {
+  font-family: var(--font-fraunces), Georgia, serif; font-size: 1.05rem; font-weight: 700;
+  border-top: 1px solid var(--text-primary); padding-top: 0.5rem; margin: 0 0 0.5rem;
+}
+.trilhos-rede-concelho ul { list-style: none; margin: 0; padding: 0; }
+.trilhos-rede-concelho li {
+  display: flex; align-items: baseline; gap: 0.5rem;
+  font-size: 0.8438rem; line-height: 1.4; padding: 0.2rem 0;
+  color: var(--text-secondary);
+}
+.trilhos-rede-concelho li .trilhos-rede-ponto { transform: translateY(1px); }
+.trilhos-rede-concelho li.is-carta { color: var(--text-primary); }
+.trilhos-rede-concelho li .ui-mono { font-size: 10.5px; color: var(--text-tertiary); margin-right: 0.15rem; }
+.trilhos-rede-concelho button {
+  all: unset; cursor: pointer; color: var(--text-primary);
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.trilhos-rede-concelho button:hover { border-bottom-color: var(--accent); color: var(--accent-text); }
+.trilhos-rede-concelho button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.trilhos-rede-nota { margin-top: 2rem; }
+.trilhos-rede-nota a { color: var(--accent-text); }
+/* As famílias começam todas ligadas: ligada é tinta sobre papel, não um
+   bloco negro; desligada fica esbatida e a tracejado. */
+.trilhos-chip-familia.is-on {
+  background: rgba(242, 238, 230, 0.92); color: var(--text-primary);
+  border: 1.5px solid var(--text-primary); font-weight: 500;
+}
+.trilhos-chip-familia:not(.is-on) { border-style: dashed; color: var(--text-tertiary); }
+.trilhos-chip-familia:not(.is-on) .trilho-marca-traco { opacity: 0.45; }
+@media (max-width: 639px) { .trilhos-carta { height: 58svh; min-height: 340px; } }

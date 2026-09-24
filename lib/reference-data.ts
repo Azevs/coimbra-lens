@@ -150,6 +150,30 @@ export const TRACKED: TrackedDatum[] = [
     usedIn: 'lib/green-spaces (scripts/build-green-spaces.mjs)',
   },
   {
+    id: 'trilhos-tracado',
+    label: 'Traçado e perfil dos percursos pedestres',
+    // O TRILHOS_OBTIDOS_EM de lib/trilhos-dados.ts, repetido à mão pela
+    // mesma razão das zonas verdes (o ficheiro gerado tem 70 KB).
+    asOf: '2026-09',
+    source: 'OpenStreetMap · ICNF · Município de Cantanhede · Copernicus DEM',
+    // Os percursos novos entram no OSM aos poucos, e as câmaras vão
+    // publicando GPX: uma revisão por semestre.
+    refreshEvery: 6,
+    usedIn: 'lib/trilhos-dados (scripts/build-trilhos.mjs)',
+  },
+  {
+    id: 'trilhos-guia',
+    label: 'Fichas do guia de percursos pedestres da CIM',
+    // GUIA_DATA em lib/trilhos-guia.ts, transcrito à mão do PDF.
+    asOf: '2021-05',
+    source: 'CIM Região de Coimbra',
+    // Edição única, sem cadência publicada. Em Setembro de 2026 continuava
+    // a ser a que a CIM distribui; o aviso chega em Maio de 2027, altura de
+    // ver se saiu edição nova.
+    refreshEvery: 72,
+    usedIn: 'lib/trilhos-guia (GUIA_FICHAS, GUIA_REDE)',
+  },
+  {
     id: 'metrobus-tracado',
     label: 'Traçado da via dedicada do Metrobus',
     // O METROBUS_FETCHED_AT de lib/metrobus.ts, repetido à mão pela mesma
