@@ -83,7 +83,12 @@ export class Inimigo {
       som.queda(this.corpo.pes)
       return true
     }
-    if (Math.random() < 0.5) som.falar(escolher(['inimigo_ferido_1', 'inimigo_ferido_2']), { inimigo: this.id }, this.cabeca)
+    if (parte === 'virilha') {
+      // Fica dobrado e sem disparar um bocado; e diz o que tem a dizer.
+      this.boneco.dobrado = 1.4
+      this.reaccao = Math.max(this.reaccao, 1.4)
+      som.falar(escolher(['inimigo_tomates_1', 'inimigo_tomates_2']), { inimigo: this.id }, this.cabeca, true)
+    } else if (Math.random() < 0.5) som.falar(escolher(['inimigo_ferido_1', 'inimigo_ferido_2']), { inimigo: this.id }, this.cabeca)
     this.strafeAte = 0
     return false
   }
@@ -228,6 +233,7 @@ export class Inimigo {
       if (d.length() > 0.4) alvoVel.copy(d.normalize().multiplyScalar(this.estado === 'combate' ? 2.2 : correr || this.estado === 'alerta' ? 3.8 : 1.4))
       if (!olhar) olhar = querMover
     }
+    if (this.boneco.dobrado > 0) alvoVel.set(0, 0, 0)
     c.vel.x += (alvoVel.x - c.vel.x) * Math.min(1, 10 * dt)
     c.vel.z += (alvoVel.z - c.vel.z) * Math.min(1, 10 * dt)
     const antes = c.pes

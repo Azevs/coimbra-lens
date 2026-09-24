@@ -158,10 +158,13 @@ export class Mundo {
     this.cena.add(m)
     this.colisao.add(new THREE.Mesh(g))
     // Os degraus do terreno (muros de suporte, socalcos) desenham-se sozinhos.
-    const e = new THREE.EdgesGeometry(g, 38)
+    const e = new THREE.EdgesGeometry(g, 46)
     const a = e.getAttribute('position').array as Float32Array
     for (let i = 0; i < a.length; i += 6) {
-      this.quadricula((a[i] + a[i + 3]) / 2, -(a[i + 2] + a[i + 5]) / 2).segmentos(Array.from(a.subarray(i, i + 6)), 'pormenor')
+      const mx = (a[i] + a[i + 3]) / 2, my = -(a[i + 2] + a[i + 5]) / 2
+      // Debaixo dos prédios não se vê, e a rua não precisa de rabiscos.
+      if (this.edificioEm(mx, my)) continue
+      this.quadricula(mx, my).segmentos(Array.from(a.subarray(i, i + 6)), 'pormenor')
     }
   }
 
@@ -372,10 +375,13 @@ export class Mundo {
     for (let i = 0; i < anel.length; i++) {
       const a = anel[i], c = anel[(i + 1) % anel.length]
       const dx = c[0] - a[0], dy = c[1] - a[1], L = Math.hypot(dx, dy)
-      if (L < 2.4) continue
+      if (L < 1.8) continue
       const ux = dx / L, uy = dy / L, nx = uy, ny = -ux // normal exterior (anel anti-horário)
       const mx = (a[0] + c[0]) / 2, my = (a[1] + c[1]) / 2
-      if (!this.livre(mx + nx * 1.5, my + ny * 1.5, b)) continue
+      // Fachada com rua à frente em pelo menos parte do comprimento (cada vão confirma o seu).
+      const livreEm = (t: number) => this.livre(a[0] + ux * t + nx * 1.1, a[1] + uy * t + ny * 1.1, b)
+      if (![0.15, 0.5, 0.85].some((f) => livreEm(f * L))) continue
+      void mx; void my
       const off = 0.04
       const P = (t: number, z: number, fora = off): P3 => p3(a[0] + ux * t + nx * fora, a[1] + uy * t + ny * fora, z)
       const chaoEm = (t: number) => this.chao(a[0] + ux * t + nx * 1.2, a[1] + uy * t + ny * 1.2)
@@ -398,14 +404,14 @@ export class Mundo {
       }
       // Cornija
       esc.linha([P(0, b.topo - 0.35, 0.05), P(L, b.topo - 0.35, 0.05)], 'pormenor')
-      const colunas = Math.floor(L / 3.1)
-      if (!colunas) continue
+      const colunas = Math.max(1, Math.floor(L / 3.1))
       const passo = L / colunas
       let chaoMax = -Infinity
       for (let t = 0; t <= L; t += 1) chaoMax = Math.max(chaoMax, chaoEm(t))
       const rachas = r() < 0.3
       for (let k = 0; k < colunas; k++) {
         const t = passo * (k + 0.5)
+        if (!livreEm(t)) continue
         const zc = chaoEm(t)
         // Rés-do-chão: porta ou montra, a partir do chão desse ponto.
         if (zc < b.topo - 3 && zc > b.base - 1) {
@@ -703,24 +709,31 @@ export class Mundo {
     for (const v of this.n.vias) {
       if (v.tipo !== 'steps') continue
       const W = v.largura ?? 2.6
-      for (let i = 1; i < v.g.length; i++) {
-        const a = v.g[i - 1], b = v.g[i]
-        const L = Math.hypot(b[0] - a[0], b[1] - a[1])
-        const ux = (b[0] - a[0]) / L, uy = (b[1] - a[1]) / L
-        for (let t = 0; t < L; t += 0.45) {
-          const x = a[0] + ux * t, y = a[1] + uy * t
-          const z = this.chao(x, y) + 0.04
-          this.quadricula(x, y).linha([p3(x - uy * W / 2, y + ux * W / 2, z), p3(x + uy * W / 2, y - ux * W / 2, z)], 'chao')
-        }
-        for (const s of [-1, 1]) {
-          const pts: P3[] = []
-          for (let t = 0; t <= L; t += 1) {
-            const x = a[0] + ux * t + s * -uy * W / 2, y = a[1] + uy * t + s * ux * W / 2
-            pts.push(p3(x, y, this.chao(x, y) + 0.05))
-          }
-          this.quadricula(a[0], a[1]).linha(pts, 'pormenor')
-        }
+      // Amostras ao longo da escada; cada degrau perpendicular à direcção média
+      // ali, para as curvas abrirem em leque em vez de os degraus se cruzarem.
+      const cum = [0]
+      for (let i = 1; i < v.g.length; i++) cum.push(cum[i - 1] + Math.hypot(v.g[i][0] - v.g[i - 1][0], v.g[i][1] - v.g[i - 1][1]))
+      const total = cum[cum.length - 1]
+      const em = (t: number): [number, number] => {
+        t = Math.max(0, Math.min(total, t))
+        let i = 1
+        while (i < cum.length - 1 && cum[i] < t) i++
+        const f = (t - cum[i - 1]) / Math.max(1e-6, cum[i] - cum[i - 1])
+        return [v.g[i - 1][0] + (v.g[i][0] - v.g[i - 1][0]) * f, v.g[i - 1][1] + (v.g[i][1] - v.g[i - 1][1]) * f]
       }
+      const lado = (t: number) => {
+        const a = em(t - 1.2), b = em(t + 1.2), L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1
+        return [-(b[1] - a[1]) / L, (b[0] - a[0]) / L]
+      }
+      const bordas: P3[][] = [[], []]
+      for (let t = 0; t <= total; t += 0.45) {
+        const [x, y] = em(t), [lx, ly] = lado(t)
+        const e: [number, number] = [x + (lx * W) / 2, y + (ly * W) / 2], d: [number, number] = [x - (lx * W) / 2, y - (ly * W) / 2]
+        this.quadricula(x, y).linha([p3(...e, this.chao(...e) + 0.04), p3(...d, this.chao(...d) + 0.04)], 'chao')
+        bordas[0].push(p3(...e, this.chao(...e) + 0.05))
+        bordas[1].push(p3(...d, this.chao(...d) + 0.05))
+      }
+      for (const b of bordas) if (b.length > 1) this.quadricula(v.g[0][0], v.g[0][1]).linha(b, 'pormenor')
     }
     // Calçada: pequenas marcas espalhadas pelas ruas, poucas, como quem sugere.
     const r = aleatorio(7)
@@ -829,7 +842,7 @@ export class Mundo {
   }
 
   /** A fachada mais perto de um ponto: onde, e para onde está virada. */
-  private paredePerto(x: number, y: number, max = 8) {
+  paredePerto(x: number, y: number, max = 8) {
     let melhor: { x: number; y: number; nx: number; ny: number; ux: number; uy: number; d: number } | null = null
     const vistos = new Set<Edificio>()
     for (let gx = Math.floor((x - max) / 10); gx <= Math.floor((x + max) / 10); gx++)
@@ -855,8 +868,65 @@ export class Mundo {
    * Candeeiros de braço nas fachadas e placas com o nome das ruas, ao longo do
    * percurso — o que faz uma rua desenhada parecer habitada.
    */
+  /** Varandas de onde disparam os atiradores: posição onde ficam e para onde olham. */
+  varandas: { pos: THREE.Vector3; olhar: THREE.Vector3 }[] = []
+
+  /**
+   * Varanda de ferro num primeiro ou segundo andar, com a porta aberta e
+   * escura atrás. O desenho, a laje e o parapeito (com colisão).
+   */
+  private varanda(x: number, y: number, andar: number, esc: Esboco) {
+    const w = this.paredePerto(x, y, 8)
+    if (!w) return
+    const chao = this.chao(w.x + w.nx * 1.2, w.y + w.ny * 1.2)
+    const z = chao + 0.6 + andar * 3.1
+    const dono = this.edificioEm(w.x - w.nx * 0.5, w.y - w.ny * 0.5)
+    if (!dono || z + 2.8 > dono.topo) return
+    const P = (fora: number, lat: number, dz: number): P3 => p3(w.x + w.nx * fora + w.ux * lat, w.y + w.ny * fora + w.uy * lat, z + dz)
+    const ang = Math.atan2(w.uy, w.ux)
+    const caixa = (lat: number, fora: number, dz: number, cL: number, cF: number, h: number, desenhar: boolean) => {
+      const g = new THREE.BoxGeometry(cL, h, cF)
+      g.rotateY(ang)
+      const [cx, cy, cz] = P(fora, lat, dz)
+      g.translate(cx, cy, cz)
+      this.colisao.add(new THREE.Mesh(g.clone()))
+      if (desenhar) esc.solido(g, 'aresta')
+    }
+    // Laje e parapeito (o parapeito só colide: desenha-se em ferro).
+    caixa(0, 0.45, -0.06, 1.9, 0.9, 0.12, true)
+    caixa(0, 0.88, 0.5, 1.9, 0.06, 1.0, false)
+    caixa(-0.93, 0.45, 0.5, 0.06, 0.9, 1.0, false)
+    caixa(0.93, 0.45, 0.5, 0.06, 0.9, 1.0, false)
+    esc.linha([P(0, -0.95, 1), P(0.9, -0.95, 1), P(0.9, 0.95, 1), P(0, 0.95, 1)], 'aresta')
+    esc.linha([P(0.9, -0.95, 0.12), P(0.9, 0.95, 0.12)], 'pormenor')
+    for (let l = -0.95; l <= 0.96; l += 0.14) esc.linha([P(0.9, l, 0), P(0.9, l, 1)], 'sombra')
+    for (let f = 0.14; f < 0.9; f += 0.14) for (const l of [-0.95, 0.95]) esc.linha([P(f, l, 0), P(f, l, 1)], 'sombra')
+    // Mísulas por baixo da laje.
+    for (const l of [-0.7, 0.7]) esc.linha([P(0.02, l, -0.55), P(0.7, l, -0.12)], 'pormenor')
+    // Porta aberta: moldura e o escuro de dentro.
+    esc.linha([P(0.03, -0.55, 0), P(0.03, -0.55, 2.3), P(0.03, 0.55, 2.3), P(0.03, 0.55, 0)], 'aresta')
+    const o = P(0.02, -0.55, 0), fim = P(0.02, 0.55, 0)
+    esc.tracejar(o, [fim[0] - o[0], 0, fim[2] - o[2]], [0, 2.3, 0], 0.06, 'pormenor')
+    this.varandas.push({ pos: v3(...([w.x + w.nx * 0.45, w.y + w.ny * 0.45] as [number, number]), z + 0.02), olhar: v3(w.x + w.nx * 8, w.y + w.ny * 8, z - 2) })
+  }
+
   private mobiliario() {
     const esc = new Esboco('mobiliario', 0.4, 0.3)
+    // Varandas com atiradores ao longo da subida ("olha para as janelas").
+    const S = (a: THREE.Vector3, b: THREE.Vector3, t: number) => this.sDe(a) + (this.sDe(b) - this.sDe(a)) * t
+    const P0 = this.pontos
+    const locais: [number, number, number][] = [
+      [S(P0.arco, P0.largoArco, 0.9), 3, 1],
+      [S(P0.largoArco, P0.escadasBase, 0.5), -3, 1],
+      [S(P0.escadasBase, P0.escadasMeio, 0.35), 3, 1],
+      [S(P0.escadasBase, P0.escadasMeio, 0.8), -3, 2],
+      [S(P0.escadasMeio, P0.escadasTopo, 0.55), 3, 1],
+      [S(P0.escadasTopo, P0.largo, 0.4), -4, 1],
+    ]
+    for (const [s, lat, andar] of locais) {
+      const p = this.noPercurso(s, lat)
+      this.varanda(p.x, -p.z, andar, esc)
+    }
     const fimRua = this.comprimentos[this.percurso.indexOf(this.pontos.portaClaustro)] ?? this.comprimentos[this.comprimentos.length - 1]
     let lado = 1
     for (let s = 6; s < fimRua - 4; s += 13) {

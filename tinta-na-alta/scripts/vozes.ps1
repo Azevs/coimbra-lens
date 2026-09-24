@@ -28,6 +28,8 @@ $s.Voice = $voz
 Write-Host "voz: $($voz.DisplayName)"
 
 foreach ($p in $falas.PSObject.Properties) {
+  # Só grava as que faltam (apagar o .wav para regravar).
+  if (Test-Path (Join-Path $saida "$($p.Name).wav")) { continue }
   $id = $p.Name
   $cfg = $p.Value
   $texto = [string]$cfg.texto

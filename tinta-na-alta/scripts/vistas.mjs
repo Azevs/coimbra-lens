@@ -38,7 +38,9 @@ await js(`dbg.comecar(); dbg.jog.vida = 1e9; 1`)
 for (const v of vistas) {
   await js(`(async () => {
     const d = dbg, V = d.P.inicio.constructor
-    const [x, y] = ${JSON.stringify(v.de)}, [tx, ty] = ${JSON.stringify(v.para)}
+    const ps = ${v.s ?? -1}
+    const pa = ps >= 0 ? d.mundo.noPercurso(ps) : null, pb = ps >= 0 ? d.mundo.noPercurso(ps + 10) : null
+    const [x, y] = pa ? [pa.x, -pa.z] : ${JSON.stringify(v.de ?? [0, 0])}, [tx, ty] = pb ? [pb.x, -pb.z] : ${JSON.stringify(v.para ?? [0, 0])}
     const o = new V(x, d.mundo.chao(x, y), -y)
     d.jog.corpo.colocar(o)
     if (${!!v.limpar}) d.inimigos.forEach((e) => { if (e.vivo && e.corpo.pes.distanceTo(o) < 40) { e.vida = 1; e.ferir(5, 'tronco', o, d.som, { sangue() {}, poca() {} }, e.corpo.pes) } })

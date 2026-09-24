@@ -5,7 +5,7 @@
 import * as THREE from 'three'
 import { Esboco, tintaSolida } from './tinta'
 
-export type Parte = 'cabeca' | 'tronco' | 'membro'
+export type Parte = 'cabeca' | 'tronco' | 'membro' | 'virilha'
 type Estilo = 'tinta' | 'contorno'
 
 const invisivel = new THREE.MeshBasicMaterial({ visible: false })
@@ -50,6 +50,8 @@ export class Boneco {
   fase = Math.random() * 10
   queda = 0
   quedaDir = 1
+  /** Segundos que ainda passa dobrado (tiro no baixo ventre). */
+  dobrado = 0
 
   constructor(public estilo: Estilo, comArma = true) {
     const L = 0.035 // espessura dos palitos
@@ -62,6 +64,7 @@ export class Boneco {
     tronco.translate(0, 0.52, 0)
     this.peito.add(peca(tronco, estilo, 'tronco', this.alvos))
     this.peito.add(caixaAcerto('tronco', 0.34, 0.6, 0.24, 0.28, this.alvos))
+    this.anca.add(caixaAcerto('virilha', 0.24, 0.22, 0.24, -0.1, this.alvos))
     this.peito.add(this.cabeca)
     this.cabeca.position.y = 0.68
     this.cabeca.add(peca(new THREE.SphereGeometry(0.14, 16, 12), estilo, 'cabeca', this.alvos))
@@ -154,6 +157,21 @@ export class Boneco {
       this.cabeca.rotation.y = Math.sin(f * 0.7) * 0.5
       return
     }
+    if (this.dobrado > 0) {
+      // Dobrado sobre si, mãos lá em baixo, joelhos para dentro.
+      this.dobrado -= dt
+      const k = Math.min(1, this.dobrado * 3, 1)
+      this.anca.position.y = 0.92 - 0.12 * k
+      this.peito.rotation.x = 0.9 * k
+      this.pernaE.rotation.set(-0.2 * k, 0, 0.15 * k); this.pernaD.rotation.set(-0.2 * k, 0, -0.15 * k)
+      this.canelaE.rotation.x = this.canelaD.rotation.x = 0.4 * k
+      this.bracoE.rotation.set(-0.3 * k, 0, 0.3 * k); this.bracoD.rotation.set(-0.3 * k, 0, -0.3 * k)
+      this.antebracoE.rotation.x = this.antebracoD.rotation.x = -0.6 * k
+      this.cabeca.rotation.y = Math.sin(this.fase * 9) * 0.15 * k
+      this.fase += dt
+      return
+    }
+    this.pernaE.rotation.z = this.pernaD.rotation.z = 0
     this.anca.position.y = 0.92 + Math.abs(Math.sin(f)) * 0.05 * passo - mira * 0.06
     this.pernaE.rotation.x = Math.sin(f) * 0.7 * passo - mira * 0.15
     this.pernaD.rotation.x = -Math.sin(f) * 0.7 * passo - mira * 0.15

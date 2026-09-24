@@ -138,6 +138,8 @@ function povoar() {
   criar(naRota(dentro, patio, 0.75, 4), dentro)
   criar(naRota(dentro, patio, 1.05, -3), dentro, { patrulha: [naRota(dentro, patio, 1.05, -3), naRota(dentro, patio, 1.05, 4)] })
   guardasDoFadista()
+  // Atiradores nas varandas: parados, a vigiar a rua lá em baixo.
+  for (const v of mundo.varandas) criar(v.pos, v.olhar, { telhado: true })
   void barba
 }
 
@@ -329,7 +331,7 @@ jog.onAterrar = (v) => {
 
 // -------------------------------------------------------------- disparos --
 const raycaster = new THREE.Raycaster()
-const DANO: Record<Parte, number> = { cabeca: 100, tronco: 38, membro: 24 }
+const DANO: Record<Parte, number> = { cabeca: 100, tronco: 38, membro: 24, virilha: 55 }
 
 function dispararJogador() {
   arma.disparar()

@@ -418,13 +418,13 @@ export class Som {
    * Diz uma fala. Prioridade: rádio 3, fadista 2, inimigos 1 (e os inimigos
    * não falam uns por cima dos outros).
    */
-  falar(id: string, quem: Personagem, pos: THREE.Vector3 | null = null) {
+  falar(id: string, quem: Personagem, pos: THREE.Vector3 | null = null, forcar = false) {
     if (!this.pronto) return 0
     const buf = this.vozes.get(id)
     const agora = this.ctx.currentTime
     const prioridade = quem === 'radio' ? 3 : quem === 'fadista' ? 2 : 1
     if (typeof quem === 'object') {
-      if (agora - this.ultimaFalaInimigo < 1.6) return 0
+      if (agora - this.ultimaFalaInimigo < 1.6 && !forcar) return 0
       this.ultimaFalaInimigo = agora
     }
     if (this.falaActual && this.falaActual.ate > agora) {

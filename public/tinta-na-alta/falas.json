@@ -1,40 +1,156 @@
 {
-  "radio_inicio": { "texto": "Atenção. Os Borrões raptaram o fadista e fecharam-no no claustro da Sé Velha. A Serenata é à meia-noite. Passa o Arco de Almedina, sobe o Quebra-Costas e traz-mo inteiro.", "velocidade": "5%" },
-  "radio_arco": { "texto": "Estás no Arco. Daqui para cima é sempre a subir. Olha para as janelas.", "velocidade": "5%" },
-  "radio_largo": { "texto": "Largo da Sé Velha. O claustro fica do outro lado da catedral, a sul.", "velocidade": "5%" },
-  "radio_claustro": { "texto": "Ele está no pátio do claustro. Cuidado com as galerias.", "velocidade": "5%" },
-  "radio_fuga": { "texto": "Tens o fadista. Vêm aí reforços pelo Quebra-Costas. Desce até ao Arco de Almedina, depressa!", "velocidade": "8%" },
-  "radio_fim": { "texto": "Belo trabalho. A Serenata vai para a frente.", "velocidade": "0%" },
-  "radio_ferido": { "texto": "Estás a perder muita tinta. Protege-te!", "velocidade": "10%" },
-  "radio_fadista_caiu": { "texto": "Perdemos o fadista. Missão falhada.", "velocidade": "0%" },
-  "radio_morreste": { "texto": "Agente em baixo. Missão falhada.", "velocidade": "0%" },
-
-  "inimigo_viu_1": { "texto": "Olha ali!", "velocidade": "15%" },
-  "inimigo_viu_2": { "texto": "Está ali um! Está ali um!", "velocidade": "20%" },
-  "inimigo_viu_3": { "texto": "Intruso! Nas escadas!", "velocidade": "15%" },
-  "inimigo_viu_4": { "texto": "Ei! Tu aí!", "velocidade": "10%" },
-  "inimigo_alerta_1": { "texto": "Ouviste aquilo?", "velocidade": "0%" },
-  "inimigo_alerta_2": { "texto": "Tiros! Vieram lá de baixo!", "velocidade": "15%" },
-  "inimigo_alerta_3": { "texto": "Onde é que ele se meteu?", "velocidade": "5%" },
-  "inimigo_combate_1": { "texto": "Cobre-me!", "velocidade": "15%" },
-  "inimigo_combate_2": { "texto": "Apanhem-no!", "velocidade": "15%" },
-  "inimigo_combate_3": { "texto": "Não o deixem chegar à Sé!", "velocidade": "15%" },
-  "inimigo_combate_4": { "texto": "Vai, vai, vai!", "velocidade": "25%" },
-  "inimigo_combate_5": { "texto": "Dá-lhe, dá-lhe!", "velocidade": "20%" },
-  "inimigo_recarregar_1": { "texto": "A recarregar!", "velocidade": "15%" },
-  "inimigo_recarregar_2": { "texto": "Estou sem balas!", "velocidade": "15%" },
-  "inimigo_ferido_1": { "texto": "Ai! Fui atingido!", "velocidade": "15%" },
-  "inimigo_ferido_2": { "texto": "Ai a minha perna!", "velocidade": "10%" },
-  "inimigo_baixa_1": { "texto": "Perdemos o Tó!", "velocidade": "15%" },
-  "inimigo_baixa_2": { "texto": "Caiu mais um!", "velocidade": "15%" },
-  "inimigo_perdeu_1": { "texto": "Perdi-o de vista.", "velocidade": "0%" },
-  "inimigo_perdeu_2": { "texto": "Deve ter ido para as ruelas.", "velocidade": "0%" },
-  "inimigo_fadista_1": { "texto": "O fadista fugiu! Apanhem-nos!", "velocidade": "15%" },
-
-  "fadista_solto": { "texto": "Até que enfim! Pensei que ia passar a Serenata amarrado a este banco. Tira-me daqui!", "velocidade": "10%" },
-  "fadista_segue_1": { "texto": "Estou atrás de ti.", "velocidade": "5%" },
-  "fadista_segue_2": { "texto": "Espera por mim!", "velocidade": "10%" },
-  "fadista_medo_1": { "texto": "Cuidado! Estão a disparar!", "velocidade": "20%" },
-  "fadista_medo_2": { "texto": "Ai, a minha guitarra!", "velocidade": "15%" },
-  "fadista_fim": { "texto": "Obrigado, pá! Hoje à meia-noite, nas escadas da Sé, esta é para ti.", "velocidade": "5%" }
+  "radio_inicio": {
+    "texto": "Atenção. Os Borrões raptaram o fadista e fecharam-no no claustro da Sé Velha. A Serenata é à meia-noite. Passa o Arco de Almedina, sobe o Quebra-Costas e traz-mo inteiro.",
+    "velocidade": "5%"
+  },
+  "radio_arco": {
+    "texto": "Estás no Arco. Daqui para cima é sempre a subir. Olha para as janelas.",
+    "velocidade": "5%"
+  },
+  "radio_largo": {
+    "texto": "Largo da Sé Velha. O claustro fica do outro lado da catedral, a sul.",
+    "velocidade": "5%"
+  },
+  "radio_claustro": {
+    "texto": "Ele está no pátio do claustro. Cuidado com as galerias.",
+    "velocidade": "5%"
+  },
+  "radio_fuga": {
+    "texto": "Tens o fadista. Vêm aí reforços pelo Quebra-Costas. Desce até ao Arco de Almedina, depressa!",
+    "velocidade": "8%"
+  },
+  "radio_fim": {
+    "texto": "Belo trabalho. A Serenata vai para a frente.",
+    "velocidade": "0%"
+  },
+  "radio_ferido": {
+    "texto": "Estás a perder muita tinta. Protege-te!",
+    "velocidade": "10%"
+  },
+  "radio_fadista_caiu": {
+    "texto": "Perdemos o fadista. Missão falhada.",
+    "velocidade": "0%"
+  },
+  "radio_morreste": {
+    "texto": "Agente em baixo. Missão falhada.",
+    "velocidade": "0%"
+  },
+  "inimigo_viu_1": {
+    "texto": "Olha ali!",
+    "velocidade": "15%"
+  },
+  "inimigo_viu_2": {
+    "texto": "Está ali um! Está ali um!",
+    "velocidade": "20%"
+  },
+  "inimigo_viu_3": {
+    "texto": "Intruso! Nas escadas!",
+    "velocidade": "15%"
+  },
+  "inimigo_viu_4": {
+    "texto": "Ei! Tu aí!",
+    "velocidade": "10%"
+  },
+  "inimigo_alerta_1": {
+    "texto": "Ouviste aquilo?",
+    "velocidade": "0%"
+  },
+  "inimigo_alerta_2": {
+    "texto": "Tiros! Vieram lá de baixo!",
+    "velocidade": "15%"
+  },
+  "inimigo_alerta_3": {
+    "texto": "Onde é que ele se meteu?",
+    "velocidade": "5%"
+  },
+  "inimigo_combate_1": {
+    "texto": "Cobre-me!",
+    "velocidade": "15%"
+  },
+  "inimigo_combate_2": {
+    "texto": "Apanhem-no!",
+    "velocidade": "15%"
+  },
+  "inimigo_combate_3": {
+    "texto": "Não o deixem chegar à Sé!",
+    "velocidade": "15%"
+  },
+  "inimigo_combate_4": {
+    "texto": "Vai, vai, vai!",
+    "velocidade": "25%"
+  },
+  "inimigo_combate_5": {
+    "texto": "Dá-lhe, dá-lhe!",
+    "velocidade": "20%"
+  },
+  "inimigo_recarregar_1": {
+    "texto": "A recarregar!",
+    "velocidade": "15%"
+  },
+  "inimigo_recarregar_2": {
+    "texto": "Estou sem balas!",
+    "velocidade": "15%"
+  },
+  "inimigo_ferido_1": {
+    "texto": "Ai! Fui atingido!",
+    "velocidade": "15%"
+  },
+  "inimigo_ferido_2": {
+    "texto": "Ai a minha perna!",
+    "velocidade": "10%"
+  },
+  "inimigo_baixa_1": {
+    "texto": "Perdemos o Tó!",
+    "velocidade": "15%"
+  },
+  "inimigo_baixa_2": {
+    "texto": "Caiu mais um!",
+    "velocidade": "15%"
+  },
+  "inimigo_perdeu_1": {
+    "texto": "Perdi-o de vista.",
+    "velocidade": "0%"
+  },
+  "inimigo_perdeu_2": {
+    "texto": "Deve ter ido para as ruelas.",
+    "velocidade": "0%"
+  },
+  "inimigo_fadista_1": {
+    "texto": "O fadista fugiu! Apanhem-nos!",
+    "velocidade": "15%"
+  },
+  "fadista_solto": {
+    "texto": "Até que enfim! Pensei que ia passar a Serenata amarrado a este banco. Tira-me daqui!",
+    "velocidade": "10%"
+  },
+  "fadista_segue_1": {
+    "texto": "Estou atrás de ti.",
+    "velocidade": "5%"
+  },
+  "fadista_segue_2": {
+    "texto": "Espera por mim!",
+    "velocidade": "10%"
+  },
+  "fadista_medo_1": {
+    "texto": "Cuidado! Estão a disparar!",
+    "velocidade": "20%"
+  },
+  "fadista_medo_2": {
+    "texto": "Ai, a minha guitarra!",
+    "velocidade": "15%"
+  },
+  "fadista_fim": {
+    "texto": "Obrigado, pá! Hoje à meia-noite, nas escadas da Sé, esta é para ti.",
+    "velocidade": "5%"
+  },
+  "inimigo_tomates_1": {
+    "texto": "Caraças! Mesmo nos tomates!",
+    "velocidade": "20%",
+    "tom": "+15%"
+  },
+  "inimigo_tomates_2": {
+    "texto": "Ai! Ai os tomates!",
+    "velocidade": "15%",
+    "tom": "+20%"
+  }
 }
