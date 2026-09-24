@@ -93,7 +93,11 @@ export class Mundo {
     return e
   }
 
+  /** Cota do chão nivelado da galeria do claustro (o LiDAR lá dentro tem saliências). */
+  pisoClaustro = 0
+
   constructor(public n: Nivel) {
+    this.nivelarClaustro()
     for (const b of n.edificios) {
       const xs = b.anel.map((p) => p[0]), ys = b.anel.map((p) => p[1])
       for (let gx = Math.floor(Math.min(...xs) / 10); gx <= Math.floor(Math.max(...xs) / 10); gx++)
@@ -103,6 +107,28 @@ export class Mundo {
           this.grelha.get(k)!.push(b)
         }
     }
+  }
+
+  /**
+   * Dentro do claustro o chão fica entre a cota do pátio e 1,6 m abaixo dela:
+   * as saliências de até 6 m que o laser mede ali (muros, coberturas) não são
+   * chão por onde se ande, e a rampa desde a porta continua suave.
+   */
+  private nivelarClaustro() {
+    const c = this.n.edificios.find((b) => b.osm === ID_CLAUSTRO)
+    if (!c || !c.furos[0]) return
+    const d = this.n.dem, patio: number[] = [], nos: number[] = []
+    for (let r = 0; r < d.nRow; r++)
+      for (let k = 0; k < d.nCol; k++) {
+        const x = d.x0 + k * d.passo, y = d.y0 + r * d.passo
+        if (!dentro(x, y, c.anel)) continue
+        nos.push(r * d.nCol + k)
+        if (dentro(x, y, c.furos[0])) patio.push(d.elev[r * d.nCol + k])
+      }
+    patio.sort((a, b) => a - b)
+    const med = patio[patio.length >> 1]
+    for (const i of nos) d.elev[i] = Math.min(med + 0.4, Math.max(med - 1.6, d.elev[i]))
+    this.pisoClaustro = med + 0.4
   }
 
   /** Cota do chão (bilinear sobre os nós de 2 m). */
@@ -380,7 +406,13 @@ export class Mundo {
       const mx = (a[0] + c[0]) / 2, my = (a[1] + c[1]) / 2
       // Fachada com rua à frente em pelo menos parte do comprimento (cada vão confirma o seu).
       const livreEm = (t: number) => this.livre(a[0] + ux * t + nx * 1.1, a[1] + uy * t + ny * 1.1, b)
-      if (![0.15, 0.5, 0.85].some((f) => livreEm(f * L))) continue
+      // Onde há um vizinho encostado, a parede só se vê acima do telhado dele.
+      const acimaDe = (t: number) => {
+        if (livreEm(t)) return -Infinity
+        const v = this.edificioEm(a[0] + ux * t + nx * 1.1, a[1] + uy * t + ny * 1.1, b)
+        return v ? Math.max(v.topo, v.cumeeira) + 0.5 : Infinity
+      }
+      if (![0.15, 0.5, 0.85].some((f) => acimaDe(f * L) < b.topo - 2.6)) continue
       void mx; void my
       const off = 0.04
       const P = (t: number, z: number, fora = off): P3 => p3(a[0] + ux * t + nx * fora, a[1] + uy * t + ny * fora, z)
@@ -411,10 +443,12 @@ export class Mundo {
       const rachas = r() < 0.3
       for (let k = 0; k < colunas; k++) {
         const t = passo * (k + 0.5)
-        if (!livreEm(t)) continue
+        const desde = acimaDe(t)
+        if (desde >= b.topo - 2.6) continue
+        const rua = desde === -Infinity
         const zc = chaoEm(t)
-        // Rés-do-chão: porta ou montra, a partir do chão desse ponto.
-        if (zc < b.topo - 3 && zc > b.base - 1) {
+        // Rés-do-chão: porta ou montra, a partir do chão desse ponto (só com rua à frente).
+        if (rua && zc < b.topo - 3 && zc > b.base - 1) {
           const tipo = r()
           if (tipo < 0.45) {
             rect(t - 0.55, t + 0.55, zc, zc + 2.3)
@@ -427,6 +461,7 @@ export class Mundo {
         }
         // Andares de cima.
         for (let z = Math.max(zc, chaoMax - 2) + 3.6; z + 1.6 < b.topo - 0.6; z += 3.1) {
+          if (z < desde) continue
           if (r() < 0.08) continue
           const w = 0.5 + r() * 0.1
           rect(t - w, t + w, z, z + 1.5)
@@ -593,9 +628,31 @@ export class Mundo {
       const cx = xs.reduce((s, v) => s + v) / xs.length, cy = ys.reduce((s, v) => s + v) / ys.length
       this.pontos.patio = v3(cx, cy, this.chao(cx, cy))
     }
-    // Tecto da galeria: laje entre os dois anéis, com a cota do terreno a subir
-    // por dentro; fica ao beirado para não se ver o céu por cima da galeria.
+    // Telhado ao beirado e, por baixo, o tecto da galeria à altura de gente.
     this.tampa(exterior, patio ? [patio] : [], zTopo, esc)
+    if (patio && this.pisoClaustro) {
+      const zg = this.pisoClaustro + 4.5
+      this.tampa(exterior, [patio], zg, esc)
+      // Onde o tecto encontra as paredes, e as traves de madeira a cada 2,5 m.
+      const inset = (anel: Anel, o: number) => anel.map(([x, y], i): P3 => {
+        const a = anel[(i - 1 + anel.length) % anel.length], c = anel[(i + 1) % anel.length]
+        const d1 = Math.hypot(x - a[0], y - a[1]) || 1, d2 = Math.hypot(c[0] - x, c[1] - y) || 1
+        const n1 = [(y - a[1]) / d1, -(x - a[0]) / d1], n2 = [(c[1] - y) / d2, -(c[0] - x) / d2]
+        return p3(x - (n1[0] + n2[0]) * 0.5 * o, y - (n1[1] + n2[1]) * 0.5 * o, zg - 0.02)
+      })
+      esc.linha(inset(patio, 0.03), 'aresta', true)
+      for (let i = 0; i < patio.length; i++) {
+        const a = patio[i], c = patio[(i + 1) % patio.length]
+        const L = Math.hypot(c[0] - a[0], c[1] - a[1]), ux = (c[0] - a[0]) / L, uy = (c[1] - a[1]) / L
+        for (let t = 1.2; t < L - 1; t += 2.5) {
+          // Trave do pátio para fora, até ao muro exterior (ou 8 m).
+          const x0 = a[0] + ux * t, y0 = a[1] + uy * t, nx = -uy, ny = ux
+          let fim = 0.1
+          while (fim < 8 && dentro(x0 + nx * fim, y0 + ny * fim, exterior)) fim += 0.3
+          esc.linha([p3(x0 + nx * 0.1, y0 + ny * 0.1, zg - 0.03), p3(x0 + nx * (fim - 0.4), y0 + ny * (fim - 0.4), zg - 0.03)], 'pormenor')
+        }
+      }
+    }
     // Um fontanário no meio do pátio.
     if (this.pontos.patio) {
       const p = this.pontos.patio
