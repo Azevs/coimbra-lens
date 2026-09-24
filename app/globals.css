@@ -2964,3 +2964,192 @@ footer a {
 
 
 
+
+/* ── Sobre ─────────────────────────────────────────────────────────────
+   O filme abre a página num palco escuro de lado a lado — o mesmo azul
+   da noite do próprio filme, em qualquer tema. */
+.filme-palco {
+  background: #0B0E18;
+  color: #EDE6D8;
+  padding: 4rem 1.25rem 3.5rem;
+  margin-top: 3rem;
+}
+@media (min-width: 768px) { .filme-palco { padding: 5.5rem 4rem 4.5rem; } }
+.filme-contentor { max-width: 72rem; }
+.filme-cabeca { margin-bottom: 2rem; }
+.filme-kicker {
+  display: block;
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #EE8A5A;
+  margin-bottom: 0.75rem;
+}
+.filme-titulo {
+  font-family: var(--font-fraunces), 'Fraunces', Georgia, serif;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+  color: #F5EFE3;
+}
+.filme-titulo em { font-style: italic; font-weight: 300; color: #EE8A5A; }
+
+.filme-ecra { position: relative; aspect-ratio: 16 / 9; background: #000; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55); }
+.filme-ecra video { width: 100%; height: 100%; display: block; }
+.filme-play {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem;
+  background: linear-gradient(180deg, rgba(11, 14, 24, 0) 40%, rgba(11, 14, 24, 0.55));
+  border: 0; cursor: pointer; color: #F5EFE3;
+}
+.filme-play-disco {
+  width: 5rem; height: 5rem; border-radius: 50%;
+  display: grid; place-items: center; padding-left: 4px;
+  background: #B03A0B; color: #FFF;
+  box-shadow: 0 0 0 10px rgba(176, 58, 11, 0.22);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.filme-play:hover .filme-play-disco,
+.filme-play:focus-visible .filme-play-disco { transform: scale(1.06); box-shadow: 0 0 0 16px rgba(176, 58, 11, 0.18); }
+.filme-play-texto {
+  font-family: var(--font-jetbrains), monospace; font-size: 12px;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+}
+
+.filme-capitulos {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  border-top: 1px solid rgba(237, 230, 216, 0.14);
+}
+@media (min-width: 768px) { .filme-capitulos { grid-template-columns: repeat(6, 1fr); } }
+.filme-capitulos button {
+  width: 100%; text-align: left; cursor: pointer;
+  background: none; border: 0; border-top: 2px solid transparent; margin-top: -1px;
+  padding: 0.875rem 0.75rem 0.875rem 0;
+  display: flex; flex-direction: column; gap: 0.25rem;
+  color: rgba(237, 230, 216, 0.72);
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.filme-capitulos button:hover,
+.filme-capitulos button:focus-visible { color: #F5EFE3; border-top-color: rgba(237, 230, 216, 0.45); }
+.filme-capitulos button[aria-current='true'] { color: #F5EFE3; border-top-color: #EE8A5A; }
+.filme-cap-tempo {
+  font-family: var(--font-jetbrains), monospace; font-size: 11px;
+  letter-spacing: 0.08em; color: #EE8A5A; font-variant-numeric: tabular-nums; flex-shrink: 0;
+}
+.filme-cap-titulo { font-family: var(--font-fraunces), Georgia, serif; font-size: 1.0625rem; line-height: 1.25; }
+
+.filme-rodape {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 1rem;
+  margin-top: 1.5rem;
+  font-family: var(--font-jetbrains), monospace; font-size: 11px;
+  letter-spacing: 0.12em; text-transform: uppercase; color: rgba(237, 230, 216, 0.62);
+}
+.filme-narracao { flex-basis: 100%; }
+@media (min-width: 768px) { .filme-narracao { flex-basis: auto; } .filme-narracao[open] { flex-basis: 100%; } }
+.filme-narracao summary { cursor: pointer; color: #EE8A5A; list-style: none; }
+.filme-narracao summary::-webkit-details-marker { display: none; }
+.filme-narracao summary::after { content: ' +'; }
+.filme-narracao[open] summary::after { content: ' −'; }
+.filme-narracao ol {
+  list-style: none; margin: 1.25rem 0 0; padding: 0;
+  columns: 1; column-gap: 3rem;
+  text-transform: none; letter-spacing: 0;
+}
+@media (min-width: 900px) { .filme-narracao ol { columns: 2; } }
+.filme-narracao li { break-inside: avoid; }
+.filme-narracao li button {
+  display: flex; gap: 0.875rem; width: 100%; text-align: left; cursor: pointer;
+  background: none; border: 0; padding: 0.4rem 0;
+  font-family: var(--font-ibm-plex), sans-serif; font-size: 0.9375rem; line-height: 1.55;
+  color: rgba(237, 230, 216, 0.82);
+}
+.filme-narracao li button:hover { color: #F5EFE3; }
+.filme-narracao li .filme-cap-tempo { padding-top: 0.2rem; min-width: 2.25rem; }
+
+/* As regras da casa: número, texto, e um exemplo real ao lado. */
+.regras { display: grid; border-top: 1px solid var(--border-strong); }
+.regra {
+  display: grid; gap: 1rem 2rem;
+  grid-template-columns: 3rem 1fr;
+  padding: 2.25rem 0;
+  border-bottom: 1px solid var(--border-panel);
+}
+@media (min-width: 900px) { .regra { grid-template-columns: 4.5rem 1fr 17rem; } }
+.regra-numero {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-style: italic; font-weight: 300;
+  font-size: clamp(2rem, 4vw, 2.75rem); line-height: 1;
+  color: var(--accent-text);
+}
+.regra-titulo {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 1.375rem; line-height: 1.25; font-weight: 600;
+  color: var(--text-primary); margin-bottom: 0.75rem;
+}
+.regra-exemplo {
+  grid-column: 2;
+  align-self: start;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-panel);
+  border-radius: 4px;
+  padding: 1rem 1.125rem 1.125rem;
+}
+@media (min-width: 900px) { .regra-exemplo { grid-column: 3; } }
+.regra-exemplo > div { margin-top: 0.625rem !important; padding-top: 0.625rem !important; }
+.regra-exemplo > span + div { margin-top: 0.25rem !important; padding-top: 0 !important; border-top: 0 !important; }
+.regra-exemplo-rotulo {
+  display: block;
+  font-family: var(--font-jetbrains), monospace; font-size: 10px;
+  letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-tertiary);
+  margin-bottom: 0.5rem;
+}
+.regra-periodos { margin: 0; }
+.regra-periodos div {
+  display: flex; justify-content: space-between; gap: 1rem; align-items: baseline;
+  padding: 0.5rem 0; border-top: 1px solid var(--border-subtle);
+}
+.regra-periodos div:first-child { border-top: 0; padding-top: 0.125rem; }
+.regra-periodos dt { font-family: var(--font-ibm-plex), sans-serif; font-size: 0.8125rem; color: var(--text-secondary); }
+.regra-periodos dd {
+  margin: 0; white-space: nowrap;
+  font-family: var(--font-jetbrains), monospace; font-size: 12px; color: var(--text-data);
+}
+.regra-aviso { display: flex; flex-direction: column; gap: 0.375rem; margin: 0; }
+.regra-aviso-tema { font-family: var(--font-ibm-plex), sans-serif; font-size: 0.8125rem; color: var(--text-secondary); }
+.regra-aviso-data {
+  font-family: var(--font-fraunces), Georgia, serif; font-size: 1.5rem; line-height: 1.1;
+  color: var(--text-data);
+}
+
+/* O que falta: um quadro de estados em vez de quatro parágrafos. */
+.falta {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14.5rem), 1fr));
+}
+.falta-cartao {
+  display: flex; flex-direction: column; gap: 0.625rem;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-panel);
+  border-top: 3px solid var(--estado);
+  border-radius: 4px;
+  padding: 1.25rem 1.25rem 1.375rem;
+}
+.falta-estado {
+  align-self: flex-start;
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-jetbrains), monospace; font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--estado);
+}
+.falta-estado::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--estado); }
+.falta-tema {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 1.1875rem; line-height: 1.25; font-weight: 600; color: var(--text-primary);
+}
+.falta-texto { font-family: var(--font-ibm-plex), sans-serif; font-size: 0.875rem; line-height: 1.65; color: var(--text-secondary); margin: 0; }
+.falta-texto a { color: var(--accent-text); }
+
