@@ -73,6 +73,7 @@ const SECTIONS: Record<string, { label: string; href: string }[]> = {
     { label: 'Referências', href: '#referencias' },
   ],
   '/sobre': [
+    { label: 'O filme', href: '#filme' },
     { label: 'O projecto', href: '#projecto' },
     { label: 'Como é feito', href: '#metodo' },
     { label: 'O que falta', href: '#em-falta' },

@@ -50,3 +50,6 @@ scripts/blender/dem/ortos*.tiff
 # Ensaios com a ortofoto no chão (build-orto.mjs + maqueta.py --orto)
 scripts/blender/*.orto.jpg
 scripts/blender/*-orto-*.png
+
+# vídeo: frames, vozes e misturas intermédias
+/scripts/video/.cache/

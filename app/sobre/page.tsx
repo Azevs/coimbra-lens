@@ -42,6 +42,40 @@ export default function SobrePage() {
           </h1>
         </div>
 
+        <SectionReveal id="filme" className="page-section">
+          <div className="section-container" style={{ maxWidth: '64rem' }}>
+            <SectionTitle label="O FILME" title="Coimbra, em três minutos" />
+            <figure style={{ margin: 0 }}>
+              {/* preload="none": os 28 MB só descem quando alguém carrega no play */}
+              <video
+                controls
+                playsInline
+                preload="none"
+                poster="/video/coimbra-poster.jpg"
+                width={1920}
+                height={1080}
+                style={{ width: '100%', height: 'auto', display: 'block', background: '#0B0E18' }}
+              >
+                <source src="/video/coimbra.mp4" type="video/mp4" />
+                <track kind="subtitles" src="/video/coimbra.pt.vtt" srcLang="pt" label="Português" default />
+                <track kind="subtitles" src="/video/coimbra.en.vtt" srcLang="en" label="English" />
+              </video>
+              <figcaption
+                style={{
+                  fontFamily: 'var(--font-jetbrains)',
+                  fontSize: '11px',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: 'var(--text-secondary)',
+                  marginTop: '0.875rem',
+                }}
+              >
+                Narrado em inglês · legendas em português
+              </figcaption>
+            </figure>
+          </div>
+        </SectionReveal>
+
         <SectionReveal id="projecto" className="page-section">
           <div className="section-container" style={{ maxWidth: '46rem' }}>
             <SectionTitle label="O PROJECTO" title="O que é isto" />

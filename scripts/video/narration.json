@@ -1,0 +1,92 @@
+{
+  "voice": "en-US-AndrewMultilingualNeural",
+  "rate": "-8%",
+  "pitch": "-2Hz",
+  "lines": [
+    {
+      "id": "rio",
+      "en": "Every city has a river. Coimbra has the Mondego — and a hill it has been climbing for two thousand years.",
+      "pt": "Todas as cidades têm um rio. Coimbra tem o Mondego — e uma colina que sobe há dois mil anos."
+    },
+    {
+      "id": "aeminium",
+      "en": "The Romans called it Aeminium. On the summit they laid out a forum, raised on vaulted galleries that still stand today, beneath the Machado de Castro Museum.",
+      "pt": "Os romanos chamaram-lhe Aeminium. No topo abriram um fórum, assente em galerias abobadadas que ainda hoje existem, por baixo do Museu Machado de Castro."
+    },
+    {
+      "id": "nome",
+      "en": "When the bishops moved here from nearby Conímbriga, they brought the old city's name with them.",
+      "pt": "Quando os bispos vieram da vizinha Conímbriga, trouxeram consigo o nome da cidade antiga."
+    },
+    {
+      "id": "reino",
+      "en": "In 1131, Afonso Henriques brought his court to Coimbra. From here, a county became a kingdom.",
+      "pt": "Em 1131, D. Afonso Henriques trouxe a corte para Coimbra. Daqui, um condado fez-se reino."
+    },
+    {
+      "id": "capital",
+      "en": "For more than a century this was Portugal's capital — and its first two kings still lie in the Monastery of Santa Cruz.",
+      "pt": "Durante mais de um século foi a capital de Portugal — e os dois primeiros reis ainda repousam no Mosteiro de Santa Cruz."
+    },
+    {
+      "id": "ines",
+      "en": "Coimbra also keeps Portugal's saddest love story. Inês de Castro was killed here in 1355, on the orders of the king — her lover's father.",
+      "pt": "Coimbra guarda também a mais triste história de amor de Portugal. Inês de Castro foi morta aqui em 1355, por ordem do rei — o pai do seu amado."
+    },
+    {
+      "id": "lagrimas",
+      "en": "Legend says the spring where she died still runs with her tears.",
+      "pt": "Diz a lenda que a fonte onde morreu ainda corre com as suas lágrimas."
+    },
+    {
+      "id": "ponte",
+      "en": "Today, a footbridge named for Pedro and Inês crosses the river. Its two halves meet in the middle — but never quite line up.",
+      "pt": "Hoje, uma ponte pedonal com o nome de Pedro e Inês atravessa o rio. As duas metades encontram-se a meio — mas nunca chegam a alinhar."
+    },
+    {
+      "id": "universidade",
+      "en": "Founded in 1290, the university wandered between Lisbon and Coimbra until 1537, when it came here to stay — in the royal palace, at the top of the hill.",
+      "pt": "Fundada em 1290, a universidade andou entre Lisboa e Coimbra até 1537, quando veio para ficar — no paço real, no alto da colina."
+    },
+    {
+      "id": "cabra",
+      "en": "Its tower rings a bell the students call the goat.",
+      "pt": "A torre toca um sino a que os estudantes chamam a cabra."
+    },
+    {
+      "id": "joanina",
+      "en": "Its baroque library glows with gold. And after dark, a colony of bats patrols the shelves, hunting the insects that would eat the books.",
+      "pt": "A biblioteca barroca brilha a ouro. E depois de escurecer, uma colónia de morcegos patrulha as estantes, à caça dos insectos que comeriam os livros."
+    },
+    {
+      "id": "unesco",
+      "en": "In 2013, the University, the Alta and Sofia became World Heritage.",
+      "pt": "Em 2013, a Universidade, a Alta e a Sofia tornaram-se Património Mundial."
+    },
+    {
+      "id": "queima",
+      "en": "Every May, students who are finishing their degrees burn the ribbons of their faculties. The city fills with black capes, and colour.",
+      "pt": "Todos os anos, em Maio, os finalistas queimam as fitas das suas faculdades. A cidade enche-se de capas negras, e de cor."
+    },
+    {
+      "id": "serenata",
+      "en": "At night, on the steps of the Old Cathedral, they sing Coimbra's own fado, to the Portuguese guitar.",
+      "pt": "À noite, nas escadas da Sé Velha, canta-se o fado de Coimbra, à guitarra portuguesa."
+    },
+    {
+      "id": "palmas",
+      "en": "When the song ends, nobody claps.",
+      "pt": "Quando a canção acaba, ninguém bate palmas."
+    },
+    {
+      "id": "tosse",
+      "en": "They clear their throats.",
+      "pt": "Tossem."
+    },
+    {
+      "id": "fim",
+      "en": "Two thousand years on the same hill. Every autumn, someone new begins the climb.",
+      "pt": "Dois mil anos na mesma colina. Todos os outonos, alguém novo começa a subida."
+    }
+  ]
+}
