@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // O jogo tem o seu próprio build (Vite); o compilado vive em public/.
+    "tinta-na-alta/**",
+    "public/tinta-na-alta/**",
   ]),
 ]);
 

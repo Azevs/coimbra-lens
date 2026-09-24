@@ -56,3 +56,7 @@ scripts/blender/*-orto-*.png
 
 # trilhos: respostas em bruto e janelas do DEM Copernicus (~70 MB)
 /scripts/data/trilhos/cache/
+
+# jogo (código em tinta-na-alta/, compilado para public/tinta-na-alta/)
+/tinta-na-alta/node_modules
+/tinta-na-alta/dist
