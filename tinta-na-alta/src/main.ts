@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { Octree } from 'three/addons/math/Octree.js'
 import { Mundo, type Nivel } from './mundo'
-import { Jogador } from './jogador'
+import { Jogador, Corpo } from './jogador'
 import { redimensionar, Esboco } from './tinta'
 import { Arma } from './arma'
 import { Som } from './audio'
@@ -34,8 +34,18 @@ await Promise.race([document.fonts.load('64px "Patrick Hand"'), new Promise((r) 
 const mundo = new Mundo(nivel)
 mundo.construir()
 cena.add(mundo.cena)
-const octree = new Octree()
-octree.fromGraphNode(mundo.colisao)
+// Duas octrees: a dos tiros e da visão tem o chão; a da física não (o chão é a função de altura).
+const octreeTiros = new Octree()
+octreeTiros.fromGraphNode(mundo.colisao)
+const semChao = new THREE.Group()
+for (const m of [...mundo.colisao.children]) if (!m.userData.terreno) semChao.add(m)
+const octreeFisica = new Octree()
+octreeFisica.fromGraphNode(semChao)
+const octree = {
+  capsuleIntersect: (c: Parameters<Octree['capsuleIntersect']>[0]) => octreeFisica.capsuleIntersect(c),
+  rayIntersect: (r: THREE.Ray) => octreeTiros.rayIntersect(r),
+} as unknown as Octree
+Corpo.chao = (x, z) => mundo.chao(x, -z)
 const P = mundo.pontos
 
 const efeitos = new Efeitos()
@@ -460,7 +470,7 @@ botao.disabled = false
 
 const q = new URLSearchParams(location.search)
 if (q.get('em') && P[q.get('em')!]) { jog.corpo.colocar(P[q.get('em')!]); olharPara(P[q.get('olhar') ?? 'largo'] ?? P.largo) }
-;(window as any).dbg = { mundo, jog, camera, inimigos, fadista, P, arma, som, hud, cena,
+;(window as any).dbg = { THREE, octree, mundo, jog, camera, inimigos, fadista, P, arma, som, hud, cena,
   comecar: () => { emJogo = true; hud.ecra(null); avancar('arco') },
   disparar: () => dispararJogador(), ferir: (d: number) => ferirJogador(d, jog.corpo.pes), soltar: () => { soltarProgresso = 1 }, fase: () => fase,
   vencer: () => terminar(true, 'Teste.') }

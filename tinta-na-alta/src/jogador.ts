@@ -22,11 +22,32 @@ export class Corpo {
     this.capsula.end.set(p.x, p.y + this.capsula.radius + h, p.z)
     this.vel.set(0, 0, 0)
   }
+  /**
+   * Altura do chão em coordenadas three (x, z). O terreno não entra na octree da
+   * física: a cápsula a roçar as arestas dos triângulos de 2 m do LiDAR recebia
+   * normais horizontais e ficava travada em rampas suaves.
+   */
+  static chao: ((x: number, z: number) => number) | null = null
+  /** Declive máximo que se sobe a andar (tan 50°): acima disto é muro de suporte. */
+  static DECLIVE = 1.2
+
   passo(dt: number, octree: Octree) {
     if (!this.noChao) this.vel.y -= GRAVIDADE * dt
     else this.vel.y = Math.max(this.vel.y - GRAVIDADE * dt, -2)
     const d = this.vel.clone().multiplyScalar(dt)
+    const chao = Corpo.chao
+    const x0 = this.capsula.start.x, z0 = this.capsula.start.z
+    const pes0 = this.capsula.start.y - this.capsula.radius
     this.capsula.translate(d)
+    if (chao) {
+      // Não subir por um muro de suporte: o declive do chão à frente é demasiado.
+      const g0 = chao(x0, z0), g1 = chao(this.capsula.start.x, this.capsula.start.z)
+      const h = Math.hypot(d.x, d.z)
+      if (h > 1e-5 && g1 - g0 > Corpo.DECLIVE * h + 0.02 && g1 > pes0 + 0.35) {
+        this.capsula.translate(new THREE.Vector3(x0 - this.capsula.start.x, 0, z0 - this.capsula.start.z))
+        this.vel.x = 0; this.vel.z = 0
+      }
+    }
     this.noChao = false
     for (let k = 0; k < 3; k++) {
       const r = octree.capsuleIntersect(this.capsula)
@@ -40,6 +61,15 @@ export class Corpo {
         this.vel.addScaledVector(r.normal, -r.normal.dot(this.vel))
         this.capsula.translate(r.normal.multiplyScalar(r.depth))
       }
+    }
+    if (chao) {
+      const g = chao(this.capsula.start.x, this.capsula.start.z)
+      const pes = this.capsula.start.y - this.capsula.radius
+      if (pes < g) {
+        this.capsula.translate(new THREE.Vector3(0, g - pes, 0))
+        if (this.vel.y < 0) this.vel.y = 0
+        this.noChao = true
+      } else if (pes < g + 0.04 && this.vel.y <= 0) this.noChao = true
     }
   }
 }

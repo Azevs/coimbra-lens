@@ -182,7 +182,10 @@ export class Mundo {
     const m = new THREE.Mesh(g, papel)
     m.name = 'terreno'
     this.cena.add(m)
-    this.colisao.add(new THREE.Mesh(g))
+    // O chão só serve para os tiros; para andar usa-se a função de altura (ver Corpo.chao).
+    const col = new THREE.Mesh(g)
+    col.userData.terreno = true
+    this.colisao.add(col)
     // Os degraus do terreno (muros de suporte, socalcos) desenham-se sozinhos.
     const e = new THREE.EdgesGeometry(g, 46)
     const a = e.getAttribute('position').array as Float32Array
@@ -244,7 +247,7 @@ export class Mundo {
     const se = b.osm === ID_SE
     if (b.cumeeira - b.topo > 1.5 && !se) this.telhado(b, esc)
     this.fachadas(b, esc, se)
-    if (se) this.ameias(b, esc)
+    if (se) { this.ameias(b, esc); this.contrafortes(b, esc) }
   }
 
   /** Telhado de quatro águas simplificado: cumeeira ao longo do eixo maior. */
@@ -561,6 +564,40 @@ export class Mundo {
     esc.linha([P(t - 1.3, zj), ...pts, P(t + 1.3, zj), P(t - 1.3, zj)], 'aresta')
   }
 
+  /**
+   * Contrafortes da Sé: pilares de pedra encostados às paredes compridas, com o
+   * topo em rampa. Nunca na fachada poente (portal e escadaria).
+   */
+  private contrafortes(b: Edificio, esc: Esboco) {
+    for (let i = 0; i < b.anel.length; i++) {
+      const a = b.anel[i], c = b.anel[(i + 1) % b.anel.length]
+      const L = Math.hypot(c[0] - a[0], c[1] - a[1])
+      if (L < 9) continue
+      const ux = (c[0] - a[0]) / L, uy = (c[1] - a[1]) / L, nx = uy, ny = -ux
+      if (nx < -0.7) continue
+      const n = Math.max(1, Math.round(L / 7) - 1)
+      for (let k = 1; k <= n; k++) {
+        const t = (L * k) / (n + 1)
+        const x = a[0] + ux * t, y = a[1] + uy * t
+        if (!this.livre(x + nx * 2, y + ny * 2, b)) continue
+        const z0 = this.chao(x + nx * 0.6, y + ny * 0.6) - 0.5, z1 = b.topo - 3.5
+        if (z1 - z0 < 3) continue
+        const g = new THREE.BoxGeometry(1.3, z1 - z0, 1.1)
+        g.rotateY(Math.atan2(uy, ux))
+        g.translate(x + nx * 0.55, (z0 + z1) / 2, -(y + ny * 0.55))
+        this.colisao.add(new THREE.Mesh(g.clone()))
+        esc.solido(g, 'aresta')
+        // Rampa do topo: do bordo do contraforte até à parede, 1,4 m acima.
+        for (const s2 of [-0.65, 0.65]) {
+          esc.face([p3(x + ux * s2 + nx * 1.1, y + uy * s2 + ny * 1.1, z1), p3(x + ux * s2, y + uy * s2, z1 + 1.4), p3(x + ux * s2, y + uy * s2, z1)], 'pormenor')
+        }
+        esc.face([p3(x - ux * 0.65 + nx * 1.1, y - uy * 0.65 + ny * 1.1, z1), p3(x + ux * 0.65 + nx * 1.1, y + uy * 0.65 + ny * 1.1, z1),
+          p3(x + ux * 0.65, y + uy * 0.65, z1 + 1.4), p3(x - ux * 0.65, y - uy * 0.65, z1 + 1.4)], 'pormenor')
+        esc.linha([p3(x - ux * 0.65 + nx * 1.12, y - uy * 0.65 + ny * 1.12, z0 + 0.5 + (z1 - z0) * 0.45), p3(x + ux * 0.65 + nx * 1.12, y + uy * 0.65 + ny * 1.12, z0 + 0.5 + (z1 - z0) * 0.45)], 'pormenor')
+      }
+    }
+  }
+
   /** Merlões ao longo do beirado da Sé. */
   private ameias(b: Edificio, esc: Esboco) {
     const z = b.topo
@@ -653,6 +690,7 @@ export class Mundo {
         }
       }
     }
+    if (patio && this.pisoClaustro) this.detalhesClaustro(exterior, patio, zTopo, esc)
     // Um fontanário no meio do pátio.
     if (this.pontos.patio) {
       const p = this.pontos.patio
@@ -669,6 +707,99 @@ export class Mundo {
       col.translate(p.x + 3, p.y + 0.7, p.z + 2)
       this.colisao.add(new THREE.Mesh(col))
     }
+  }
+
+  /**
+   * O que faz o claustro parecer claustro: lajes na galeria, arcossólios nas
+   * paredes de fora, o piso de cima virado ao pátio e o jardim de buxo.
+   */
+  private detalhesClaustro(exterior: Anel, patio: Anel, zTopo: number, esc: Esboco) {
+    const piso = this.pisoClaustro, zg = piso + 4.5
+    const r = aleatorio(semente('claustro'))
+    const noPatio = (x: number, y: number) => dentro(x, y, patio)
+    const naGaleria = (x: number, y: number) => dentro(x, y, exterior) && !noPatio(x, y)
+    // Lajes: juntas paralelas ao pátio e juntas de través, só dentro da galeria.
+    const pr = [...patio].reverse()
+    for (let i = 0; i < pr.length; i++) {
+      const a = pr[i], c = pr[(i + 1) % pr.length]
+      const L = Math.hypot(c[0] - a[0], c[1] - a[1]), ux = (c[0] - a[0]) / L, uy = (c[1] - a[1]) / L
+      const nx = uy, ny = -ux // para fora do pátio (galeria)
+      for (let f = 1.3; f < 9; f += 1.3) {
+        const pts: [number, number][] = []
+        for (let t = 0; t <= L; t += 0.5) { const x = a[0] + ux * t + nx * f, y = a[1] + uy * t + ny * f; if (naGaleria(x, y)) pts.push([x, y]) }
+        for (let k = 1; k < pts.length; k++) {
+          if (Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]) > 0.6) continue
+          esc.linha([p3(...pts[k - 1], this.chao(...pts[k - 1]) + 0.03), p3(...pts[k], this.chao(...pts[k]) + 0.03)], 'chao')
+        }
+      }
+      for (let t = 0.6; t < L; t += 1.1 + r() * 0.4) {
+        for (let f = 0.7; f < 9; f += 1.3) {
+          const x = a[0] + ux * t + nx * f, y = a[1] + uy * t + ny * f
+          if (!naGaleria(x, y) || !naGaleria(x + nx * 1.3, y + ny * 1.3)) continue
+          const d = (k: number) => p3(x + nx * k, y + ny * k, this.chao(x + nx * k, y + ny * k) + 0.03)
+          esc.linha([d(0.05), d(1.25)], 'chao')
+        }
+      }
+      // Piso de cima, virado ao pátio: cornija e janelas geminadas por cima de cada arco.
+      const o = -0.63 // face do lado do pátio (a arcada fica para dentro do pátio)
+      const F = (t: number, z: number): P3 => p3(a[0] + ux * t - nx * 0.64, a[1] + uy * t - ny * 0.64, z)
+      void o
+      esc.linha([F(0, zg + 0.1), F(L, zg + 0.1)], 'aresta')
+      esc.linha([F(0, zg + 0.35), F(L, zg + 0.35)], 'pormenor')
+      const n = Math.floor(L / 3.4)
+      for (let k = 0; k < n; k++) {
+        const t = (L / n) * (k + 0.5)
+        const z0 = zg + 1.3, z1 = Math.min(zTopo - 1, z0 + 1.8)
+        if (z1 - z0 < 1) continue
+        for (const dt of [-0.42, 0.42]) {
+          const pts: P3[] = [F(t + dt - 0.3, z0)]
+          for (let q = 0; q <= 8; q++) { const an = Math.PI * (1 - q / 8); pts.push(F(t + dt + Math.cos(an) * 0.3, z1 - 0.3 + Math.sin(an) * 0.3)) }
+          pts.push(F(t + dt + 0.3, z0))
+          esc.linha([...pts, pts[0]], 'pormenor')
+        }
+        esc.linha([F(t - 0.85, z0 - 0.08), F(t + 0.85, z0 - 0.08)], 'pormenor')
+      }
+    }
+    // Arcossólios nas paredes de fora, virados para a galeria.
+    for (let i = 0; i < exterior.length; i++) {
+      const a = exterior[i], c = exterior[(i + 1) % exterior.length]
+      const L = Math.hypot(c[0] - a[0], c[1] - a[1]), ux = (c[0] - a[0]) / L, uy = (c[1] - a[1]) / L
+      const ix = -uy, iy = ux // para dentro do anel exterior
+      const G = (t: number, z: number): P3 => p3(a[0] + ux * t + ix * 0.64, a[1] + uy * t + iy * 0.64, z)
+      for (let t = 2.2; t < L - 2.2; t += 4.6) {
+        const x = a[0] + ux * t + ix * 1.6, y = a[1] + uy * t + iy * 1.6
+        if (!naGaleria(x, y) || r() < 0.25) continue
+        const z0 = this.chao(x, y)
+        // Nicho em arco quebrado, com o túmulo dentro e sombra no fundo.
+        const R = 1.2, zn = z0 + 1.6
+        const arco: P3[] = []
+        for (let q = 0; q <= 10; q++) { const an = Math.PI * (1 - q / 10); arco.push(G(t + Math.cos(an) * R, zn + Math.sin(an) * R * 1.1)) }
+        esc.linha([G(t - R, z0), ...arco, G(t + R, z0)], 'aresta')
+        esc.linha([G(t - R - 0.2, z0), ...arco.map((p, q) => { const an = Math.PI * (1 - q / 10); return G(t + Math.cos(an) * (R + 0.2), zn + Math.sin(an) * (R + 0.2) * 1.1) }), G(t + R + 0.2, z0)], 'pormenor')
+        esc.linha([G(t - R + 0.1, z0 + 0.75), G(t + R - 0.1, z0 + 0.75)], 'pormenor') // tampa do túmulo
+        esc.linha([G(t - R + 0.1, z0 + 0.9), G(t + R - 0.1, z0 + 0.9)], 'pormenor')
+        for (let q = -0.7; q <= 0.71; q += 0.7) esc.linha([G(t + q - 0.15, z0 + 0.2), G(t + q + 0.15, z0 + 0.2), G(t + q + 0.15, z0 + 0.6), G(t + q - 0.15, z0 + 0.6)], 'sombra', true)
+        const o = G(t - R + 0.1, z0 + 1), f = G(t + R - 0.1, z0 + 1)
+        esc.tracejar(o, [f[0] - o[0], 0, f[2] - o[2]], [0, zn - z0 - 0.2, 0], 0.12, 'sombra')
+      }
+    }
+    // Jardim de buxo no pátio: quatro canteiros em cruz à volta do fontanário.
+    const xs = patio.map((p) => p[0]), ys = patio.map((p) => p[1])
+    const cx = xs.reduce((s, v) => s + v) / xs.length + 3, cy = ys.reduce((s, v) => s + v) / ys.length - 2
+    for (const [sx, sy] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+      const x0 = cx + sx * 2.8, x1 = cx + sx * 7.5, y0 = cy + sy * 2.8, y1 = cy + sy * 7.5
+      const canto: [number, number][] = [[x0, y0], [x1, y0], [x1, y1], [x0, y1]]
+      if (!canto.every(([x, y]) => noPatio(x, y))) continue
+      const Q = (x: number, y: number, dz = 0.04): P3 => p3(x, y, this.chao(x, y) + dz)
+      esc.linha(canto.map(([x, y]) => Q(x, y)), 'pormenor', true)
+      esc.linha([[x0 + sx * 0.3, y0 + sy * 0.3], [x1 - sx * 0.3, y0 + sy * 0.3], [x1 - sx * 0.3, y1 - sy * 0.3], [x0 + sx * 0.3, y1 - sy * 0.3]].map(([x, y]) => Q(x, y)), 'chao', true)
+      // Buxo: tufos baixos em riscos curtos.
+      for (let k = 0; k < 26; k++) {
+        const x = x0 + (x1 - x0) * r(), y = y0 + (y1 - y0) * r()
+        esc.linha([Q(x - 0.15, y), Q(x - 0.05, y + 0.08, 0.15), Q(x + 0.05, y - 0.02, 0.1), Q(x + 0.15, y + 0.06)], 'sombra')
+      }
+    }
+    void zTopo
   }
 
   /**
@@ -739,14 +870,24 @@ export class Mundo {
         bloco(t0, t1, fundo, zc - 0.05)
         bloco(t0, t1, zc + h, topo)
         if (arcos) {
-          const pts: P3[] = []
-          const R = (t1 - t0) / 2, tm = (t0 + t1) / 2
-          for (let q = 0; q <= 14; q++) {
-            const ang2 = Math.PI * (q / 14)
-            const tt = tm + Math.cos(ang2) * R
-            pts.push(p3(a[0] + ux * tt + uy * 0.02, a[1] + uy * tt - ux * 0.02, zc + h - R * 0.6 + Math.sin(ang2) * R * 0.6))
+          // Arco de claustro nas duas faces: arco abatido, arquivolta, capitéis e colunelos.
+          const R = (t1 - t0) / 2, tm = (t0 + t1) / 2, zn = zc + h - R * 0.6
+          for (const o of [-0.02, esp + 0.02]) {
+            for (const [k, r] of [[0, 1], [1, 1.14]] as const) {
+              const pts: P3[] = []
+              for (let q = 0; q <= 14; q++) {
+                const ang2 = Math.PI * (q / 14)
+                pts.push(W(tm + Math.cos(ang2) * R * r, o, zn + Math.sin(ang2) * R * 0.6 * r))
+              }
+              esc.linha(pts, k === 0 ? 'aresta' : 'pormenor')
+            }
+            for (const tt of [t0, t1]) {
+              const s = tt === t0 ? 1 : -1
+              esc.linha([W(tt - s * 0.12, o, zn), W(tt + s * 0.28, o, zn)], 'pormenor') // capitel
+              esc.linha([W(tt - s * 0.12, o, zn - 0.18), W(tt + s * 0.22, o, zn - 0.18)], 'pormenor')
+              esc.linha([W(tt + s * 0.1, o, zc + 0.3), W(tt + s * 0.1, o, zn - 0.18)], 'sombra') // colunelo
+            }
           }
-          esc.linha(pts, 'pormenor')
         }
         t = t1
       }
