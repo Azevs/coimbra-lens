@@ -7,7 +7,9 @@
  * Os factos do Paço das Escolas são os do inventário do património
  * edificado da Universidade de Coimbra; os de Santa Cruz, os do guia de
  * Pedro Dias (Coimbra, Guia para uma visita, 2002) no roteiro do património
- * da Presidência da República (2008). O que só guias e blogues afirmam
+ * da Presidência da República (2008); os da Sé Velha, os da página da
+ * Universidade de Coimbra no UniverCidade (2022), que segue Maria de Lurdes
+ * Craveiro (A Sé Velha de Coimbra, 2011) e o SIPA. O que só guias e blogues afirmam
  * (alcunhas, lendas, "o mais antigo de") ficou de fora.
  *
  * `camara` é de onde se olha quando o ponto é escolhido: azimute e
@@ -38,6 +40,7 @@ export interface TextoMonumento {
 
 const ALA_NORTE = 'relation/2708767'
 const IGREJA_SC = 'way/204192080'
+const SE_VELHA = 'way/41222810'
 
 export const TEXTOS_MONUMENTOS: TextoMonumento[] = [
   {
@@ -150,6 +153,53 @@ export const TEXTOS_MONUMENTOS: TextoMonumento[] = [
           'Estava no centro de um dos três claustros do mosteiro. Depois da extinção das ordens religiosas, uma das alas foi destruída para regularizar a rua, e ficou a fonte: o templete ao centro e os quatro cubelos na água, traçados por João de Ruão, com a pedraria contratada em 1533. É uma das primeiras obras inteiramente renascentistas feitas em Portugal.',
         camara: { azimute: 90, elevacao: 38, distancia: 48 },
         acende: ['way/873267259'],
+      },
+    ],
+  },
+  {
+    id: 'se-velha',
+    inicio: { azimute: 145, elevacao: 30 },
+    alt: 'Reconstituição da Sé Velha e do casario à volta, vista de noroeste: a fachada com ameias, a Porta Especiosa na fachada norte e a torre-lanterna com a cúpula; o claustro por trás.',
+    pontos: [
+      {
+        id: 'fachada',
+        titulo: 'A fachada',
+        texto:
+          'Na porta principal e no janelão por cima dela, as colunas e as arquivoltas sucedem-se como uma concha, com decoração de influência islâmica. O risco da igreja foi de mestre Roberto, e a primeira pedra terá sido lançada em 1162; em 1185 foi aqui coroado D. Sancho I. São {altura} m do chão da rua ao alto das ameias.',
+        camara: { azimute: 180, elevacao: 18, distancia: 70, subir: 9 },
+        acende: [SE_VELHA],
+      },
+      {
+        id: 'porta-especiosa',
+        titulo: 'Porta Especiosa',
+        texto:
+          'Acrescentada à fachada norte por volta de 1530, é atribuída ao arquitecto João de Ruão e ao escultor Nicolau Chanterene. É de calcário branco, em três registos sobrepostos, como um retábulo: o portal, a loggia e o remate, que lembra os arcos triunfais romanos.',
+        camara: { azimute: 92, elevacao: 36, distancia: 62, subir: 8 },
+        acende: [SE_VELHA],
+      },
+      {
+        id: 'lanterna',
+        titulo: 'A torre-lanterna',
+        texto:
+          'Por dentro, três naves de cinco tramos e um transepto curto, com abóbada de canhão na nave central. Sobre o cruzeiro ergue-se a torre-lanterna, quadrangular e gótica. Dos azulejos sevilhanos do século XVI que forravam pilares e naves restam alguns vãos e arcossólios. São {altura} m do chão ao alto da cúpula.',
+        camara: { azimute: 40, elevacao: 18, distancia: 58, subir: -9 },
+        acende: [SE_VELHA],
+      },
+      {
+        id: 'cabeceira',
+        titulo: 'A cabeceira',
+        texto:
+          'É curta porque a igreja teve de se assentar na encosta: do lado poente foi preciso construir uma grande plataforma de pedra para aplanar o declive. Na capela-mor está o retábulo de madeira dourada e policromada dos escultores flamengos Olivier de Gand e Jean de Ypres (1498), que glorifica a Virgem na Assunção.',
+        camara: { azimute: 5, elevacao: 34, distancia: 62, subir: -4 },
+        acende: [SE_VELHA],
+      },
+      {
+        id: 'claustro',
+        titulo: 'O claustro',
+        texto:
+          'Começado em 1218, sob a protecção de D. Afonso II, foi o primeiro claustro gótico construído em Coimbra. Tem um só piso, com cinco tramos de ogiva em cada lanço; os capitéis têm decoração naturalista e os tímpanos, rosáceas. Numa das capelas está hoje o túmulo de D. Sesnando.',
+        camara: { azimute: -70, elevacao: 55, distancia: 60 },
+        acende: ['relation/3475986'],
       },
     ],
   },

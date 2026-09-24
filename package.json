@@ -16,7 +16,7 @@
     "build:historia": "node scripts/build-historia.mjs",
     "build:turismo": "node scripts/build-turismo.mjs",
     "build:maqueta": "blender -b --factory-startup --python scripts/blender/maqueta.py -- rua-do-brasil && blender -b --factory-startup --python scripts/blender/maqueta.py -- baixa && node scripts/optimise-maquetas.mjs",
-    "build:monumento": "node scripts/build-monumento.mjs && blender -b --factory-startup --python scripts/blender/monumento.py -- paco-das-escolas --rico && blender -b --factory-startup --python scripts/blender/monumento.py -- santa-cruz --rico && node scripts/optimise-maquetas.mjs",
+    "build:monumento": "node scripts/build-monumento.mjs && blender -b --factory-startup --python scripts/blender/monumento.py -- paco-das-escolas --rico && blender -b --factory-startup --python scripts/blender/monumento.py -- santa-cruz --rico && blender -b --factory-startup --python scripts/blender/monumento.py -- se-velha --rico && node scripts/optimise-maquetas.mjs",
     "check:contrast": "node scripts/check-contrast.mjs",
     "check": "npm run check:contrast && npm run check:data"
   },

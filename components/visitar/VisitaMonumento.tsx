@@ -596,7 +596,7 @@ export default function VisitaMonumento({ monumento, textos, largura, altura }: 
           className="visita3d-webgl"
           tabIndex={interactivo ? 0 : -1}
           role={interactivo ? 'application' : undefined}
-          aria-label={interactivo ? `Maqueta do ${monumento.nome} em três dimensões. Arraste para rodar.` : undefined}
+          aria-label={interactivo ? `Maqueta d${monumento.artigo ?? 'o'} ${monumento.nome} em três dimensões. Arraste para rodar.` : undefined}
           style={{ opacity: interactivo ? 1 : 0, cursor: interactivo ? 'grab' : 'default' }}
         />
 

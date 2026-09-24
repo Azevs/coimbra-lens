@@ -16,7 +16,7 @@ import { estimate } from '@/lib/provenance'
 export const metadata: Metadata = {
   title: 'Visitar',
   description:
-    'Um dia em Coimbra a pé, lugar a lugar: da Baixa à Alta, pelo Jardim Botânico, até à outra margem. Com o Mosteiro de Santa Cruz e o Paço das Escolas em três dimensões.',
+    'Um dia em Coimbra a pé, lugar a lugar: da Baixa à Alta, pelo Jardim Botânico, até à outra margem. Com o Mosteiro de Santa Cruz, a Sé Velha e o Paço das Escolas em três dimensões.',
 }
 
 /**
@@ -41,6 +41,7 @@ const ANCORA: Record<string, string> = { Manhã: 'manha', 'Meio do dia': 'meio-d
 const DESTAQUE: Record<string, { ponto: string; nome: string }> = {
   'paco-das-escolas': { ponto: 'torre', nome: 'torre' },
   'santa-cruz': { ponto: 'fachada', nome: 'fachada' },
+  'se-velha': { ponto: 'lanterna', nome: 'torre-lanterna' },
 }
 
 /** As paragens numeradas de seguida, através dos três tempos. */

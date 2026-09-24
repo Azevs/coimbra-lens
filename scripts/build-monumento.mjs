@@ -70,8 +70,13 @@ const { SkeletonBuilder } = (await import('straight-skeleton')).default
  * outra cor e o resto é contexto. `pontos` são os lugares que a visita
  * aponta; cada um vem de um elemento do OSM, nunca de uma coordenada à mão.
  * `alvo: 'topo'` pousa o ponto no alto do que o laser mediu ali (a torre);
- * `'chao'`, no terreno; `'face-poente'`, ao meio da face poente do contorno
- * (a fachada de uma igreja), com a altura medida das torres por trás.
+ * `'chao'`, no terreno; `'face-poente'` (ou `-norte`, `-sul`, `-nascente`), ao
+ * meio da face do contorno virada para esse lado (a fachada de uma igreja),
+ * com a altura medida por trás dela; `'pico'`, no píxel mais alto que o laser
+ * mediu no contorno; `'abside'`, ao meio do arco que o contorno desenha (a
+ * maior sequência de arestas curtas a virar sempre para o mesmo lado);
+ * `'saliencia-norte'`, ao meio da saliência mais a poente da face norte (um
+ * corpo que avança da parede, com as duas ilhargas perpendiculares a ela).
  */
 const MONUMENTOS = [
   {
@@ -124,6 +129,33 @@ const MONUMENTOS = [
       { id: 'tumulos', osm: 'node/12593540265', alvo: 'topo' },
       { id: 'claustro', osm: 'way/1349800549', alvo: 'chao' },
       { id: 'manga', osm: 'way/873267259', alvo: 'chao' },
+    ],
+  },
+  {
+    id: 'se-velha',
+    nome: 'Sé Velha',
+    artigo: 'a',
+    // Entre a igreja e o claustro, que lhe fica a sul: a poente apanha o
+    // Largo da Sé Velha e o alto do Quebra-Costas, a norte a Rua do Cabido.
+    centro: { lat: 40.20862, lon: -8.42696 },
+    raio: 95,
+    vestidos: ['rico'],
+    conjunto: [
+      'way/41222810', // a catedral
+      'relation/3475986', // o claustro, com o pátio por dentro
+    ],
+    pontos: [
+      { id: 'fachada', osm: 'way/41222810', alvo: 'face-poente' },
+      // A Porta Especiosa é a saliência de 6 m que o contorno desenha na
+      // fachada norte, a poente do braço do transepto.
+      { id: 'porta-especiosa', osm: 'way/41222810', alvo: 'saliencia-norte' },
+      // A torre-lanterna sobre o cruzeiro não tem elemento no OSM: é o píxel
+      // mais alto que o laser mediu dentro do contorno.
+      { id: 'lanterna', osm: 'way/41222810', alvo: 'pico' },
+      // A cabeceira: a ábside, que o contorno desenha em arco.
+      { id: 'cabeceira', osm: 'way/41222810', alvo: 'abside' },
+      // O fontanário ao meio do pátio do claustro.
+      { id: 'claustro', osm: 'node/10773754449', alvo: 'chao' },
     ],
   },
 ]
@@ -513,7 +545,19 @@ out geom;`) // "body": os membros das relações vêm com geometria
         conta.esqueletoFalhou++
       }
       conta[dentro ? 'conjunto' : 'contexto']++
+      // Nos do monumento vai também o MDS em bruto, em grelha de 2 m sobre a
+      // caixa do contorno: a reconstituição tira dele as cotas das partes que
+      // o esqueleto recto não sabe fazer (a lanterna da Sé, a ábside).
+      let lidar
+      if (dentro) {
+        const gx = Math.floor((Math.min(...xs) + CX - 3) / 2) * 2 + 1, gy = Math.floor((Math.min(...ys) + CY - 3) / 2) * 2 + 1
+        const n = Math.ceil((Math.max(...xs) + CX + 2 - gx) / 2) + 1, mm = Math.ceil((Math.max(...ys) + CY + 2 - gy) / 2) + 1
+        const v = []
+        for (let r = 0; r < mm; r++) for (let c = 0; c < n; c++) v.push(+(pixelDGT(mds, gx + c * 2, gy + r * 2) ?? 0).toFixed(2))
+        lidar = { x0: gx - CX, y0: gy - CY, passo: 2, nCol: n, nRow: mm, mds: v }
+      }
       edificios.push({
+        ...(lidar ? { lidar } : {}),
         osm,
         n: t.name ?? null,
         k: dentro ? 'conjunto' : 'contexto',
@@ -557,19 +601,52 @@ out geom;`) // "body": os membros das relações vêm com geometria
         Y = cy / (6 * a)
       }
     }
-    if (p.alvo === 'face-poente') {
-      // O meio da aresta mais comprida virada a poente (normal exterior com
-      // x < −0,8): numa igreja orientada, a fachada.
-      const ccw = areaAssinada(XY) > 0
+    if (p.alvo === 'saliencia-norte') {
+      // As arestas viradas a norte cujas vizinhas são as ilhargas de um corpo
+      // saliente (perpendiculares à face, a sair dela); fica a mais a poente.
+      const A = limparAnel(XY)
+      const ccw = areaAssinada(A) > 0
+      const nrm = (a, b) => {
+        const L = Math.hypot(b[0] - a[0], b[1] - a[1]), s = ccw ? 1 : -1
+        return [(s * (b[1] - a[1])) / L, (-s * (b[0] - a[0])) / L, L]
+      }
       let melhor = null
-      for (let i = 0; i < XY.length - 1; i++) {
-        const [a, b] = [XY[i], XY[i + 1]]
+      for (let i = 0; i < A.length; i++) {
+        const a = A[i], b = A[(i + 1) % A.length], ant = A[(i - 1 + A.length) % A.length], seg = A[(i + 2) % A.length]
+        const [, ny, L] = nrm(a, b)
+        if (ny < 0.8 || L < 2) continue
+        // ilhargas: a de trás desce para sul até à face, a da frente volta a subir
+        const sobe = (a[1] - ant[1]) / Math.hypot(a[0] - ant[0], a[1] - ant[1])
+        const desce = (seg[1] - b[1]) / Math.hypot(seg[0] - b[0], seg[1] - b[1])
+        if (sobe < 0.8 || desce > -0.8) continue
+        const m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]
+        if (!melhor || m[0] < melhor.m[0]) melhor = { m, L, fundo: Math.min(a[1] - ant[1], b[1] - seg[1]) }
+      }
+      if (!melhor) throw new Error(`ponto ${p.id}: ${p.osm} não tem saliência a norte`)
+      ;[X, Y] = melhor.m
+      altura = null
+    }
+    if (p.alvo.startsWith('face-')) {
+      // O meio da aresta mais comprida virada para o lado pedido (normal
+      // exterior a menos de 37° dele): a poente, numa igreja orientada, a
+      // fachada; a norte, na Sé Velha, o transepto com a Porta Especiosa.
+      const lado = { poente: [-1, 0], nascente: [1, 0], norte: [0, 1], sul: [0, -1] }[p.alvo.slice(5)]
+      if (!lado) throw new Error(`ponto ${p.id}: alvo ${p.alvo} desconhecido`)
+      // Sem vértices quase colineares: uma face desenhada em dois troços
+      // conta como uma.
+      const A = limparAnel(XY)
+      A.push(A[0])
+      const ccw = areaAssinada(A) > 0
+      let melhor = null
+      for (let i = 0; i < A.length - 1; i++) {
+        const [a, b] = [A[i], A[i + 1]]
         const L = Math.hypot(b[0] - a[0], b[1] - a[1])
         if (L < 1) continue
-        const nx = ccw ? (b[1] - a[1]) / L : -(b[1] - a[1]) / L
-        if (nx < -0.8 && (!melhor || L > melhor.L)) melhor = { L, a, b, m: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2] }
+        const s = ccw ? 1 : -1
+        const nx = (s * (b[1] - a[1])) / L, ny = (-s * (b[0] - a[0])) / L
+        if (nx * lado[0] + ny * lado[1] > 0.8 && (!melhor || L > melhor.L)) melhor = { L, a, b, m: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2] }
       }
-      if (!melhor) throw new Error(`ponto ${p.id}: ${p.osm} não tem face a poente`)
+      if (!melhor) throw new Error(`ponto ${p.id}: ${p.osm} não tem face a ${p.alvo.slice(5)}`)
       ;[X, Y] = melhor.m
       // A altura da fachada: o mais alto que o laser mediu na faixa de 5 m
       // por trás dela (as torres), acima do chão à porta.
@@ -580,6 +657,46 @@ out geom;`) // "body": os membros das relações vêm com geometria
           if (dentroDoPoligono(x, y, XY) && distSegmento([x, y], melhor.a, melhor.b) < 5)
             topo = Math.max(topo, pixelDGT(mds, x, y) ?? -Infinity)
       altura = +(topo - chao(X, Y)).toFixed(1)
+    }
+    if (p.alvo === 'pico' || p.alvo === 'abside') {
+      // 'pico': o píxel mais alto que o laser mediu dentro do contorno (uma
+      // torre que o OSM não desenha à parte). 'abside': o vértice do meio da
+      // maior sequência de arestas curtas (< 3 m) que viram todas para o lado
+      // de fora — o arco de uma ábside —, à altura do telhado ali.
+      const xs = XY.map((q) => q[0]), ys = XY.map((q) => q[1])
+      let v = null
+      if (p.alvo === 'abside') {
+        const A = limparAnel(XY), N = A.length, ccw = areaAssinada(A) > 0
+        const curta = (i) => Math.hypot(A[(i + 1) % N][0] - A[i][0], A[(i + 1) % N][1] - A[i][1]) < 3
+        const convexo = (i) => {
+          const a = A[(i - 1 + N) % N], b = A[i], c = A[(i + 1) % N]
+          const cr = (b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0])
+          return ccw ? cr > 0 : cr < 0
+        }
+        let melhor = []
+        for (let i0 = 0; i0 < N; i0++) {
+          const run = []
+          for (let k = 0; k < N && curta((i0 + k) % N) && convexo((i0 + k + 1) % N); k++) run.push((i0 + k + 1) % N)
+          if (run.length > melhor.length) melhor = run
+        }
+        if (melhor.length < 3) throw new Error(`ponto ${p.id}: ${p.osm} não desenha ábside`)
+        v = A[melhor[Math.floor((melhor.length - 1) / 2)]]
+      }
+      let topo = -Infinity
+      for (let x = Math.floor((Math.min(...xs) - 1) / 2) * 2 + 1; x <= Math.max(...xs); x += 2)
+        for (let y = Math.floor((Math.min(...ys) - 1) / 2) * 2 + 1; y <= Math.max(...ys); y += 2) {
+          if (!dentroDoPoligono(x, y, XY) || (v && Math.hypot(x - v[0], y - v[1]) > 6)) continue
+          const s = pixelDGT(mds, x, y) ?? -Infinity
+          if (s > topo) {
+            topo = s
+            if (!v) [X, Y] = [x, y]
+          }
+        }
+      if (v) [X, Y] = v
+      const chaoPol = XY.map(([x, y]) => chao(x, y)).filter((c) => c != null)
+      if (p.alvo === 'pico') altura = +(topo - percentil(chaoPol, 0.5)).toFixed(1)
+      pontos.push({ id: p.id, osm: p.osm, p: [...local([X, Y]), +topo.toFixed(2)], ...(altura != null ? { altura } : {}) })
+      continue
     }
     if (X == null) {
       X = XY.reduce((s, q) => s + q[0], 0) / XY.length
@@ -641,6 +758,7 @@ out geom;`) // "body": os membros das relações vêm com geometria
   return {
     id: m.id,
     nome: m.nome,
+    ...(m.artigo ? { artigo: m.artigo } : {}),
     centro: [m.centro.lat, m.centro.lon],
     raio: R,
     ...(m.vestidos ? { vestidos: m.vestidos } : {}),
@@ -705,6 +823,8 @@ export interface PontoMonumento {
 export interface Monumento {
   id: string
   nome: string
+  /** O artigo do nome, para "a maqueta da Sé" — sem o campo, "o". */
+  artigo?: 'o' | 'a'
   centro: [number, number]
   raio: number
   /**

@@ -20,6 +20,8 @@ export interface PontoMonumento {
 export interface Monumento {
   id: string
   nome: string
+  /** O artigo do nome, para "a maqueta da Sé" — sem o campo, "o". */
+  artigo?: 'o' | 'a'
   centro: [number, number]
   raio: number
   /**
@@ -199,6 +201,76 @@ export const MONUMENTOS: Monumento[] = [
       }
     ],
     "lidoEm": "2026-09-23T11:33:05.275Z"
+  },
+  {
+    "id": "se-velha",
+    "nome": "Sé Velha",
+    "artigo": "a",
+    "centro": [
+      40.20862,
+      -8.42696
+    ],
+    "raio": 95,
+    "vestidos": [
+      "rico"
+    ],
+    "chaoDesenhado": true,
+    "edificios": 120,
+    "doMonumento": 2,
+    "semAltura": 2,
+    "arvores": 23,
+    "cotaMin": 44,
+    "cotaMax": 87.5,
+    "pontos": [
+      {
+        "id": "fachada",
+        "osm": "way/41222810",
+        "p": [
+          -25.35,
+          18.15,
+          63.23
+        ],
+        "altura": 18.6
+      },
+      {
+        "id": "porta-especiosa",
+        "osm": "way/41222810",
+        "p": [
+          -8.45,
+          28.59,
+          62.93
+        ]
+      },
+      {
+        "id": "lanterna",
+        "osm": "way/41222810",
+        "p": [
+          6,
+          15,
+          93.32
+        ],
+        "altura": 28.2
+      },
+      {
+        "id": "cabeceira",
+        "osm": "way/41222810",
+        "p": [
+          19.63,
+          17.96,
+          78.92
+        ]
+      },
+      {
+        "id": "claustro",
+        "osm": "node/10773754449",
+        "p": [
+          7.23,
+          -12.21,
+          67.79
+        ]
+      }
+    ],
+    "lidoEm": "2026-09-24T10:24:56.055Z"
   }
 ]
 

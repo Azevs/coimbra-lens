@@ -298,7 +298,9 @@ for b in CENA['buildings']:
     # página acende um deles quando a visita aponta para lá.
     nome = 'Edif_conjunto_' + b['osm'].replace('/', '_') if dentro else 'Edif_contexto'
     if RICO and b['osm'] in rc.a_parte(ID):
-        continue                     # a torre do Paço, a fonte da Manga: modeladas à parte, peça a peça
+        continue                     # a torre do Paço, a fonte da Manga, a Sé: modeladas à parte, peça a peça
+    if RICO:
+        rc.volume(ID, b)             # o claustro da Sé, terraço plano
     ob = objecto(nome, edificio(b), mats)
     if RICO:
         rc.vestir(ob, b, CTX, MATS)
@@ -541,7 +543,9 @@ VISTAS = {
     # aberto, a Via Latina em frente, a torre no canto.
     # Santa Cruz: de poente-sudoeste, da Praça 8 de Maio: a fachada de
     # frente, o mosteiro por trás e a Manga ao fundo.
-    'conjunto': (None, {'paco-das-escolas': -112, 'santa-cruz': -160}.get(ID, -112), 30, 60, (2000, 1250)),
+    # Sé Velha: de noroeste, do alto do Largo: a fachada poente e a norte,
+    # com a Porta Especiosa, e a lanterna por cima; o claustro fica atrás.
+    'conjunto': (None, {'paco-das-escolas': -112, 'santa-cruz': -160, 'se-velha': 145}.get(ID, -112), 30, 60, (2000, 1250)),
 }
 
 # Vistas de perto, para conferir pormenores. Só saem quando pedidas com
@@ -558,6 +562,13 @@ INSPECCAO = {
         'claustro': ((-14, 16, 23), -120, 42, 45, (1600, 1000)),
         'manga': ((32, 21, 27), 35, 28, 45, (1600, 1000)),
         'cafe': ((-58, -30, 26), -165, 8, 50, (1600, 1000)),
+    },
+    'se-velha': {
+        'fachada': ((-25, 18, 72), 180, 10, 45, (1600, 1000)),
+        'norte': ((-8, 29, 70), 95, 26, 45, (1600, 1000)),
+        'lanterna': ((7, 17, 86), 25, 22, 45, (1600, 1000)),
+        'cabeceira': ((18, 16, 74), 0, 14, 45, (1600, 1000)),
+        'claustro': ((7, -12, 70), -60, 38, 45, (1600, 1000)),
     },
 }.get(ID, {})
 for _v in SO_VISTAS:
