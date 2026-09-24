@@ -177,10 +177,10 @@ export class Inimigo {
         if (this.vistoHa > 2.5) {
           this.estado = 'procura'
           this.alvoMov = this.ultimaVista.clone()
-          // Estava mesmo aqui e escondeu-se: provoca-o.
-          if (this.ultimaVista.distanceTo(this.corpo.pes) < 14 && Math.random() < 0.75)
-            som.falar(escolher(['inimigo_medo_1', 'inimigo_medo_2']), { inimigo: this.id }, this.cabeca, true)
-          else if (Math.random() < 0.6) som.falar(escolher(['inimigo_perdeu_1', 'inimigo_perdeu_2', 'inimigo_alerta_3']), { inimigo: this.id }, this.cabeca)
+          // Perdeu-o de vista. Se estava mesmo aqui, também pode provocar: mais variedade, não em vez de.
+          const perto = this.ultimaVista.distanceTo(this.corpo.pes) < 14
+          const falas = ['inimigo_perdeu_1', 'inimigo_perdeu_2', 'inimigo_alerta_3', ...(perto ? ['inimigo_medo_1', 'inimigo_medo_2'] : [])]
+          if (Math.random() < 0.65) som.falar(escolher(falas), { inimigo: this.id }, this.cabeca)
           break
         }
         // Mexer-se de lado entre rajadas: não ficar parado a levar tiros.
