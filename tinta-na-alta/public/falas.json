@@ -152,5 +152,18 @@
     "texto": "Ai! Ai os tomates!",
     "velocidade": "15%",
     "tom": "+20%"
+  },
+  "inimigo_guedes": {
+    "texto": "Sai da frente, Guedes!",
+    "velocidade": "25%",
+    "tom": "+10%"
+  },
+  "inimigo_medo_1": {
+    "texto": "Não tejas medo!",
+    "velocidade": "10%"
+  },
+  "inimigo_medo_2": {
+    "texto": "Anda cá, não tejas medo.",
+    "velocidade": "5%"
   }
 }

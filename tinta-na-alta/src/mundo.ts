@@ -869,7 +869,7 @@ export class Mundo {
    * a dobra para o Quebra-Costas, as escadas, o Largo e o claustro.
    */
   percurso: THREE.Vector3[] = []
-  private comprimentos: number[] = []
+  comprimentos: number[] = []
 
   private marcarPontos() {
     const via = (id: string) => this.n.vias.find((v) => v.osm === id)?.g ?? []

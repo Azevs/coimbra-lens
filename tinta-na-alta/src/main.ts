@@ -221,6 +221,19 @@ function largarPente(pos: THREE.Vector3) {
   pentes.push({ obj: g, pos: g.position.clone() })
 }
 
+// ------------------------------------------------- o que desce da Sé --
+let guedes: { e: Inimigo; desde: number; gritou: boolean } | null = null
+/** Um Borrão sai do portal da Sé e desce a correr pelas ruas até ao jogador. */
+function desceDaSe() {
+  const origem = P.portalSe ?? P.largo
+  const sJog = mundo.sDe(jog.corpo.pes), sLargo = mundo.sDe(P.largo)
+  const e = criar(origem, P.largo)
+  e.rota = mundo.percurso.filter((_, k) => { const s = mundo.comprimentos[k]; return s >= sJog && s <= sLargo }).reverse()
+  e.pressa = true
+  e.ouvir(jog.corpo.pes, som)
+  guedes = { e, desde: tempoJogo, gritou: false }
+}
+
 // --------------------------------------------------------------- missão --
 type Fase = 'arco' | 'largo' | 'claustro' | 'soltar' | 'fuga' | 'fim'
 let fase: Fase = 'arco'
@@ -500,6 +513,15 @@ renderer.setAnimationLoop(() => {
 
     // Missão.
     if (!acabou) {
+      if (!guedes && fase !== 'arco' && pes.distanceTo(P.escadasBase) < 8) desceDaSe()
+      if (guedes && !guedes.gritou && guedes.e.vivo) {
+        const g = guedes.e
+        const passa = inimigos.some((o) => o !== g && o.vivo && o.corpo.pes.distanceTo(g.corpo.pes) < 3.5)
+        if (passa || tempoJogo - guedes.desde > 8) {
+          som.falar('inimigo_guedes', { inimigo: g.id }, g.cabeca, true)
+          guedes.gritou = true
+        }
+      }
       if (fase === 'arco' && pes.distanceTo(P.arco) < 7) avancar('largo', 'radio_arco')
       else if (fase === 'largo' && pes.distanceTo(P.largo) < 14) avancar('claustro', 'radio_largo')
       else if (fase === 'claustro' && pes.distanceTo(P.dentroClaustro) < 6) avancar('soltar', 'radio_claustro')

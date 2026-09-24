@@ -44,6 +44,10 @@ export class Inimigo {
   private idxPatrulha = 0
   aDescansar = 0
   vel = 0
+  /** Caminho a seguir quando vem a correr de longe (pelas ruas, não pelas paredes). */
+  rota: THREE.Vector3[] = []
+  /** Corre a sério (o que desce da Sé). */
+  pressa = false
 
   constructor(pos: THREE.Vector3, yaw: number, public telhado = false) {
     this.corpo = new Corpo(pos, 1.75, 0.3)
@@ -152,6 +156,13 @@ export class Inimigo {
         break
       }
       case 'alerta': {
+        if (this.rota.length) {
+          while (this.rota.length && this.rota[0].distanceTo(this.corpo.pes) < 1.6) this.rota.shift()
+          querMover = this.rota[0] ?? this.alvoMov
+          olhar = querMover
+          correr = true
+          break
+        }
         this.reaccao -= dt
         if (this.alvoMov && this.reaccao < 0) {
           if (this.alvoMov.distanceTo(this.corpo.pes) > 3 && !this.telhado) querMover = this.alvoMov
@@ -166,7 +177,10 @@ export class Inimigo {
         if (this.vistoHa > 2.5) {
           this.estado = 'procura'
           this.alvoMov = this.ultimaVista.clone()
-          if (Math.random() < 0.6) som.falar(escolher(['inimigo_perdeu_1', 'inimigo_perdeu_2', 'inimigo_alerta_3']), { inimigo: this.id }, this.cabeca)
+          // Estava mesmo aqui e escondeu-se: provoca-o.
+          if (this.ultimaVista.distanceTo(this.corpo.pes) < 14 && Math.random() < 0.75)
+            som.falar(escolher(['inimigo_medo_1', 'inimigo_medo_2']), { inimigo: this.id }, this.cabeca, true)
+          else if (Math.random() < 0.6) som.falar(escolher(['inimigo_perdeu_1', 'inimigo_perdeu_2', 'inimigo_alerta_3']), { inimigo: this.id }, this.cabeca)
           break
         }
         // Mexer-se de lado entre rajadas: não ficar parado a levar tiros.
@@ -230,7 +244,7 @@ export class Inimigo {
     const alvoVel = new THREE.Vector3()
     if (querMover) {
       const d = querMover.clone().sub(c.pes).setY(0)
-      if (d.length() > 0.4) alvoVel.copy(d.normalize().multiplyScalar(this.estado === 'combate' ? 2.2 : correr || this.estado === 'alerta' ? 3.8 : 1.4))
+      if (d.length() > 0.4) alvoVel.copy(d.normalize().multiplyScalar(this.estado === 'combate' ? 2.2 : this.pressa && (correr || this.estado === 'alerta') ? 6.5 : correr || this.estado === 'alerta' ? 3.8 : 1.4))
       if (!olhar) olhar = querMover
     }
     if (this.boneco.dobrado > 0) alvoVel.set(0, 0, 0)
