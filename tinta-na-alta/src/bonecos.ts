@@ -90,6 +90,7 @@ export class Boneco {
       perna.add(caixaAcerto('membro', 0.17, 0.46, 0.17, -0.23, this.alvos))
       canela.add(caixaAcerto('membro', 0.15, 0.46, 0.15, -0.23, this.alvos))
     }
+    if (estilo === 'tinta') this.acessorio()
     if (comArma) {
       // Espingarda em silhueta, presa à mão direita.
       const g = new THREE.Group()
@@ -137,6 +138,30 @@ export class Boneco {
       this.peito.add(guit)
     }
     this.raiz.traverse((o) => { o.frustumCulled = false })
+  }
+
+  /** Cada Borrão com a sua cabeça: boné, gorro, chapéu, lenço, ou nada; e a sua altura. */
+  private acessorio() {
+    const r = Math.random()
+    const m = (g: THREE.BufferGeometry) => { const x = new THREE.Mesh(g, tintaSolida); this.cabeca.add(x); return x }
+    if (r < 0.22) {
+      m(new THREE.SphereGeometry(0.15, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2)).position.y = 0.03
+      const pala = m(new THREE.BoxGeometry(0.2, 0.02, 0.14))
+      pala.position.set(0, 0.04, -0.17)
+    } else if (r < 0.42) {
+      const g = m(new THREE.SphereGeometry(0.155, 12, 8, 0, Math.PI * 2, 0, Math.PI / 1.8))
+      g.position.y = 0.02
+      m(new THREE.SphereGeometry(0.05, 8, 6)).position.y = 0.19
+    } else if (r < 0.58) {
+      m(new THREE.CylinderGeometry(0.26, 0.26, 0.015, 16)).position.y = 0.08
+      m(new THREE.CylinderGeometry(0.12, 0.14, 0.14, 12)).position.y = 0.15
+    } else if (r < 0.72) {
+      const faixa = m(new THREE.CylinderGeometry(0.147, 0.147, 0.06, 14))
+      faixa.position.y = 0.05
+      const no = m(new THREE.BoxGeometry(0.04, 0.12, 0.03))
+      no.position.set(0.05, -0.02, 0.15); no.rotation.z = 0.4
+    }
+    this.raiz.scale.setScalar(0.93 + Math.random() * 0.14)
   }
 
   /** Pose: velocidade (m/s), mira (0–1), dt. */

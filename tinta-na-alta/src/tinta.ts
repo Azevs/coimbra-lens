@@ -40,8 +40,8 @@ const distanciaGLSL = (perto: number, queda: number, minimo: number) => `
     return ${minimo.toFixed(2)} + ${(1 - minimo).toFixed(2)} / (1.0 + r * r);
   }`
 
-function materialTraco(perfil: 'mundo' | 'arma') {
-  const [perto, queda, minimo] = perfil === 'arma' ? [0.5, 3, 0.4] : [6, 40, 0.22]
+function materialTraco(perfil: 'mundo' | 'arma' | 'longe') {
+  const [perto, queda, minimo] = perfil === 'arma' ? [0.5, 3, 0.4] : perfil === 'longe' ? [40, 120, 0.5] : [6, 40, 0.22]
   const m = new LineMaterial({ color: 0xffffff, vertexColors: true, linewidth: perfil === 'arma' ? 1.35 : 1, worldUnits: false,
     alphaToCoverage: true, toneMapped: false })
   m.depthWrite = false
@@ -71,7 +71,7 @@ function materialTraco(perfil: 'mundo' | 'arma') {
       .replace('uniform float linewidth;', `uniform float linewidth;
         varying float vLonge;`)
       .replace('gl_FragColor = vec4( diffuseColor.rgb, alpha );',
-        `float nevoa = smoothstep(${perfil === 'arma' ? '50.0, 60.0' : '70.0, 190.0'}, vLonge);
+        `float nevoa = smoothstep(${perfil === 'arma' ? '50.0, 60.0' : perfil === 'longe' ? '220.0, 420.0' : '70.0, 190.0'}, vLonge);
          gl_FragColor = vec4( mix(diffuseColor.rgb, vec3(1.0), nevoa * 0.85), alpha );`)
   }
   m.customProgramCacheKey = () => 'tinta-' + perfil
@@ -81,6 +81,8 @@ function materialTraco(perfil: 'mundo' | 'arma') {
 export const materiais = {
   mundo: materialTraco('mundo'),
   arma: materialTraco('arma'),
+  /** Marcos ao longe (a Torre da Universidade): o nevoeiro só começa aos 220 m. */
+  longe: materialTraco('longe'),
 }
 
 export const papel = new THREE.MeshBasicMaterial({
@@ -123,6 +125,7 @@ export function silhueta(geo: THREE.BufferGeometry, largura = 2.2) {
 export function redimensionar(w: number, h: number) {
   materiais.mundo.resolution.set(w, h)
   materiais.arma.resolution.set(w, h)
+  materiais.longe.resolution.set(w, h)
 }
 
 type Marcas = { pos: number[]; cor: number[]; larg: number[]; desv: number[] }
@@ -167,7 +170,7 @@ function esbocar(seg: ArrayLike<number>, seed: number, traco: Traco, m: Marcas, 
   }
 }
 
-export function malhaDeTraco(m: Marcas, perfil: 'mundo' | 'arma' = 'mundo', recortar = false) {
+export function malhaDeTraco(m: Marcas, perfil: 'mundo' | 'arma' | 'longe' = 'mundo', recortar = false) {
   const g = new LineSegmentsGeometry().setPositions(m.pos).setColors(m.cor)
   g.setAttribute('instanceLargura', new THREE.InstancedBufferAttribute(new Float32Array(m.larg), 1))
   g.setAttribute('instanceDesvio', new THREE.InstancedBufferAttribute(new Float32Array(m.desv), 2))
@@ -247,7 +250,7 @@ export class Esboco {
     if (arestas) this.linha(pts, arestas, true)
   }
 
-  acabar(perfil: 'mundo' | 'arma' = 'mundo', material: THREE.Material = papel, recortar = false) {
+  acabar(perfil: 'mundo' | 'arma' | 'longe' = 'mundo', material: THREE.Material = papel, recortar = false) {
     const grupo = new THREE.Group()
     grupo.name = this.nome
     if (this.faces.length) {

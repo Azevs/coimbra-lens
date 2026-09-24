@@ -159,6 +159,7 @@ export class Mundo {
     }
     this.chaoDesenhado()
     this.muros()
+    this.torreUniversidade()
     for (const esc of this.quadriculas.values()) this.cena.add(esc.acabar('mundo', papel, true))
     this.limites()
     this.marcarPontos()
@@ -598,6 +599,70 @@ export class Mundo {
     }
   }
 
+  /**
+   * A Torre da Universidade (a "Cabra"), no alto da Alta: referência para quem
+   * se orienta pelas ruas. Posição e alturas da maqueta do Paço no CoimbraLens
+   * (topo a 133 m, 34 m de altura); o desenho da torre é simplificado.
+   */
+  private torreUniversidade() {
+    const cx = 108, cy = -106, base = 99.1, topo = 133.2
+    const dono = this.edificioEm(cx, cy)
+    let ang = 0
+    if (dono) {
+      let maior = 0
+      for (let i = 0; i < dono.anel.length; i++) {
+        const a = dono.anel[i], c = dono.anel[(i + 1) % dono.anel.length]
+        const L = Math.hypot(c[0] - a[0], c[1] - a[1])
+        if (L > maior) { maior = L; ang = Math.atan2(c[1] - a[1], c[0] - a[0]) }
+      }
+    }
+    const esc = new Esboco('torre-universidade', 0.8, 1)
+    const ux = Math.cos(ang), uy = Math.sin(ang), vx = -uy, vy = ux
+    const P = (a: number, b: number, z: number): P3 => p3(cx + ux * a + vx * b, cy + uy * a + vy * b, z)
+    const bloco = (meia: number, z0: number, z1: number) => {
+      const g = new THREE.BoxGeometry(meia * 2, z1 - z0, meia * 2)
+      g.rotateY(ang)
+      g.translate(cx, (z0 + z1) / 2, -cy)
+      esc.solido(g, 'aresta')
+      this.colisao.add(new THREE.Mesh(g.clone()))
+    }
+    const zSino = topo - 11
+    bloco(3.6, base - 2, zSino)
+    bloco(3.9, zSino, zSino + 0.5) // cornija
+    bloco(3.3, zSino + 0.5, topo - 4)
+    bloco(3.6, topo - 4, topo - 3.6)
+    // Cúpula baixa e lanterna.
+    const cup = new THREE.SphereGeometry(2.6, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2)
+    cup.scale(1, 0.8, 1)
+    cup.translate(cx, topo - 3.6, -cy)
+    esc.solido(cup, 'pormenor', 35)
+    const lant = new THREE.CylinderGeometry(0.5, 0.6, 1.6, 8)
+    lant.translate(cx, topo - 1.0, -cy)
+    esc.solido(lant, 'aresta', 30)
+    // Nas quatro faces: sineira em arco, relógio, janelas e cunhais.
+    for (let f = 0; f < 4; f++) {
+      const rot = (a: number, b: number): [number, number] => {
+        const c = Math.cos((f * Math.PI) / 2), sn = Math.sin((f * Math.PI) / 2)
+        return [a * c - b * sn, a * sn + b * c]
+      }
+      const F = (lat: number, z: number, fora: number): P3 => P(...rot(lat, fora), z)
+      const arco: P3[] = []
+      for (let q = 0; q <= 12; q++) { const an = Math.PI * (1 - q / 12); arco.push(F(Math.cos(an) * 1.4, zSino + 4.6 + Math.sin(an) * 1.4, 3.32)) }
+      esc.linha([F(-1.4, zSino + 1, 3.32), ...arco, F(1.4, zSino + 1, 3.32)], 'aresta')
+      const o = F(-1.3, zSino + 1.1, 3.31), e = F(1.3, zSino + 1.1, 3.31)
+      esc.tracejar(o, [e[0] - o[0], 0, e[2] - o[2]], [0, 4.8, 0], 0.14, 'sombra')
+      // Relógio.
+      const zr = zSino - 3.2
+      esc.linha(Array.from({ length: 21 }, (_, q) => { const an = (q / 20) * Math.PI * 2; return F(Math.cos(an) * 1.3, zr + Math.sin(an) * 1.3, 3.62) }), 'aresta')
+      for (let h = 0; h < 12; h++) { const an = (h / 12) * Math.PI * 2; esc.linha([F(Math.cos(an) * 1.05, zr + Math.sin(an) * 1.05, 3.62), F(Math.cos(an) * 1.25, zr + Math.sin(an) * 1.25, 3.62)], 'pormenor') }
+      esc.linha([F(0, zr, 3.63), F(0, zr + 0.8, 3.63)], 'aresta')
+      esc.linha([F(0, zr, 3.63), F(0.55, zr - 0.25, 3.63)], 'aresta')
+      for (let z = base + 6; z < zr - 3; z += 5) esc.linha([F(-0.4, z, 3.62), F(0.4, z, 3.62), F(0.4, z + 1.6, 3.62), F(-0.4, z + 1.6, 3.62)], 'pormenor', true)
+      for (let z = base; z < zSino; z += 0.9) esc.linha([F(3.62, z, 3.62), F(3.62 - (Math.round(z) % 2 ? 0.9 : 0.5), z, 3.62)], 'sombra')
+    }
+    this.cena.add(esc.acabar('longe'))
+  }
+
   /** Merlões ao longo do beirado da Sé. */
   private ameias(b: Edificio, esc: Esboco) {
     const z = b.topo
@@ -935,6 +1000,22 @@ export class Mundo {
     }
     // Calçada: pequenas marcas espalhadas pelas ruas, poucas, como quem sugere.
     const r = aleatorio(7)
+    // Nas praças, grupos de escamas de calçada aqui e ali.
+    for (const pr of this.n.pracas) {
+      const xs = pr.g.map((p) => p[0]), ys = pr.g.map((p) => p[1])
+      for (let x = Math.min(...xs); x < Math.max(...xs); x += 2.6)
+        for (let y = Math.min(...ys); y < Math.max(...ys); y += 2.6) {
+          if (r() > 0.35) continue
+          const px = x + r() * 2, py = y + r() * 2
+          if (!dentro(px, py, pr.g) || this.edificioEm(px, py)) continue
+          for (let k = 0; k < 3; k++) {
+            const ox = px + (k - 1) * 0.42, oy = py + (k % 2) * 0.2
+            const z = this.chao(ox, oy) + 0.04
+            esc2(this.quadricula(ox, oy), Array.from({ length: 6 }, (_, q) => { const an = Math.PI * (0.15 + (q / 5) * 0.7); return p3(ox + Math.cos(an) * 0.22, oy + Math.sin(an) * 0.22 - 0.1, z) }))
+          }
+        }
+    }
+    function esc2(e: Esboco, pts: P3[]) { e.linha(pts, 'chao') }
     for (const v of this.n.vias) {
       if (v.tipo === 'steps' || v.tipo === 'service') continue
       for (let i = 1; i < v.g.length; i++) {
