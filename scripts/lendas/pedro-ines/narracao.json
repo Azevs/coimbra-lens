@@ -1,0 +1,30 @@
+{
+  "voice": "pt-PT-DuarteNeural",
+  "rate": "-6%",
+  "pitch": "-2Hz",
+  "lines": [
+    { "id": "v1", "pt": "Em 1340, chegou a Portugal Dona Constança Manuel, para casar com o infante Dom Pedro, herdeiro do trono." },
+    { "id": "v2", "pt": "Entre as damas que a acompanhavam, vinha uma jovem galega: Inês de Castro." },
+    { "id": "v3", "pt": "E Pedro apaixonou-se por ela." },
+    { "id": "v4", "pt": "O amor não ficou muito tempo em segredo. E o rei, Dom Afonso Quarto, pai de Pedro, não o aprovava." },
+    { "id": "v5", "pt": "Em 1344, mandou Inês para longe: para o castelo de Albuquerque, do outro lado da fronteira." },
+    { "id": "v6", "pt": "No ano seguinte, Dona Constança morreu, pouco depois de dar à luz o futuro rei Dom Fernando." },
+    { "id": "v7", "pt": "Pedro mandou chamar Inês. E desta vez, não a deixou partir." },
+    { "id": "v8", "pt": "Foram viver para Coimbra, junto ao mosteiro de Santa Clara." },
+    { "id": "v9", "pt": "Conta-se que se encontravam junto a uma fonte, na quinta a que hoje chamamos das Lágrimas." },
+    { "id": "v10", "pt": "Tiveram quatro filhos." },
+    { "id": "v11", "pt": "Mas na corte crescia o medo. Medo dos irmãos de Inês, nobres poderosos de Castela. E medo de que os filhos dela viessem a disputar o trono a Dom Fernando." },
+    { "id": "v12", "pt": "Três conselheiros do rei defendiam a sua morte." },
+    { "id": "v13", "pt": "A 7 de janeiro de 1355, com o consentimento do rei, os três foram a Coimbra. Pedro estava ausente." },
+    { "id": "v14", "pt": "Inês de Castro foi morta." },
+    { "id": "v15", "pt": "Quando soube, Pedro revoltou-se contra o pai. A guerra devastou o norte do reino, até que pai e filho fizeram as pazes." },
+    { "id": "v16", "pt": "Em 1357, Afonso Quarto morreu, e Pedro tornou-se rei." },
+    { "id": "v17", "pt": "Três anos depois, em Cantanhede, jurou que tinha casado com Inês, em segredo." },
+    { "id": "v18", "pt": "Dois dos assassinos, que tinham fugido para Castela, foram-lhe entregues. Pedro mandou arrancar-lhes o coração." },
+    { "id": "v19", "pt": "O terceiro, Diogo Lopes Pacheco, conseguiu escapar." },
+    { "id": "v20", "pt": "Depois, mandou levar o corpo de Inês para o mosteiro de Alcobaça, onde fez construir dois túmulos: o dela, e o seu." },
+    { "id": "v21", "pt": "Quando Pedro morreu, em 1367, foi ali sepultado. Hoje, os dois túmulos estão frente a frente." },
+    { "id": "v22", "pt": "A lenda conta que Pedro fez coroar Inês depois de morta, e que obrigou a corte a beijar-lhe a mão." },
+    { "id": "v23", "pt": "E que, em Coimbra, as lágrimas de Inês fizeram nascer uma fonte: a Fonte das Lágrimas." }
+  ]
+}

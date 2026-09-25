@@ -3070,6 +3070,41 @@ footer a {
 .filme-narracao li button:hover { color: #F5EFE3; }
 .filme-narracao li .filme-cap-tempo { padding-top: 0.2rem; min-width: 2.25rem; }
 
+/* ── Lendas ────────────────────────────────────────────────────────────
+   Cada episódio no mesmo palco do filme da Sobre, mas no preto quente da
+   película dos anos 30; por baixo, o que aconteceu e o que se conta. */
+.lendas-entrada {
+  max-width: 38rem; margin-top: 1.25rem;
+  font-family: var(--font-ibm-plex), sans-serif; font-size: 1.0625rem; line-height: 1.6;
+  color: var(--text-secondary);
+}
+.filme-palco--sepia { background: #16120E; }
+.lenda-resumo {
+  max-width: 40rem; margin-top: 1rem;
+  font-family: var(--font-ibm-plex), sans-serif; font-size: 1.0625rem; line-height: 1.6;
+  color: rgba(237, 230, 216, 0.78);
+}
+@media (min-width: 768px) { .filme-capitulos--lenda { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 1100px) { .filme-capitulos--lenda { grid-template-columns: repeat(8, 1fr); } }
+.lenda-nota {
+  display: grid; gap: 2.5rem; margin-top: 3rem; padding-top: 2rem;
+  border-top: 1px solid rgba(237, 230, 216, 0.14);
+}
+@media (min-width: 900px) { .lenda-nota { grid-template-columns: 3fr 2fr; gap: 4rem; } }
+.lenda-nota-titulo {
+  font-family: var(--font-jetbrains), monospace; font-size: 11px; font-weight: 400;
+  letter-spacing: 0.22em; text-transform: uppercase; color: #EE8A5A; margin-bottom: 1rem;
+}
+.lenda-cronologia, .lenda-contos {
+  list-style: none; margin: 0; padding: 0;
+  font-family: var(--font-ibm-plex), sans-serif; font-size: 0.9375rem; line-height: 1.55;
+  color: rgba(237, 230, 216, 0.82);
+}
+.lenda-cronologia li { display: grid; grid-template-columns: 6.5rem 1fr; gap: 1rem; padding: 0.45rem 0; }
+.lenda-cronologia .filme-cap-tempo { padding-top: 0.2rem; }
+.lenda-contos li { padding: 0.45rem 0 0.45rem 1.25rem; position: relative; font-style: italic; }
+.lenda-contos li::before { content: '~'; position: absolute; left: 0; color: #EE8A5A; font-style: normal; }
+
 /* As regras da casa: número, texto, e um exemplo real ao lado. */
 .regras { display: grid; border-top: 1px solid var(--border-strong); }
 .regra {

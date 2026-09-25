@@ -28,6 +28,7 @@ const AREAS = [
   { label: 'Trilhos', href: '/trilhos' },
   { label: 'Zonas urbanas', href: '/zonas-urbanas' },
   { label: 'História', href: '/historia' },
+  { label: 'Lendas', href: '/lendas' },
   { label: 'Sobre', href: '/sobre' },
 ]
 
@@ -78,6 +79,7 @@ const SECTIONS: Record<string, { label: string; href: string }[]> = {
     { label: 'Em camadas', href: '#camadas' },
     { label: 'Referências', href: '#referencias' },
   ],
+  '/lendas': [{ label: 'Pedro e Inês', href: '#pedro-ines' }],
   '/sobre': [
     { label: 'O filme', href: '#filme' },
     { label: 'O projecto', href: '#projecto' },

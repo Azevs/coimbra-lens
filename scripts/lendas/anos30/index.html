@@ -1,0 +1,16 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face { font-family: Chango; src: url(fontes/Chango-Regular.ttf); }
+html, body { margin: 0; background: #000; overflow: hidden }
+canvas { display: block }
+</style>
+<script src="estilo.js"></script>
+<script>
+  // cada lenda traz os seus bonecos e as suas cenas: index.html?lenda=pedro-ines
+  const LENDA = new URLSearchParams(location.search).get('lenda')
+  document.write(`<script src="../${LENDA}/bonecos.js"><\/script><script src="../${LENDA}/cenas.js"><\/script>`)
+</script>
+</head><body><canvas id="c" width="1920" height="1080"></canvas>
+<span style="font-family:Chango;position:absolute;left:-999px">.</span>
+</body></html>
