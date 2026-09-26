@@ -60,7 +60,6 @@ export const metadata: Metadata = {
     title: `${SITE_NAME} — ${SITE_TAGLINE}`,
     description: SITE_DESCRIPTION,
   },
-  icons: { icon: "/favicon.png" },
 };
 
 export const viewport: Viewport = {
