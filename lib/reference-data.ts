@@ -200,13 +200,21 @@ export const TRACKED: TrackedDatum[] = [
     label: 'Edificado e altimetria das maquetas urbanas',
     // O mesmo MODEL_FETCHED_AT que o gerador escreveu em lib/urban-zones.ts.
     asOf: '2026-09',
-    source: 'OpenStreetMap · EU-DEM (Copernicus)',
+    source: 'OpenStreetMap · LiDAR e ortofoto DGT',
     // O edificado de uma rua feita muda devagar, e o terreno não muda de
-    // todo. O que envelhece é a cobertura de `building:levels`, que sobe à
-    // medida que alguém a preenche — refazer por semestre levanta os
-    // edifícios que entretanto ganharam altura publicada.
+    // todo. O que envelhece é o OSM (contornos novos, ruas redesenhadas) —
+    // refazer por semestre apanha-o. As alturas são do LiDAR de 2024.
     refreshEvery: 6,
     usedIn: 'lib/urban-zones (scripts/build-urban-model.mjs)',
+  },
+  {
+    id: 'zonas-censos',
+    label: 'Censos nas zonas urbanas (subsecções da BGRI)',
+    asOf: '2021',
+    source: 'INE · BGRI 2021 e 2011',
+    // Os Censos são decenais; os próximos são em 2031.
+    refreshEvery: 120,
+    usedIn: 'lib/zona-censos (scripts/build-zona-censos.mjs)',
   },
   {
     id: 'turismo-pordata',

@@ -676,6 +676,34 @@ def dentro(x, y, pol):
     return d
 
 
+def dist_borda(recorte, pts):
+    """Distância de cada ponto (N × 2) à borda do polígono `recorte` = (A, B), arestas A[i]→B[i]."""
+    A, B = recorte
+    D = B - A
+    L2 = np.maximum((D * D).sum(1), 1e-12)
+    out = np.empty(len(pts))
+    # Aos blocos, para não fazer uma matriz de milhões de pares de uma vez.
+    for i in range(0, len(pts), 4096):
+        P = pts[i:i + 4096, None, :]
+        t = np.clip(((P - A) * D).sum(2) / L2, 0, 1)
+        Q = A + t[..., None] * D
+        out[i:i + 4096] = np.sqrt(((P - Q) ** 2).sum(2)).min(1)
+    return out
+
+
+def dentro_do_recorte(recorte, pts, folga=0.0):
+    """Os pontos (N × 2) dentro do polígono e a mais de `folga` da borda (par-ímpar)."""
+    A, B = recorte
+    x, y = pts[:, 0:1], pts[:, 1:2]
+    ax, ay, bx, by = A[:, 0], A[:, 1], B[:, 0], B[:, 1]
+    with np.errstate(divide='ignore', invalid='ignore'):
+        cruza = ((ay > y) != (by > y)) & (x < (bx - ax) * (y - ay) / (by - ay) + ax)
+    dentro = (cruza.sum(1) % 2) == 1
+    if folga > 0 and dentro.any():
+        dentro[dentro] = dist_borda(recorte, pts[dentro]) > folga
+    return dentro
+
+
 class Contexto:
     """O que os pormenores precisam de saber da cena: terreno, edifícios, disco, fotografia."""
 
@@ -685,6 +713,16 @@ class Contexto:
         d = cena['dem']
         self.d = d
         self.edificios = [b for b in cena['buildings']]
+        # Caixa de cada contorno, para `ocupado` não testar mil polígonos por
+        # parede numa zona inteira.
+        self._caixas = [(min(p[0] for p in b['aneis'][0]), max(p[0] for p in b['aneis'][0]),
+                         min(p[1] for p in b['aneis'][0]), max(p[1] for p in b['aneis'][0]))
+                        for b in self.edificios]
+        # Numa zona, o recorte é o corredor (um polígono) e não o disco.
+        self.recorte = None
+        if cena.get('recorte'):
+            A = np.array(cena['recorte'], dtype=np.float64)
+            self.recorte = (A, np.roll(A, -1, axis=0))
         self.foto = cena.get('foto')
         self.px = None
         if imagem_foto is not None:
@@ -707,8 +745,8 @@ class Contexto:
 
     def ocupado(self, x, y, excepto=None):
         """O ponto cai dentro de outro edifício? (é assim que se reconhece uma meeira)"""
-        for b in self.edificios:
-            if b is excepto:
+        for b, (x0, x1, y0, y1) in zip(self.edificios, self._caixas):
+            if b is excepto or x < x0 or x > x1 or y < y0 or y > y1:
                 continue
             ext = b['aneis'][0]
             if dentro(x, y, ext) and not any(dentro(x, y, f) for f in b['aneis'][1:]):
@@ -716,7 +754,32 @@ class Contexto:
         return False
 
     def no_disco(self, x, y, folga=0.6):
-        return math.hypot(x, y) < self.R - folga
+        """Dentro do recorte (o disco, ou o corredor de uma zona), a mais de `folga` da borda."""
+        if self.recorte is None:
+            return math.hypot(x, y) < self.R - folga
+        return bool(dentro_do_recorte(self.recorte, np.array([[x, y]]), folga)[0])
+
+    def troco(self, a, u, L, folga):
+        """O troço [s0, s1] de a + u·s (0 ≤ s ≤ L) dentro do recorte, a mais de `folga` da borda, ou None."""
+        if self.recorte is None:
+            return _dentro_do_disco(a, u, L, self.R - folga)
+        n = max(2, int(L / 0.25) + 1)
+        s = np.linspace(0.0, L, n)
+        pts = np.stack([a.x + u.x * s, a.y + u.y * s], axis=1)
+        ok = dentro_do_recorte(self.recorte, pts, folga)
+        if not ok.any():
+            return None
+        # O maior troço seguido dentro.
+        melhor, ini = None, None
+        for i, v in enumerate(list(ok) + [False]):
+            if v and ini is None:
+                ini = i
+            elif not v and ini is not None:
+                if melhor is None or i - ini > melhor[1] - melhor[0]:
+                    melhor = (ini, i)
+                ini = None
+        s0, s1 = s[melhor[0]], s[melhor[1] - 1]
+        return (s0, s1) if s1 - s0 > 0.5 else None
 
     def cor_foto(self, x, y):
         f = self.foto
@@ -824,9 +887,25 @@ def vestir(ob, b, ctx, mats):
     for k in (reboco_de(b), 'telha', 'zinco', 'terraco'):
         me.materials.append(mats.m[k])
     idx = {'telha': 1, 'zinco': 2, 'terraco': 3}
+    telha_do_edificio = None
+    if ctx.cena.get('zona'):
+        # Numa zona inteira, a fotografia decide por edifício e não por água.
+        # A ortofoto não é verdadeira: longe do nadir, um prédio de 20 m
+        # aparece deitado alguns metros, e o centro de uma água estreita caía
+        # no telhado do vizinho ou na rua. A maioria, pesada pela área das
+        # águas, aguenta esse desvio; a inclinação continua a ser do laser.
+        votos = {}
+        for p, o in zip(me.polygons, orig):
+            if o:
+                c = p.center
+                k = classe_telhado(ctx.cor_foto(c.x, c.y), plana=p.normal.z > 0.97) == 'telha'
+                votos[k] = votos.get(k, 0) + p.area
+        telha_do_edificio = votos.get(True, 0) >= votos.get(False, 0)
     for p, o in zip(me.polygons, orig):
         if o == 0:
             p.material_index = 0
+        elif telha_do_edificio is not None:
+            p.material_index = idx['telha' if telha_do_edificio else ('terraco' if p.normal.z > 0.97 else 'zinco')]
         else:
             c = p.center
             p.material_index = idx[classe_telhado(ctx.cor_foto(c.x, c.y), plana=p.normal.z > 0.97)]
@@ -879,7 +958,7 @@ def _dentro_do_disco(a, u, L, R):
     return (s0, s1) if s1 - s0 > 0.5 else None
 
 
-def _janelas(acc, ctx, a, u, n, L, hf, beirado, mon, evitar=()):
+def _janelas(acc, ctx, a, u, n, L, hf, beirado, mon, evitar=(), moldura_plana=False):
     esp = 3.5 if mon else 3.4
     w, h = (1.3, 2.5) if mon else (1.0, 1.6)
     margem = 1.5 if mon else 1.0
@@ -899,8 +978,14 @@ def _janelas(acc, ctx, a, u, n, L, hf, beirado, mon, evitar=()):
             z1 = z0 + h
             if z1 > beirado - (1.0 if mon else 0.55):
                 break
-            acc.caixa('cantaria', a, u, n, x - w / 2 - 0.17, x + w / 2 + 0.17, 0, 0.09, z0 - 0.2, z1 + 0.17)
-            acc.plano('janela', a, u, n, x - w / 2, x + w / 2, z0, z1, 0.095)
+            if moldura_plana:
+                # Numa zona inteira a espessura da moldura não se vê, e a
+                # caixa (20 vértices) pesava cinco vezes o plano.
+                acc.plano('cantaria', a, u, n, x - w / 2 - 0.17, x + w / 2 + 0.17, z0 - 0.2, z1 + 0.17, 0.04)
+                acc.plano('janela', a, u, n, x - w / 2, x + w / 2, z0, z1, 0.05)
+            else:
+                acc.caixa('cantaria', a, u, n, x - w / 2 - 0.17, x + w / 2 + 0.17, 0, 0.09, z0 - 0.2, z1 + 0.17)
+                acc.plano('janela', a, u, n, x - w / 2, x + w / 2, z0, z1, 0.095)
             piso += 1
             feitas += 1
     return feitas
@@ -1176,12 +1261,14 @@ def _d_joao_iii(acc, ctx, ponto):
     acc.esfera('cantaria', (x, y, g + 6.05), 0.22, seg=10)
 
 
-def _fachadas(acc, ctx, saltar=(), sem_cornija=(), sem_janelas=(), PE=None, MERLOES=(), evitar=None):
+def _fachadas(acc, ctx, saltar=(), sem_cornija=(), sem_janelas=(), PE=None, MERLOES=(), evitar=None, pe_contexto=3.1,
+              moldura_plana=False):
     """Soco, cunhais, cornija, merlões e janelas em todas as fachadas livres.
 
     `sem_cornija` e `sem_janelas` levam (osm, anel, aresta) ou (osm, anel), o
     anel inteiro; `PE` é o pé-direito de cada edifício do monumento (None =
-    sem janelas); `evitar` dá, por edifício, os pontos a não tapar.
+    sem janelas); `evitar` dá, por edifício, os pontos a não tapar;
+    `pe_contexto`, o pé-direito dos prédios à volta.
     """
     PE = PE or {}
     evitar = evitar or {}
@@ -1191,13 +1278,13 @@ def _fachadas(acc, ctx, saltar=(), sem_cornija=(), sem_janelas=(), PE=None, MERL
             continue
         mon = b['k'] == 'conjunto'
         beirado = b['beirado']
-        hf = PE.get(b['osm'], 4.2) if mon else 3.1
+        hf = PE.get(b['osm'], 4.2) if mon else pe_contexto
         for ri, anel in enumerate(b['aneis']):
             convexo = _convexos(anel)
             for (a, bb, u, n, L, i) in arestas(anel):
                 # Uma fachada que a borda do disco corta é decorada até à borda,
                 # não saltada inteira: senão os prédios da orla ficavam lisos.
-                t = _dentro_do_disco(a, u, L, ctx.R - 0.8)
+                t = ctx.troco(a, u, L, 0.8)
                 if t is None:
                     continue
                 corta_ini, corta_fim = t[0] > 0.01, t[1] < L - 0.01
@@ -1235,7 +1322,8 @@ def _fachadas(acc, ctx, saltar=(), sem_cornija=(), sem_janelas=(), PE=None, MERL
                                       beirado + 0.06, beirado + 0.68)
                             x += 1.15
                 if hf and chave not in sem_janelas and (b['osm'], ri) not in sem_janelas:
-                    janelas += _janelas(acc, ctx, a, u, n, L, hf, beirado, mon, evitar=evitar.get(b['osm'], ()))
+                    janelas += _janelas(acc, ctx, a, u, n, L, hf, beirado, mon, evitar=evitar.get(b['osm'], ()),
+                                        moldura_plana=moldura_plana)
     return janelas
 
 
@@ -2159,7 +2247,22 @@ def _pormenores_se_velha(ctx, mats):
     return obs
 
 
+def _pormenores_zona(ctx, mats):
+    """Uma zona urbana: só o que é comum a todos os prédios — soco, cunhais,
+    cornija e janelas nas fachadas livres. Nenhum edifício é desenhado peça a
+    peça; os monumentos que caem no corredor têm a sua maqueta no /visitar.
+
+    Pé-direito de 3,4 m: o das casas antigas da Baixa (o laser mede 25 m nos
+    prédios de sete pisos)."""
+    acc = Acumulador(mats)
+    janelas = _fachadas(acc, ctx, pe_contexto=3.4, moldura_plana=True)
+    print('reconstituição: %d janelas' % janelas)
+    return acc.criar('Rico_')
+
+
 def pormenores(ctx, mats):
     """Tudo o que se desenha por cima dos volumes, conforme o monumento. Devolve os objectos criados."""
+    if ctx.cena.get('zona'):
+        return _pormenores_zona(ctx, mats)
     return {'paco-das-escolas': _pormenores_paco, 'santa-cruz': _pormenores_santa_cruz,
             'se-velha': _pormenores_se_velha}[ctx.cena['id']](ctx, mats)

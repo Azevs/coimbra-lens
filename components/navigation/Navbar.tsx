@@ -71,8 +71,9 @@ const SECTIONS: Record<string, { label: string; href: string }[]> = {
     { label: 'Os percursos', href: '#percursos' },
     { label: 'A rede', href: '#rede' },
   ],
-  // Zonas urbanas não tem fila aqui: cada zona é uma página, e o selector
-  // delas vive na própria página (`SeletorZonas`), visível em qualquer ecrã.
+  // Zonas urbanas: o índice não tem fila; cada zona tem a sua (ver
+  // SECOES_ZONA, em baixo). O selector entre zonas vive na própria página
+  // (`SeletorZonas`), e só aparece quando há mais do que uma.
   '/historia': [
     { label: 'O corte', href: '#corte' },
     { label: 'Criptopórtico', href: '#criptoportico' },
@@ -88,11 +89,17 @@ const SECTIONS: Record<string, { label: string; href: string }[]> = {
   ],
 }
 
+/** As secções da página de uma zona urbana (`ZonaUrbana`), iguais em todas. */
+const SECOES_ZONA = [
+  { label: 'A maqueta', href: '#maqueta' },
+  { label: 'Quem lá vive', href: '#quem-vive' },
+]
+
 export default function Navbar() {
   const [open, setOpen] = useState(false)
   const pathname = usePathname() ?? '/'
   const area = AREAS.find((a) => a.href !== '/' && pathname.startsWith(a.href))?.href ?? '/'
-  const sections = SECTIONS[area] ?? []
+  const sections = (area === '/zonas-urbanas' && pathname !== area ? SECOES_ZONA : SECTIONS[area]) ?? []
 
   return (
     <nav className="nav-sticky">

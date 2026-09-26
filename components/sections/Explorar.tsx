@@ -4,7 +4,7 @@ import SectionTitle from '@/components/ui/SectionTitle'
 import { MAP_VIEW, PARISH_SHAPES } from '@/lib/parish-map'
 import { CITY_FOCUS, GREEN_SPACES, WATER } from '@/lib/green-spaces'
 import { ATTRACTIONS, WALKING_ROUTE } from '@/lib/attractions'
-import { URBAN_ZONES } from '@/lib/urban-zones'
+import { ZONAS_URBANAS } from '@/lib/urban-zones-textos'
 import { fmt } from '@/lib/format'
 
 /**
@@ -29,7 +29,7 @@ const verdesNaCidade = GREEN_SPACES.filter((s) => s.distanceKm <= 3)
 const porId = new Map(ATTRACTIONS.map((a) => [a.id, a]))
 const paragens = WALKING_ROUTE.flatMap((t) => t.paragens).map((p) => porId.get(p.id)?.name).filter((n): n is string => Boolean(n))
 
-const edificios = URBAN_ZONES.reduce((n, z) => n + z.edificios, 0)
+const edificios = ZONAS_URBANAS.reduce((n, { zona }) => n + zona.edificios, 0)
 
 function Entrar() {
   return (
@@ -66,7 +66,7 @@ export default function Explorar() {
               <span className="porta-area">Zonas urbanas</span>
               <span className="porta-titulo">A cidade em maqueta</span>
               <span className="porta-linha">
-                {URBAN_ZONES.map((z) => z.nome).join(' e ')} em 3D · {fmt(edificios)} edifícios
+                {ZONAS_URBANAS.map(({ zona }) => zona.nome).join(' e ')} em 3D · {fmt(edificios)} edifícios
               </span>
               <Entrar />
             </span>

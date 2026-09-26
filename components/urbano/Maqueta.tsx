@@ -19,7 +19,38 @@ const LEGENDA = [
 /** Só nas zonas onde as árvores foram medidas; noutras a entrada mentiria. */
 const ARVORE = { cor: '#A7B08F', borda: 'var(--border-panel)', termo: 'árvore' } as const
 
-export function LegendaMaqueta({ arvores = false }: { arvores?: boolean } = {}) {
+/**
+ * A chave da reconstituição, a mesma das maquetas do /visitar: diz o que é
+ * desenho e o que vem de fora. As fachadas e as janelas são desenho sobre a
+ * altura medida; a cor de cada telhado vem da fotografia aérea.
+ */
+function LegendaRica({ arvores }: { arvores: boolean }) {
+  return (
+    <ul className="visita3d-chave">
+      <li>
+        <span className="chave-cor" style={{ background: 'linear-gradient(90deg, #EFEAE0 50%, #D8C7A0 50%)' }} />
+        fachadas e janelas: desenhadas sobre a altura medida
+      </li>
+      <li>
+        <span className="chave-cor" style={{ background: 'linear-gradient(90deg, #A8573A 50%, #8D979C 50%)' }} />
+        telha ou zinco, como na fotografia aérea
+      </li>
+      <li>
+        <span className="chave-cor" style={{ background: 'linear-gradient(90deg, #E2DCCE 50%, #55585B 50%)' }} />
+        ruas, praças e jardins: desenhados a partir do mapa
+      </li>
+      {arvores && (
+        <li>
+          <span className="chave-cor chave-redonda" style={{ background: '#5F6F44' }} />
+          árvore
+        </li>
+      )}
+    </ul>
+  )
+}
+
+export function LegendaMaqueta({ arvores = false, rico = false }: { arvores?: boolean; rico?: boolean } = {}) {
+  if (rico) return <LegendaRica arvores={arvores} />
   const itens = arvores ? [...LEGENDA, ARVORE] : LEGENDA
   return (
     <ul

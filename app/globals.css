@@ -1259,6 +1259,49 @@ input[type='range']::-moz-range-thumb {
 }
 .chave-redonda { border-radius: 50%; width: 14px; }
 
+/* Maqueta de uma zona (MaquetaViva): ao alto nos ecrãs estreitos, quando há vista vertical. */
+.maqueta-palco { aspect-ratio: var(--ar-largo); }
+.maqueta-so-alto { display: none; }
+@media (max-width: 699px) {
+  .tem-vertical .maqueta-palco { aspect-ratio: var(--ar-alto); }
+  .tem-vertical .maqueta-so-largo { display: none; }
+  .tem-vertical .maqueta-so-alto { display: inline; }
+}
+
+/* Pontos de uma zona (MaquetaViva): em fila por baixo da maqueta, e o texto do escolhido a seguir. */
+.zona-pontos {
+  list-style: none;
+  margin: 1.75rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  column-gap: 1.5rem;
+  border-top: 1px solid var(--border-panel);
+}
+.zona-pontos li { border-bottom: 1px solid var(--border-panel); }
+.zona-ponto { display: flex; gap: 0.875rem; align-items: flex-start; margin-top: 1.25rem; max-width: 44rem; }
+.zona-ponto .visita3d-num { background: var(--accent); color: #fff; margin-top: 2px; flex-shrink: 0; }
+.zona-ponto strong { display: block; font-size: 1.25rem; line-height: 1.2; margin-bottom: 0.375rem; }
+.zona-ponto p { margin: 0; font-size: 0.9375rem; line-height: 1.6; color: var(--text-secondary); font-weight: 300; }
+
+/* Abertura de uma zona: o texto à esquerda, a planta do corredor à direita. */
+.zona-abertura { display: grid; gap: 2rem; }
+.zona-abertura figure { max-width: 22rem; }
+@media (min-width: 900px) {
+  .zona-abertura { grid-template-columns: minmax(0, 1fr) minmax(0, 20rem); gap: 3rem; align-items: start; }
+  .zona-abertura figure { justify-self: end; }
+}
+
+/* As épocas dos prédios de uma zona (EpocasBarras). No telemóvel o nome sobe
+   para cima da barra, e as fatias estreitas perdem o rótulo (fica o toque). */
+.epocas-linha { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); align-items: center; gap: 0.75rem; }
+.epocas-legenda { padding-left: 7.25rem !important; }
+@media (max-width: 699px) {
+  .epocas-linha { grid-template-columns: minmax(0, 1fr); gap: 0.375rem; }
+  .epocas-legenda { padding-left: 0 !important; }
+  .epoca-estreita .epoca-rotulo { display: none; }
+}
+
 .visita3d { display: grid; gap: 1.5rem; }
 @media (min-width: 1024px) {
   .visita3d { grid-template-columns: minmax(0, 1fr) 19rem; gap: 2.5rem; align-items: start; }

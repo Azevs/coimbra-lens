@@ -10,6 +10,9 @@ import { ZONAS_URBANAS } from '@/lib/urban-zones-textos'
  * lado quando as zonas deixam de caber no ecrã.
  */
 export default function SeletorZonas({ atual }: { atual: string }) {
+  // Com uma zona só, "Todas · Baixa" não escolhe nada: a barra do site já
+  // leva às secções da página.
+  if (ZONAS_URBANAS.length < 2) return null
   return (
     <nav aria-label="Zonas urbanas" className="section-container" style={{ padding: '0 1.25rem' }}>
       <div

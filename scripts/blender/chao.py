@@ -33,7 +33,7 @@ import bpy
 from reconstituicao import _ruido, _fbm, _hex, _imagem
 
 # ------------------------------------------------------------------ classes --
-BASE, CALCADA, PARALELO, LAJEADO, ASFALTO, RELVA, SAIBRO, AGUA, LANCIL, MURO, DEGRAU, JUNTA, BRANCO = range(13)
+BASE, CALCADA, PARALELO, LAJEADO, ASFALTO, RELVA, SAIBRO, AGUA, LANCIL, MURO, DEGRAU, JUNTA, BRANCO, IMPLANTACAO = range(14)
 
 CARRO = {'motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'unclassified', 'residential',
          'service', 'busway', 'living_street', 'motorway_link', 'trunk_link', 'primary_link',
@@ -121,6 +121,7 @@ def _texturas(T, px, rng):
     tex[DEGRAU] = _hex('CBC4B3')[None, None, :] * sujo(0.08) * grao(0.05)
     tex[JUNTA] = tex[DEGRAU] * 0.62
     tex[BRANCO] = _hex('EEECE5')[None, None, :] * grao(0.05)
+    tex[IMPLANTACAO] = _hex('D9D1BF')[None, None, :] * sujo(0.06)
     return tex
 
 
@@ -129,17 +130,22 @@ class Tela:
     """A grelha de classes sobre a caixa da ortofoto, e as primitivas para a pintar."""
 
     def __init__(self, foto, N):
+        # N píxeis no lado maior; o outro na mesma proporção (a caixa de um
+        # monumento é quadrada, a de uma zona não).
         self.x0, self.y0, self.x1, self.y1 = foto['x0'], foto['y0'], foto['x1'], foto['y1']
+        lx, ly = self.x1 - self.x0, self.y1 - self.y0
+        self.px = max(lx, ly) / N
+        self.NX = max(1, int(round(lx / self.px)))
+        self.NY = max(1, int(round(ly / self.px)))
         self.N = N
-        self.px = (self.x1 - self.x0) / N
-        self.cls = np.full((N, N), BASE, np.uint8)
+        self.cls = np.full((self.NY, self.NX), BASE, np.uint8)
 
     def _janela(self, xs, ys, folga):
         """Os píxeis (colunas i0..i1, linhas j0..j1) que cobrem a caixa, e as coordenadas deles."""
         i0 = max(0, int((min(xs) - folga - self.x0) / self.px))
-        i1 = min(self.N, int((max(xs) + folga - self.x0) / self.px) + 2)
+        i1 = min(self.NX, int((max(xs) + folga - self.x0) / self.px) + 2)
         j0 = max(0, int((self.y1 - max(ys) - folga) / self.px))
-        j1 = min(self.N, int((self.y1 - min(ys) + folga) / self.px) + 2)
+        j1 = min(self.NY, int((self.y1 - min(ys) + folga) / self.px) + 2)
         if i1 <= i0 or j1 <= j0:
             return None
         X = self.x0 + (np.arange(i0, i1) + 0.5) * self.px
@@ -229,13 +235,13 @@ def desenhar(cena, aqui, N=3072):
         im.pixels.foreach_get(a)
         ndvi = a.reshape(h, w, 4)[::-1, :, 0] * 2 - 1       # linha 0 = norte
         bpy.data.images.remove(im)
-        jj = (np.arange(N) * h // N)
-        ii = (np.arange(N) * w // N)
+        jj = (np.arange(tela.NY) * h // tela.NY)
+        ii = (np.arange(tela.NX) * w // tela.NX)
         v = _caixa_blur(ndvi, 1)[np.ix_(jj, ii)]
         tela.cls[v > 0.28] = RELVA
         verde_fraco = v > 0.12
     else:
-        verde_fraco = np.zeros((N, N), bool)
+        verde_fraco = np.zeros((tela.NY, tela.NX), bool)
 
     # 2. áreas pavimentadas: praças, estacionamentos, zonas pedonais. As
     # grandes primeiro: o pátio inteiro não pode tapar os canteiros de saibro
@@ -335,18 +341,26 @@ def desenhar(cena, aqui, N=3072):
         elif e['k'] == 'w' and e['t'].get('barrier') == 'kerb':
             tela.linha(e['g'], 0.2, LANCIL)
 
+    # 9. os edifícios sem altura medida nem publicada: não ganham volume, fica
+    # a implantação no chão, com a orla marcada (a mesma regra das maquetas
+    # de cartão, noutra linguagem).
+    for b in cena['buildings']:
+        if b['k'] == 'sem-altura':
+            tela.poligono(b['aneis'][0], IMPLANTACAO)
+            tela.linha(b['aneis'][0] + b['aneis'][0][:1], 0.3, LANCIL)
+
     # --- as texturas, e o escuro junto às paredes ---
     T = 768
     tex = _texturas(T, tela.px, rng)
-    jj = np.arange(N) % T
-    cor = np.empty((N, N, 3), np.float32)
+    jr = np.arange(tela.NY) % T
+    jc = np.arange(tela.NX) % T
+    cor = np.empty((tela.NY, tela.NX, 3), np.float32)
     for c, t in tex.items():
         m = tela.cls == c
         if m.any():
             r, k = np.nonzero(m)
-            cor[r, k] = t[jj[r], jj[k]]
+            cor[r, k] = t[jr[r], jc[k]]
     # Os edifícios, para o escuro junto às paredes (e para não gastar tinta por baixo deles).
-    casas = np.zeros((N, N), np.float32)
     marca = Tela(foto, N)
     for b in cena['buildings']:
         if b['k'] != 'sem-altura':

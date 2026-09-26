@@ -38,6 +38,11 @@ AQUI = os.path.dirname(os.path.abspath(__file__))
 SAIDA = os.path.join(AQUI, '..', '..', 'public', 'maquetas')
 CENA = json.load(open(os.path.join(AQUI, ID + '.scene.json'), encoding='utf8'))
 R = CENA['raio']
+# Uma zona urbana (ver `gerarZonaRica` no `build-urban-model.mjs`) não é um
+# disco: é serrada pelo contorno do corredor em torno do eixo, e R é a
+# meia-largura do corredor, não o raio de um disco.
+ZONA = bool(CENA.get('zona'))
+RECORTE = CENA.get('recorte')
 
 
 def srgb(h):
@@ -102,7 +107,8 @@ FOTO = None if CARTAO else CENA.get('foto')
 # chão, e os edifícios ganham texturas e pormenores desenhados. Sai com o
 # sufixo `-rico`, ao lado das outras versões, para se poderem comparar.
 RICO = '--rico' in ARGS and FOTO is not None
-SUF = '-rico' if RICO else ''
+# Uma zona só tem esta versão: sai com o nome da zona, sem sufixo.
+SUF = '-rico' if RICO and not ZONA else ''
 
 
 def material_foto(nome, imagem, aspereza):
@@ -144,7 +150,9 @@ if RICO:
     # o chão do OSM. A fotografia continua a decidir telha ou zinco (`CTX`).
     if CENA.get('chao'):
         import chao
-        IMG_CHAO, _contagem = chao.desenhar(CENA, AQUI)
+        # Numa zona a caixa tem quase um quilómetro: 4096 píxeis no lado maior
+        # dão ~26 cm por píxel, o bastante para as ruas e as passadeiras.
+        IMG_CHAO, _contagem = chao.desenhar(CENA, AQUI, N=4096 if ZONA else 3072)
         # Tira-se o material da fotografia antes: com o mesmo nome, o novo
         # ficava 'chao-foto.001' e escapava às coordenadas de textura (em baixo).
         bpy.data.materials.remove(M_TERRENO)
@@ -154,10 +162,41 @@ if RICO:
 # --- o cilindro que serra a placa ---
 Z_MIN = min(CENA['dem']['elev']) - 10.0
 Z_MAX = max(b.get('cumeeira', 0) for b in CENA['buildings']) + 20.0
-bpy.ops.mesh.primitive_cylinder_add(vertices=256, radius=R, depth=Z_MAX - Z_MIN,
-                                    location=(0, 0, (Z_MAX + Z_MIN) / 2))
-SERRA = bpy.context.active_object
-SERRA.name = 'Serra'
+if RECORTE:
+    # O prisma do corredor, com as tampas trianguladas (o corte exacto lida
+    # mal com um n-ágono côncavo de centenas de lados).
+    import numpy as np
+    from reconstituicao import dist_borda, dentro_do_recorte
+    _R = np.array(RECORTE, dtype=np.float64)
+    BORDA = (_R, np.roll(_R, -1, axis=0))
+    bm = bmesh.new()
+    baixo = [bm.verts.new((x, y, Z_MIN)) for x, y in RECORTE]
+    cima = [bm.verts.new((x, y, Z_MAX)) for x, y in RECORTE]
+    n = len(RECORTE)
+    for i in range(n):
+        j = (i + 1) % n
+        bm.faces.new((baixo[i], baixo[j], cima[j], cima[i]))
+    tampas = [bm.faces.new(list(reversed(baixo))), bm.faces.new(cima)]
+    bmesh.ops.triangulate(bm, faces=tampas)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    me = bpy.data.meshes.new('Serra')
+    bm.to_mesh(me)
+    bm.free()
+    SERRA = bpy.data.objects.new('Serra', me)
+    bpy.context.collection.objects.link(SERRA)
+else:
+    bpy.ops.mesh.primitive_cylinder_add(vertices=256, radius=R, depth=Z_MAX - Z_MIN,
+                                        location=(0, 0, (Z_MAX + Z_MIN) / 2))
+    SERRA = bpy.context.active_object
+    SERRA.name = 'Serra'
+
+
+def na_borda(pts, folga):
+    """Para cada ponto (x, y): fica fora do recorte, ou a menos de `folga` da borda?"""
+    if RECORTE:
+        P = np.array(pts, dtype=np.float64).reshape(-1, 2)
+        return ~dentro_do_recorte(BORDA, P, folga)
+    return [math.hypot(x, y) > R - folga for x, y in pts]
 
 
 def serrar(ob):
@@ -210,9 +249,10 @@ serrar(terreno)
 # O corte da serra é o que fica na borda do disco ou no fundo. Não basta
 # "o que não olha para cima": os muros de suporte da Alta são faces quase
 # verticais do próprio terreno, e ficavam com a cor da terra do corte.
-for p in terreno.data.polygons:
+_borda = na_borda([(p.center.x, p.center.y) for p in terreno.data.polygons], 0.4)
+for p, _b in zip(terreno.data.polygons, _borda):
     c = p.center
-    corte = math.hypot(c.x, c.y) > R - 0.4 or c.z < Z_BASE + 0.1
+    corte = bool(_b) or c.z < Z_BASE + 0.1
     # Onde o terreno é vertical — as faces de muro que o LiDAR apanha —,
     # a fotografia vista de cima esticava-se em riscas: essas faces ficam em
     # pedra. Com um limiar mais brando a malha de 2 m alternava faces e o muro
@@ -272,7 +312,7 @@ def edificio(b):
 
 
 def atravessa_a_borda(b):
-    return any(math.hypot(x, y) > R - 0.5 for anel in b['aneis'] for (x, y) in anel)
+    return any(na_borda([p for anel in b['aneis'] for p in anel], 0.5))
 
 
 def juntar(obs, nome):
@@ -481,6 +521,9 @@ def enquadrar(alvo, azimute, elevacao, lente, pts, folga=1.03):
     """Recua a câmara na direcção dada até todos os `pts` caberem no fotograma."""
     cam_dados.lens = lente
     cam_dados.shift_x = cam_dados.shift_y = 0.0
+    # As contas abaixo tomam a largura do sensor como a horizontal. Em 'AUTO'
+    # o Blender dá-a ao lado maior, e numa imagem ao alto isso é a altura.
+    cam_dados.sensor_fit = 'HORIZONTAL'
     fov_h = 2 * math.atan(cam_dados.sensor_width / (2 * lente))
     proporcao = sc.render.resolution_x / sc.render.resolution_y
     th = math.tan(fov_h / 2)
@@ -591,6 +634,41 @@ for _preferido in (('AgX - Punchy', 'AgX - Medium High Contrast') if FOTO else (
         break
 
 TODOS = pontos_da_placa()
+
+# Uma zona: o conjunto, e a vista ao alto para os ecrãs estreitos. Uma vista
+# com `alvo` é uma faixa de `meia` metros para cada lado de y = alvo[1] (a
+# Baixa corre de sul para norte), enquadrada só pelo edificado e pelas árvores
+# dela — os troços de antes, que os pontos da página substituíram. O azimute
+# é de onde a câmara olha: a Baixa vê-se do lado do rio, com a Alta por trás.
+# nome -> (alvo (x, y) ou None = a placa inteira, meia, azimute, elevação, lente, resolução)
+VISTAS_ZONA = {
+    'baixa': {
+        'conjunto': (None, None, 196, 34, 55, (2000, 900)),
+        # Para os ecrãs estreitos: de sul, ao longo do corredor, a Portagem à
+        # frente e a Sofia ao fundo — a placa comprida fica ao alto do ecrã.
+        'vertical': (None, None, -90, 52, 55, (1200, 1600)),
+    },
+}.get(ID, {}) if ZONA else {}
+if ZONA:
+    EDIF = []
+    for ob in sc.objects:
+        if ob.type == 'MESH' and ob.name != 'Terreno':
+            M = ob.matrix_world
+            vs = ob.data.vertices
+            EDIF += [M @ vs[i].co for i in range(0, len(vs), 5)]
+    for nome, (alvo, meia, azimute, elevacao, lente, res) in VISTAS_ZONA.items():
+        if SO_VISTAS and nome not in SO_VISTAS:
+            continue
+        sc.render.resolution_x, sc.render.resolution_y = res
+        pts = TODOS if alvo is None else [p for p in EDIF if abs(p.y - alvo[1]) <= meia]
+        zc = sum(p.z for p in pts) / len(pts)
+        cx, cy = alvo or (0, 0)
+        dist = enquadrar((cx, cy, zc), azimute, elevacao, lente, pts)
+        sc.render.filepath = os.path.join(SAIDA, '%s-%s.png' % (ID, nome))
+        print('vista %s: câmara a %.0f m' % (nome, dist))
+        bpy.ops.render.render(write_still=True)
+    raise SystemExit(0)
+
 for nome, (alvo, azimute, elevacao, lente, res) in VISTAS.items():
     if SO_VISTAS and nome not in SO_VISTAS:
         continue

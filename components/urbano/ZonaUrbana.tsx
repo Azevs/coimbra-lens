@@ -2,7 +2,9 @@ import SectionReveal from '@/components/ui/SectionReveal'
 import SectionTitle from '@/components/ui/SectionTitle'
 import DataSource from '@/components/ui/DataSource'
 import Maqueta, { LegendaMaqueta } from '@/components/urbano/Maqueta'
-import MaquetaViva from '@/components/urbano/MaquetaViva'
+import MaquetaViva, { type PontoViva } from '@/components/urbano/MaquetaViva'
+import CensosZona from '@/components/urbano/CensosZona'
+import PlantaZona from '@/components/urbano/PlantaZona'
 import { estimate } from '@/lib/provenance'
 import type { ZonaTexto } from '@/lib/urban-zones-textos'
 
@@ -12,6 +14,11 @@ import type { ZonaTexto } from '@/lib/urban-zones-textos'
  */
 export default function ZonaUrbana({ z }: { z: ZonaTexto }) {
   const { zona } = z
+  // O texto de cada ponto, com a posição que o gerador mediu.
+  const pontos: PontoViva[] = (z.pontos ?? []).flatMap((t) => {
+    const m = zona.pontos?.find((q) => q.id === t.id)
+    return m ? [{ ...t, pos: m.p }] : []
+  })
   return (
     <>
       {/* Abertura */}
@@ -38,7 +45,7 @@ export default function ZonaUrbana({ z }: { z: ZonaTexto }) {
           </span>
         </h1>
 
-        <div style={{ borderTop: '1px solid var(--border-panel)', paddingTop: '1.75rem' }}>
+        <div className="zona-abertura" style={{ borderTop: '1px solid var(--border-panel)', paddingTop: '1.75rem' }}>
           <p
             className="font-display"
             style={{
@@ -51,12 +58,13 @@ export default function ZonaUrbana({ z }: { z: ZonaTexto }) {
           >
             {z.abertura}
           </p>
+          <PlantaZona zona={zona} titulos={Object.fromEntries((z.pontos ?? []).map((p) => [p.id, p.titulo]))} />
         </div>
       </div>
 
       {/* A maqueta inteira */}
       <SectionReveal id="maqueta">
-        <div className="section-container" style={{ padding: '3.5rem 1.25rem 0' }}>
+        <div className="section-container" style={{ padding: z.trocos ? '3.5rem 1.25rem 0' : '3.5rem 1.25rem 4.5rem' }}>
           <MaquetaViva
             zona={zona}
             cartaz="conjunto"
@@ -65,6 +73,8 @@ export default function ZonaUrbana({ z }: { z: ZonaTexto }) {
             legenda={z.conjunto.legenda}
             azimute={z.conjunto.azimute}
             elevacao={z.conjunto.elevacao}
+            vertical={z.vertical && { cartaz: 'vertical', largura: 1200, altura: 1600, ...z.vertical }}
+            pontos={pontos}
           />
 
           <div
@@ -92,25 +102,30 @@ export default function ZonaUrbana({ z }: { z: ZonaTexto }) {
           </div>
 
           <div style={{ marginTop: '2.5rem' }}>
-            <LegendaMaqueta arvores={!!zona.arvores} />
+            <LegendaMaqueta arvores={!!zona.arvores} rico={!!zona.rico} />
           </div>
 
           <DataSource meta={estimate(z.fonte, '', zona.lidoEm, 'Modelo')} showNote={false} />
         </div>
       </SectionReveal>
 
-      {/* Três troços */}
-      <SectionReveal id="trocos">
-        <div className="section-container" style={{ padding: '4.5rem 1.25rem 4rem' }}>
-          <SectionTitle label="Troços" title="De uma ponta à outra" subtitle={z.trocos.subtitulo} />
+      {/* Quem lá vive, pelos Censos */}
+      <CensosZona z={z} />
 
-          <div style={{ display: 'grid', gap: '3rem' }}>
-            {z.trocos.vistas.map((v) => (
-              <Maqueta key={v.vista} zona={zona} vista={v.vista} largura={1600} altura={1000} legenda={v.legenda} />
-            ))}
+      {/* Três troços, nas zonas que ainda não têm pontos */}
+      {z.trocos && (
+        <SectionReveal id="trocos">
+          <div className="section-container" style={{ padding: '4.5rem 1.25rem 4rem' }}>
+            <SectionTitle label="Troços" title="De uma ponta à outra" subtitle={z.trocos!.subtitulo} />
+
+            <div style={{ display: 'grid', gap: '3rem' }}>
+              {z.trocos!.vistas.map((v) => (
+                <Maqueta key={v.vista} zona={zona} vista={v.vista} largura={1600} altura={1000} legenda={v.legenda} />
+              ))}
+            </div>
           </div>
-        </div>
-      </SectionReveal>
+        </SectionReveal>
+      )}
     </>
   )
 }

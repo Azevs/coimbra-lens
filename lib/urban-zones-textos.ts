@@ -17,6 +17,20 @@ export interface Ficha {
   nota: string
 }
 
+/**
+ * Um ponto da maqueta: o número que se toca e o texto que abre. A posição e
+ * as medidas vêm do gerador (`zona.pontos`, pelo `id`); a câmara diz de onde
+ * se olha quando se escolhe o ponto (graus, como nas estampas, e metros).
+ */
+export interface PontoTexto {
+  id: string
+  titulo: string
+  texto: string
+  camara: { azimute: number; elevacao: number; distancia: number }
+  /** Para onde o ponto continua no site (a maqueta de um monumento, no /visitar). */
+  ligacao?: { href: string; rotulo: string }
+}
+
 export interface ZonaTexto {
   zona: UrbanZone
   titulo: [string, string]
@@ -27,7 +41,12 @@ export interface ZonaTexto {
   fonte: string
   ficha: Ficha[]
   conjunto: { legenda: string; azimute: number; elevacao: number }
-  trocos: { subtitulo: string; vistas: { vista: string; legenda: string }[] }
+  /** A vista para ecrãs estreitos, ao alto (`<zona>-vertical.webp`, como no `monumento.py`). */
+  vertical?: { legenda: string; azimute: number; elevacao: number }
+  /** As vistas de perto, em imagem, das zonas que ainda não têm pontos. */
+  trocos?: { subtitulo: string; vistas: { vista: string; legenda: string }[] }
+  /** Os pontos numerados sobre a maqueta, de uma ponta à outra do eixo. */
+  pontos?: PontoTexto[]
 }
 
 /** Metros por piso usados no modelo — o mesmo valor do gerador. */
@@ -58,7 +77,16 @@ const maisAltoFicha = (z: UrbanZone): Ficha => ({
 const brasil = byId('rua-do-brasil')!
 const baixa = byId('baixa')!
 
-export const ZONAS_URBANAS: ZonaTexto[] = [
+/** O ponto medido pelo gerador; falha na compilação da página se faltar. */
+function medido(z: UrbanZone, id: string) {
+  const p = z.pontos?.find((q) => q.id === id)
+  if (!p) throw new Error(`ponto ${id} em falta em ${z.id} — correr o gerador`)
+  return p
+}
+const ferreiraBorges = medido(baixa, 'ferreira-borges')
+const sofia = medido(baixa, 'sofia')
+
+const TODAS: ZonaTexto[] = [
   {
     zona: brasil,
     titulo: ['Dois quilómetros', 'a subir'],
@@ -114,16 +142,15 @@ export const ZONAS_URBANAS: ZonaTexto[] = [
     titulo: ['Novecentos metros', 'de malha'],
     abertura:
       `Da Portagem a Santa Cruz pela Ferreira Borges e pela Visconde da Luz, e daí pela Rua da Sofia. ` +
-      `Em menos de um quilómetro de percurso cabem ${numero(baixa.edificios)} edifícios — mais do que ` +
-      `nos dois quilómetros da Rua do Brasil.`,
+      `Em menos de um quilómetro de percurso cabem ${numero(baixa.edificios)} edifícios.`,
     resumo: `${numero(baixa.edificios)} edifícios em menos de um quilómetro, da Portagem à Rua da Sofia.`,
-    fonte: 'OpenStreetMap · LiDAR DGT (MDT e MDS 2 m)',
+    fonte: 'OpenStreetMap · LiDAR DGT (MDT e MDS 2 m) · ortofoto DGT 2025',
     ficha: [
       { termo: 'Percurso', valor: km(baixa.comprimento), nota: 'da Portagem ao fim da Sofia' },
       {
         termo: 'Altitude',
         valor: `${Math.round(baixa.cotaMin)}–${Math.round(baixa.cotaMax)} m`,
-        nota: 'da Praça 8 de Maio à entrada do Arco de Almedina',
+        nota: 'da Praça 8 de Maio ao cimo da Ferreira Borges',
       },
       edificiosFicha(baixa),
       maisAltoFicha(baixa),
@@ -134,27 +161,75 @@ export const ZONAS_URBANAS: ZonaTexto[] = [
       azimute: 196,
       elevacao: 34,
     },
-    trocos: {
-      subtitulo: 'Três partes de um percurso curto, cada uma com o seu tecido.',
-      vistas: [
-        {
-          vista: 'sul',
-          legenda:
-            'Sul: a Portagem e a Ferreira Borges, que sobe devagar desde o largo até à passagem para o Arco de Almedina.',
-        },
-        {
-          vista: 'centro',
-          legenda:
-            'Centro: a Visconde da Luz desce oito metros até à Praça 8 de Maio, o ponto mais baixo do percurso, com o quarteirão apertado da Baixa entre o eixo e o rio.',
-        },
-        {
-          vista: 'norte',
-          legenda:
-            'Norte: a Rua da Sofia, larga, recta e quase plana ao pé da encosta, com os grandes volumes dos antigos colégios ao longo dela.',
-        },
-      ],
+    vertical: {
+      legenda:
+        'A Baixa vista de sul, ao longo do eixo: a Portagem à frente, a Rua da Sofia ao fundo, a virar para noroeste ao pé da encosta.',
+      azimute: -90,
+      elevacao: 52,
     },
+    // Factos: a Universidade de Coimbra (UniverCidade, «Sofia») para a Rua
+    // da Sofia; o SIPA, citado pela Wikipédia, para a Porta de Almedina e a
+    // classificação da cerca; para a Portagem, o nome e a estátua. As
+    // medidas das ruas vêm da maqueta, nunca escritas à mão.
+    pontos: [
+      {
+        id: 'portagem',
+        titulo: 'Largo da Portagem',
+        texto:
+          'Onde a Baixa começa, junto à Ponte de Santa Clara. O nome vem dos impostos que ali se cobravam sobre ' +
+          'as mercadorias que chegavam à cidade. Ao centro, a estátua de Joaquim António de Aguiar, de Costa Mota (tio).',
+        camara: { azimute: 215, elevacao: 38, distancia: 190 },
+      },
+      {
+        id: 'ferreira-borges',
+        titulo: 'Rua Ferreira Borges',
+        texto:
+          `A rua principal da Baixa, só para peões: ${numero(ferreiraBorges.comprimento!)} m entre a Portagem e a ` +
+          `Visconde da Luz, com ${cota1(ferreiraBorges.cotaMax! - ferreiraBorges.cotaMin!)} m de desnível. ` +
+          'De um lado e do outro, a frente contínua de prédios altos e estreitos.',
+        camara: { azimute: 200, elevacao: 34, distancia: 230 },
+      },
+      {
+        id: 'almedina',
+        titulo: 'Arco de Almedina',
+        texto:
+          'Era a porta principal da cidade muralhada: da Baixa entrava-se aqui para subir à Alta. A construção ' +
+          'poderá remontar ao tempo do conde Sesnando, que conquistou Coimbra em 1064; a torre foi levantada ' +
+          'por cima do arco. A cerca da cidade é Monumento Nacional desde 1910.',
+        camara: { azimute: 195, elevacao: 22, distancia: 120 },
+        ligacao: { href: '/visitar#se-velha', rotulo: 'Subir à Sé Velha' },
+      },
+      {
+        id: 'santa-cruz',
+        titulo: 'Santa Cruz',
+        texto:
+          'Na Praça 8 de Maio, o ponto mais baixo do percurso, o mosteiro onde estão sepultados os dois ' +
+          'primeiros reis de Portugal, D. Afonso Henriques e D. Sancho I.',
+        camara: { azimute: 200, elevacao: 30, distancia: 170 },
+        ligacao: { href: '/visitar#santa-cruz', rotulo: 'O mosteiro em maqueta' },
+      },
+      {
+        id: 'sofia',
+        titulo: 'Rua da Sofia',
+        texto:
+          'Aberta em 1535–1536 por ordem de frei Brás de Braga, para ser a rua dos colégios universitários. ' +
+          `São ${numero(sofia.comprimento!)} m quase planos ao pé da encosta; ao longo deles ficaram, entre outros, ` +
+          'os colégios da Graça, do Carmo, de São Pedro dos Terceiros e de São Tomás. Com a Alta, é Património ' +
+          'Mundial desde 2013.',
+        camara: { azimute: 215, elevacao: 34, distancia: 300 },
+      },
+    ],
   },
 ]
+
+/**
+ * Zonas escondidas: o texto e o modelo ficam, mas saem do índice, do
+ * selector, do sitemap e da primeira página, e o endereço dá 404. A Rua do
+ * Brasil saiu a 26/09/2026 enquanto a Baixa passa ao estilo das maquetas do
+ * /visitar.
+ */
+const ESCONDIDAS = new Set(['rua-do-brasil'])
+
+export const ZONAS_URBANAS: ZonaTexto[] = TODAS.filter((z) => !ESCONDIDAS.has(z.zona.id))
 
 export const textoDe = (id: string): ZonaTexto | undefined => ZONAS_URBANAS.find((z) => z.zona.id === id)

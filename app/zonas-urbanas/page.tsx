@@ -80,7 +80,7 @@ export default function ZonasUrbanasPage() {
               padding: 0,
               display: 'grid',
               gap: '3rem 2.5rem',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 460px), 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 460px), 1fr))',
             }}
           >
             {ZONAS_URBANAS.map(({ zona, resumo }) => (
