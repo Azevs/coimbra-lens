@@ -3,19 +3,34 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Operação Serenata</title>
-<meta name="description" content="Um FPS desenhado a caneta: do Arco de Almedina ao claustro da Sé Velha, em Coimbra, para salvar o fadista antes da Serenata." />
+<title>Tinta na Alta</title>
+<meta name="description" content="Um FPS desenhado a caneta nas ruas de Coimbra, em missões que se jogam por qualquer ordem." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Patrick+Hand&display=swap" rel="stylesheet" />
-  <script type="module" crossorigin src="/tinta-na-alta/assets/index-1klS-5Fp.js"></script>
-  <link rel="stylesheet" crossorigin href="/tinta-na-alta/assets/index-BoY-Q7p5.css">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Patrick+Hand&display=swap" rel="stylesheet" />
+  <script type="module" crossorigin src="/tinta-na-alta/assets/index-C14xwwPv.js"></script>
+  <link rel="stylesheet" crossorigin href="/tinta-na-alta/assets/index-hG_uwYlm.css">
 </head>
 <body>
 <div id="papel"></div>
 
+<main id="menu" hidden>
+  <div class="folha folha-larga">
+    <h1>Tinta na Alta</h1>
+    <p class="sub">Coimbra a caneta. Escolhe uma missão, pela ordem que quiseres.</p>
+    <p id="aviso-tactil" class="aviso" hidden>O jogo precisa de teclado e rato: abre esta página num computador para jogar.</p>
+    <figure class="mapa"><div id="mapa"></div></figure>
+    <ul id="missoes" class="missoes"></ul>
+    <figure id="trailer" class="trailer" hidden><video controls playsinline preload="none"></video></figure>
+    <p class="rodape">Ruas, rio e cerca © contribuidores do OpenStreetMap (ODbL). Relevo e alturas: LiDAR da DGT.
+      Técnica de traço: <a href="https://github.com/byteab/operation-ink">Operation Ink</a>, de Ehsan Sarshar (MIT).
+      As missões são inventadas.</p>
+  </div>
+</main>
+
 <div id="hud">
   <div id="objectivo"></div>
+  <div id="relogio"></div>
   <div id="mira"><i></i><i></i><i></i><i></i><b></b></div>
   <div id="acerto"><i></i><i></i></div>
   <div id="marcador"><svg viewBox="0 0 40 40" width="34" height="34"><path d="M20 3 L24 16 L37 20 L24 24 L20 37 L16 24 L3 20 L16 16 Z" fill="none" stroke="#111" stroke-width="2.2" stroke-linejoin="round"/><circle cx="20" cy="20" r="3" fill="#111"/></svg><span id="marcador-dist"></span></div>
@@ -23,7 +38,7 @@
     <svg id="coracao" viewBox="0 0 48 44" width="44" height="40"><path d="M24 41 C 10 30, 2 22, 3 13 C 4 5, 12 1, 18 4 C 21 5.5, 23 8, 24 10 C 25 8, 27 5.5, 30 4 C 36 1, 44 5, 45 13 C 46 22, 38 30, 24 41 Z" fill="#111" stroke="#111" stroke-width="1.5"/></svg>
     <span id="vida-n">100</span>
   </div>
-  <div id="fadista-vida"><span>fadista</span><div><i></i></div></div>
+  <div id="protegido-vida"><span></span><div><i></i></div></div>
   <div id="municao">
     <span id="pente">30</span>
     <span id="reserva">4 ×</span>
@@ -35,25 +50,26 @@
   <div id="vinheta"></div>
 </div>
 
+<!-- O ecrã de início de uma missão: o texto vem da ficha dela (src/missoes/registo.ts). -->
 <div id="inicio" class="ecra">
   <div class="folha">
+    <a class="voltar" href="./">← missões</a>
     <p class="carimbo">confidencial</p>
-    <h1>Operação Serenata</h1>
-    <p class="sub">Coimbra, véspera da Serenata Monumental</p>
-    <p>Os <b>Borrões</b> raptaram o fadista e fecharam-no no <b>claustro da Sé Velha</b>. À meia-noite ele tem de estar a cantar nas escadas da Sé.</p>
-    <p>Entra pelo <b>Arco de Almedina</b>, sobe o <b>Quebra-Costas</b>, solta-o e trá-lo de volta.</p>
+    <h1 id="missao-nome"></h1>
+    <p class="sub" id="missao-sub"></p>
+    <div id="missao-briefing"></div>
     <ul class="teclas">
       <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> andar &nbsp; <kbd>Shift</kbd> correr &nbsp; <kbd>Espaço</kbd> saltar</li>
       <li><kbd>rato</kbd> disparar &nbsp; <kbd>botão direito</kbd> apontar &nbsp; <kbd>R</kbd> recarregar &nbsp; <kbd>F</kbd> interagir</li>
     </ul>
     <p class="aviso">Usa auscultadores. As ruelas ecoam.</p>
-    <button id="comecar">Clica para começar</button>
-    <p id="carregar">a desenhar a Alta…</p>
+    <button id="comecar" disabled>Clica para começar</button>
+    <p id="carregar">a desenhar as ruas…</p>
     <p class="rodape">Ruas e edifícios © contribuidores do OpenStreetMap (ODbL). Relevo e alturas: LiDAR da DGT. Tudo o resto é inventado.</p>
   </div>
 </div>
-<div id="pausa" class="ecra"><div class="folha"><h2>Pausa</h2><p>Clica para continuar.</p></div></div>
+<div id="pausa" class="ecra"><div class="folha"><h2>Pausa</h2><p class="botoes"><button id="continuar">Continuar</button> <a class="botao voltar-menu" href="./">Missões</a></p></div></div>
 <div id="fim" class="ecra"><div class="folha"></div></div>
-
+
 </body>
 </html>

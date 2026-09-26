@@ -40,8 +40,10 @@ const distanciaGLSL = (perto: number, queda: number, minimo: number) => `
     return ${minimo.toFixed(2)} + ${(1 - minimo).toFixed(2)} / (1.0 + r * r);
   }`
 
-function materialTraco(perfil: 'mundo' | 'arma' | 'longe') {
-  const [perto, queda, minimo] = perfil === 'arma' ? [0.5, 3, 0.4] : perfil === 'longe' ? [40, 120, 0.5] : [6, 40, 0.22]
+export type Perfil = 'mundo' | 'arma' | 'longe' | 'horizonte'
+
+function materialTraco(perfil: Perfil) {
+  const [perto, queda, minimo] = perfil === 'arma' ? [0.5, 3, 0.4] : perfil === 'longe' ? [40, 120, 0.5] : perfil === 'horizonte' ? [80, 320, 0.8] : [6, 40, 0.22]
   const m = new LineMaterial({ color: 0xffffff, vertexColors: true, linewidth: perfil === 'arma' ? 1.35 : 1, worldUnits: false,
     alphaToCoverage: true, toneMapped: false })
   m.depthWrite = false
@@ -71,8 +73,8 @@ function materialTraco(perfil: 'mundo' | 'arma' | 'longe') {
       .replace('uniform float linewidth;', `uniform float linewidth;
         varying float vLonge;`)
       .replace('gl_FragColor = vec4( diffuseColor.rgb, alpha );',
-        `float nevoa = smoothstep(${perfil === 'arma' ? '50.0, 60.0' : perfil === 'longe' ? '220.0, 420.0' : '70.0, 190.0'}, vLonge);
-         gl_FragColor = vec4( mix(diffuseColor.rgb, vec3(1.0), nevoa * 0.85), alpha );`)
+        `float nevoa = smoothstep(${perfil === 'arma' ? '50.0, 60.0' : perfil === 'longe' ? '220.0, 420.0' : perfil === 'horizonte' ? '400.0, 1500.0' : '70.0, 190.0'}, vLonge);
+         gl_FragColor = vec4( mix(diffuseColor.rgb, vec3(1.0), nevoa * ${perfil === 'horizonte' ? '0.6' : '0.85'}), alpha );`)
   }
   m.customProgramCacheKey = () => 'tinta-' + perfil
   return m
@@ -83,6 +85,8 @@ export const materiais = {
   arma: materialTraco('arma'),
   /** Marcos ao longe (a Torre da Universidade): o nevoeiro só começa aos 220 m. */
   longe: materialTraco('longe'),
+  /** A cidade à volta do nível, a centenas de metros: traço que não some. */
+  horizonte: materialTraco('horizonte'),
 }
 
 export const papel = new THREE.MeshBasicMaterial({
@@ -170,7 +174,7 @@ function esbocar(seg: ArrayLike<number>, seed: number, traco: Traco, m: Marcas, 
   }
 }
 
-export function malhaDeTraco(m: Marcas, perfil: 'mundo' | 'arma' | 'longe' = 'mundo', recortar = false) {
+export function malhaDeTraco(m: Marcas, perfil: Perfil = 'mundo', recortar = false) {
   const g = new LineSegmentsGeometry().setPositions(m.pos).setColors(m.cor)
   g.setAttribute('instanceLargura', new THREE.InstancedBufferAttribute(new Float32Array(m.larg), 1))
   g.setAttribute('instanceDesvio', new THREE.InstancedBufferAttribute(new Float32Array(m.desv), 2))
@@ -250,7 +254,7 @@ export class Esboco {
     if (arestas) this.linha(pts, arestas, true)
   }
 
-  acabar(perfil: 'mundo' | 'arma' | 'longe' = 'mundo', material: THREE.Material = papel, recortar = false) {
+  acabar(perfil: Perfil = 'mundo', material: THREE.Material = papel, recortar = false) {
     const grupo = new THREE.Group()
     grupo.name = this.nome
     if (this.faces.length) {

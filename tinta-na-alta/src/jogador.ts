@@ -23,11 +23,13 @@ export class Corpo {
     this.vel.set(0, 0, 0)
   }
   /**
-   * Altura do chão em coordenadas three (x, z). O terreno não entra na octree da
+   * Altura do chão em coordenadas three (x, z), sabendo a cota dos pés (para as
+   * rampas por cima do terreno). O terreno e as rampas não entram na octree da
    * física: a cápsula a roçar as arestas dos triângulos de 2 m do LiDAR recebia
-   * normais horizontais e ficava travada em rampas suaves.
+   * normais horizontais e ficava travada em rampas suaves, e numa escada a
+   * rampa somada ao corrimão fazia o mesmo.
    */
-  static chao: ((x: number, z: number) => number) | null = null
+  static chao: ((x: number, z: number, pes: number) => number) | null = null
   /** Declive máximo que se sobe a andar (tan 50°): acima disto é muro de suporte. */
   static DECLIVE = 1.2
 
@@ -41,7 +43,7 @@ export class Corpo {
     this.capsula.translate(d)
     if (chao) {
       // Não subir por um muro de suporte: o declive do chão à frente é demasiado.
-      const g0 = chao(x0, z0), g1 = chao(this.capsula.start.x, this.capsula.start.z)
+      const g0 = chao(x0, z0, pes0), g1 = chao(this.capsula.start.x, this.capsula.start.z, pes0)
       const h = Math.hypot(d.x, d.z)
       if (h > 1e-5 && g1 - g0 > Corpo.DECLIVE * h + 0.02 && g1 > pes0 + 0.35) {
         this.capsula.translate(new THREE.Vector3(x0 - this.capsula.start.x, 0, z0 - this.capsula.start.z))
@@ -63,8 +65,8 @@ export class Corpo {
       }
     }
     if (chao) {
-      const g = chao(this.capsula.start.x, this.capsula.start.z)
       const pes = this.capsula.start.y - this.capsula.radius
+      const g = chao(this.capsula.start.x, this.capsula.start.z, pes)
       if (pes < g) {
         this.capsula.translate(new THREE.Vector3(0, g - pes, 0))
         if (this.vel.y < 0) this.vel.y = 0

@@ -77,7 +77,7 @@ export default function GreenDetail({
 
   return (
     <div className="panel-accent green-detail">
-      <span className="ui-label ui-label-accent" style={{ color: kind.color }}>
+      <span className="ui-label ui-label-accent" style={{ color: kind.text }}>
         {kind.label}
       </span>
       <h3 className="font-display" style={{ fontSize: '1.375rem', lineHeight: 1.2 }}>
@@ -101,6 +101,7 @@ export default function GreenDetail({
       <Row label="Do total desta lista">{fmt(share, 1)} %</Row>
       <Row label="Freguesia">{parishName(space)}</Row>
       <Row label="Do Largo da Portagem">{formatDistance(space.distanceKm)}</Row>
+      {space.paid && <Row label="Entrada">Paga</Row>}
 
       <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '1rem' }}>
         <button onClick={onClear} className="green-detail-close">

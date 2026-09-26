@@ -1,25 +1,25 @@
 {
-  "radio_inicio": {
+  "serenata_radio_inicio": {
     "texto": "Atenção. Os Borrões raptaram o fadista e fecharam-no no claustro da Sé Velha. A Serenata é à meia-noite. Passa o Arco de Almedina, sobe o Quebra-Costas e traz-mo inteiro.",
     "velocidade": "5%"
   },
-  "radio_arco": {
+  "serenata_radio_arco": {
     "texto": "Estás no Arco. Daqui para cima é sempre a subir. Olha para as janelas.",
     "velocidade": "5%"
   },
-  "radio_largo": {
+  "serenata_radio_largo": {
     "texto": "Largo da Sé Velha. O claustro fica do outro lado da catedral, a sul.",
     "velocidade": "5%"
   },
-  "radio_claustro": {
+  "serenata_radio_claustro": {
     "texto": "Ele está no pátio do claustro. Cuidado com as galerias.",
     "velocidade": "5%"
   },
-  "radio_fuga": {
+  "serenata_radio_fuga": {
     "texto": "Tens o fadista. Vêm aí reforços pelo Quebra-Costas. Desce até ao Arco de Almedina, depressa!",
     "velocidade": "8%"
   },
-  "radio_fim": {
+  "serenata_radio_fim": {
     "texto": "Belo trabalho. A Serenata vai para a frente.",
     "velocidade": "0%"
   },
@@ -27,7 +27,7 @@
     "texto": "Estás a perder muita tinta. Protege-te!",
     "velocidade": "10%"
   },
-  "radio_fadista_caiu": {
+  "serenata_radio_fadista_caiu": {
     "texto": "Perdemos o fadista. Missão falhada.",
     "velocidade": "0%"
   },
@@ -43,7 +43,7 @@
     "texto": "Está ali um! Está ali um!",
     "velocidade": "20%"
   },
-  "inimigo_viu_3": {
+  "serenata_inimigo_viu_3": {
     "texto": "Intruso! Nas escadas!",
     "velocidade": "15%"
   },
@@ -71,7 +71,7 @@
     "texto": "Apanhem-no!",
     "velocidade": "15%"
   },
-  "inimigo_combate_3": {
+  "serenata_inimigo_combate_3": {
     "texto": "Não o deixem chegar à Sé!",
     "velocidade": "15%"
   },
@@ -115,31 +115,31 @@
     "texto": "Deve ter ido para as ruelas.",
     "velocidade": "0%"
   },
-  "inimigo_fadista_1": {
+  "serenata_inimigo_fadista_1": {
     "texto": "O fadista fugiu! Apanhem-nos!",
     "velocidade": "15%"
   },
-  "fadista_solto": {
+  "serenata_fadista_solto": {
     "texto": "Até que enfim! Pensei que ia passar a Serenata amarrado a este banco. Tira-me daqui!",
     "velocidade": "10%"
   },
-  "fadista_segue_1": {
+  "serenata_fadista_segue_1": {
     "texto": "Estou atrás de ti.",
     "velocidade": "5%"
   },
-  "fadista_segue_2": {
+  "serenata_fadista_segue_2": {
     "texto": "Espera por mim!",
     "velocidade": "10%"
   },
-  "fadista_medo_1": {
+  "serenata_fadista_medo_1": {
     "texto": "Cuidado! Estão a disparar!",
     "velocidade": "20%"
   },
-  "fadista_medo_2": {
+  "serenata_fadista_medo_2": {
     "texto": "Ai, a minha guitarra!",
     "velocidade": "15%"
   },
-  "fadista_fim": {
+  "serenata_fadista_fim": {
     "texto": "Obrigado, pá! Hoje à meia-noite, nas escadas da Sé, esta é para ti.",
     "velocidade": "5%"
   },
@@ -153,7 +153,7 @@
     "velocidade": "15%",
     "tom": "+20%"
   },
-  "inimigo_guedes": {
+  "serenata_inimigo_guedes": {
     "texto": "Sai da frente, Guedes!",
     "velocidade": "25%",
     "tom": "+10%"
@@ -165,5 +165,313 @@
   "inimigo_medo_2": {
     "texto": "Anda cá, não tejas medo.",
     "velocidade": "5%"
+  },
+  "inimigo_viu_5": {
+    "texto": "Ó chefe! Temos turista!",
+    "velocidade": "15%"
+  },
+  "inimigo_viu_6": {
+    "texto": "Olha-me aquele! Nem pagou bilhete!",
+    "velocidade": "15%"
+  },
+  "inimigo_alerta_4": {
+    "texto": "Isto foi um tiro ou foi a Queima a começar mais cedo?",
+    "velocidade": "10%"
+  },
+  "inimigo_combate_6": {
+    "texto": "Isto não é praxe, é a sério!",
+    "velocidade": "15%"
+  },
+  "inimigo_combate_7": {
+    "texto": "Ó Zé, acorda! É agora!",
+    "velocidade": "20%"
+  },
+  "inimigo_recarregar_3": {
+    "texto": "Espera aí, que acabou a tinta!",
+    "velocidade": "15%"
+  },
+  "inimigo_ferido_3": {
+    "texto": "Ai! Isto vai deixar nódoa!",
+    "velocidade": "15%"
+  },
+  "inimigo_perdeu_3": {
+    "texto": "Sumiu. Deve ter ido às aulas.",
+    "velocidade": "5%"
+  },
+  "cabra_radio_inicio": {
+    "texto": "Atenção. Os Borrões tomaram a Torre e amarraram a Cabra. Entra no Paço pela Porta Férrea. Não há outro caminho.",
+    "velocidade": "5%"
+  },
+  "cabra_radio_porta": {
+    "texto": "Estás na Porta Férrea. O pátio é aberto. Não pares no meio.",
+    "velocidade": "8%"
+  },
+  "cabra_radio_patio": {
+    "texto": "A entrada da Torre é do outro lado do pátio.",
+    "velocidade": "5%"
+  },
+  "cabra_radio_torre": {
+    "texto": "Sobe. Eles estão nos patamares.",
+    "velocidade": "5%"
+  },
+  "cabra_radio_sino": {
+    "texto": "Solta o badalo. Depois toca. Três vezes.",
+    "velocidade": "5%"
+  },
+  "cabra_radio_vaga": {
+    "texto": "Ouviram-te. Vêm pela Porta Férrea e pela Via Latina.",
+    "velocidade": "8%"
+  },
+  "cabra_radio_aguenta": {
+    "texto": "Falta uma. Aguenta-te aí em cima.",
+    "velocidade": "8%"
+  },
+  "cabra_radio_fim": {
+    "texto": "Ouviu-se em toda a Alta. Bom trabalho.",
+    "velocidade": "0%"
+  },
+  "cabra_inimigo_viu_1": {
+    "texto": "Está na torre! Está na torre!",
+    "velocidade": "20%"
+  },
+  "cabra_inimigo_combate_1": {
+    "texto": "Calem esse sino!",
+    "velocidade": "20%"
+  },
+  "cabra_inimigo_combate_2": {
+    "texto": "Ninguém toca a Cabra sem autorização!",
+    "velocidade": "15%"
+  },
+  "becos_radio_inicio": {
+    "texto": "Atenção. Um Borrão levou as fitas dos finalistas. Vai para o rio, há um barco à espera. Não o mates, preciso dele a respirar. Apanha-o.",
+    "velocidade": "8%"
+  },
+  "becos_radio_perdeste": {
+    "texto": "Perdeste-o. Ouve os passos.",
+    "velocidade": "5%"
+  },
+  "becos_radio_rio": {
+    "texto": "Está quase no rio!",
+    "velocidade": "12%"
+  },
+  "becos_radio_barco": {
+    "texto": "O barco levou as fitas. Missão falhada.",
+    "velocidade": "0%"
+  },
+  "becos_radio_fitas": {
+    "texto": "Tens as fitas. Agora sai daí. Vem ter à Portagem.",
+    "velocidade": "8%"
+  },
+  "becos_radio_fim": {
+    "texto": "As fitas voltam a casa. Bom trabalho.",
+    "velocidade": "0%"
+  },
+  "becos_estafeta_apanha": {
+    "texto": "Apanha-me, se puderes!",
+    "velocidade": "15%",
+    "tom": "+10%"
+  },
+  "becos_estafeta_naoapanhas": {
+    "texto": "Não me apanhas!",
+    "velocidade": "15%",
+    "tom": "+10%"
+  },
+  "becos_estafeta_perna": {
+    "texto": "Ai, a perna!",
+    "velocidade": "10%",
+    "tom": "+10%"
+  },
+  "becos_estafeta_caiu": {
+    "texto": "Pronto, pronto! Leva lá as fitas!",
+    "velocidade": "10%",
+    "tom": "+10%"
+  },
+  "becos_inimigo_viu_1": {
+    "texto": "Ninguém toca no Estafeta!",
+    "velocidade": "15%"
+  },
+  "becos_inimigo_combate_1": {
+    "texto": "Corre, Estafeta, corre!",
+    "velocidade": "20%"
+  },
+  "becos_radio_via_largo_do_poco": {
+    "texto": "Virou para o Largo do Poço.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_rua_do_corvo": {
+    "texto": "Virou para a Rua do Corvo.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_rua_da_louca": {
+    "texto": "Virou para a Rua da Louça.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_rua_eduardo_coelho": {
+    "texto": "Virou para a Rua Eduardo Coelho.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_praca_do_comercio": {
+    "texto": "Virou para a Praça do Comércio.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_rua_visconde_da_luz": {
+    "texto": "Virou para a Rua Visconde da Luz.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_rua_da_sota": {
+    "texto": "Virou para a Rua da Sota.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_travessa_da_sota": {
+    "texto": "Virou para a Travessa da Sota.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_rua_das_azeiteiras": {
+    "texto": "Virou para a Rua das Azeiteiras.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_rua_dos_gatos": {
+    "texto": "Virou para a Rua dos Gatos.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_adro_de_cima": {
+    "texto": "Virou para o Adro de Cima.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_rua_das_padeiras": {
+    "texto": "Virou para a Rua das Padeiras.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_rua_adelino_veiga": {
+    "texto": "Virou para a Rua Adelino Veiga.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_rua_ferreira_borges": {
+    "texto": "Virou para a Rua Ferreira Borges.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_escadas_de_sao_tiago": {
+    "texto": "Virou para as Escadas de São Tiago.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_largo_da_freiria": {
+    "texto": "Virou para o Largo da Freiria.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_largo_da_maracha": {
+    "texto": "Virou para o Largo da Maracha.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_beco_das_canivetas": {
+    "texto": "Virou para o Beco das Canivetas.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_escada_dos_gatos": {
+    "texto": "Virou para a Escada dos Gatos.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_rua_do_sargento_mor": {
+    "texto": "Virou para a Rua do Sargento-Mor.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_rua_do_paco_do_conde": {
+    "texto": "Virou para a Rua do Paço do Conde.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_escadas_de_sao_bartolomeu": {
+    "texto": "Virou para as Escadas de São Bartolomeu.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_largo_da_fornalhinha": {
+    "texto": "Virou para o Largo da Fornalhinha.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_largo_do_romal": {
+    "texto": "Virou para o Largo do Romal.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_rua_da_gala": {
+    "texto": "Virou para a Rua da Gala.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_largo_do_paco_do_conde": {
+    "texto": "Virou para o Largo do Paço do Conde.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_beco_do_romal": {
+    "texto": "Virou para o Beco do Romal.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_rua_dos_esteireiros": {
+    "texto": "Virou para a Rua dos Esteireiros.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_rua_da_fornalhinha": {
+    "texto": "Virou para a Rua da Fornalhinha.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_largo_da_sota": {
+    "texto": "Virou para o Largo da Sota.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_adro_de_baixo": {
+    "texto": "Virou para o Adro de Baixo.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_largo_das_olarias": {
+    "texto": "Virou para o Largo das Olarias.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_travessa_dos_gatos": {
+    "texto": "Virou para a Travessa dos Gatos.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_rua_do_almoxarife": {
+    "texto": "Virou para a Rua do Almoxarife.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_beco_dos_esteireiros": {
+    "texto": "Virou para o Beco dos Esteireiros.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_travessa_das_canivetas": {
+    "texto": "Virou para a Travessa das Canivetas.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_beco_de_santa_maria": {
+    "texto": "Virou para o Beco de Santa Maria.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_rua_velha": {
+    "texto": "Virou para a Rua Velha.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_travessa_paco_do_conde": {
+    "texto": "Virou para a Travessa Paço do Conde.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_travessa_da_rua_velha": {
+    "texto": "Virou para a Travessa da Rua Velha.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_largo_das_ameias": {
+    "texto": "Virou para o Largo das Ameias.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_beco_da_boa_uniao": {
+    "texto": "Virou para o Beco da Boa União.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_beco_do_forno": {
+    "texto": "Virou para o Beco do Forno.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_travessa_do_paco_do_conde": {
+    "texto": "Virou para a Travessa do Paço do Conde.",
+    "velocidade": "8%"
+  },
+  "becos_radio_via_terreiro_do_mendonca": {
+    "texto": "Virou para o Terreiro do Mendonça.",
+    "velocidade": "8%"
   }
 }

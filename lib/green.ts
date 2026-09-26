@@ -8,6 +8,7 @@
 
 import { estimate, published, type Sourced } from '@/lib/provenance'
 import {
+  CITY_FOCUS,
   CITY_RADIUS_KM,
   GREEN_FETCHED_AT,
   GREEN_SPACES,
@@ -25,35 +26,49 @@ export type { GreenKind, GreenSpace }
  * A ordem não é alfabética nem por contagem: é da mancha ao canteiro, que é
  * como elas se distinguem no terreno.
  *
- * As cores saem da paleta do site e são escolhidas por matiz, não por
- * simpatia: verde-azulado, verde, azul e violeta. A tentação era pintar as
- * quatro de verde, e o resultado eram quatro manchas indistintas num mapa
- * cujo objectivo é justamente distingui-las. Nenhuma é o acento da marca —
- * esse fica reservado ao que o leitor escolheu.
+ * As quatro são verdes, e distinguem-se pela luminosidade: a mata é a mais
+ * escura, o jardim o mais claro, a reserva puxa ao azulado. Já foram azul e
+ * violeta para se separarem por matiz — e os parques azuis à beira do
+ * Mondego liam-se como rio. Nenhuma é o acento da marca, que fica reservado
+ * ao que o leitor escolheu.
+ *
+ * `color` pinta a forma; `edge` é o contorno, que num jardim claro é o que
+ * o separa do papel; `text` é a mesma família escurecida para letra.
  */
-export const KINDS: Record<GreenKind, { label: string; plural: string; color: string; note: string }> = {
+export const KINDS: Record<
+  GreenKind,
+  { label: string; plural: string; color: string; edge: string; text: string; note: string }
+> = {
   reserva: {
     label: 'Reserva',
     plural: 'Reservas naturais',
-    color: 'var(--tone-teal)',
+    color: 'var(--green-reserva)',
+    edge: 'var(--green-reserva)',
+    text: 'var(--green-reserva-text)',
     note: 'Área classificada, com acesso e circulação condicionados pelo seu regulamento.',
   },
   mata: {
     label: 'Mata',
     plural: 'Matas e pinhais',
-    color: 'var(--tone-moss)',
+    color: 'var(--green-mata)',
+    edge: 'var(--green-mata)',
+    text: 'var(--green-mata-text)',
     note: 'Mancha arborizada de percorrer a pé, com caminhos e sem desenho de jardim.',
   },
   parque: {
     label: 'Parque',
     plural: 'Parques',
-    color: 'var(--tone-blue)',
+    color: 'var(--green-parque)',
+    edge: 'var(--green-parque)',
+    text: 'var(--green-parque-text)',
     note: 'Espaço urbano de estar, quase sempre com relvado, água ou equipamento.',
   },
   jardim: {
     label: 'Jardim',
     plural: 'Jardins',
-    color: 'var(--tone-violet)',
+    color: 'var(--green-jardim-fill)',
+    edge: 'var(--green-jardim)',
+    text: 'var(--green-jardim-text)',
     note: 'Jardim desenhado, de escala de bairro ou de praça.',
   },
 }
@@ -81,7 +96,7 @@ const MAP_NAMES: Record<string, string> = {
   'parque-do-choupalinho': 'Choupalinho',
   'mata-da-quinta-da-sapinha': 'Quinta da Sapinha',
   'parque-verde-do-mondego': 'Parque Verde',
-  'parque-verde-do-mondego-entrada-poente': 'Entrada Poente',
+  'jardins-da-quinta-das-lagrimas': 'Quinta das Lágrimas',
   'parque-de-santa-cruz': 'Sereia',
   'jardim-da-quinta-de-sao-jeronimo': 'S. Jerónimo',
   'parque-doutor-manuel-braga': 'Manuel Braga',
@@ -139,6 +154,13 @@ export const SPACES = GREEN_SPACES
 
 export const TOTAL_HA = SPACES.reduce((sum, s) => sum + s.areaHa, 0)
 
+/**
+ * Quantas unidades do desenho mede um quilómetro. O raio dos 3 km vem do
+ * gerador já projectado, e é dele que sai a escala de tudo o que se desenha
+ * "à mesma escala" — o herbário e a barra de escala do mapa.
+ */
+export const UNITS_PER_KM = CITY_FOCUS.r / CITY_RADIUS_KM
+
 /** Dentro do raio a pé do Largo da Portagem. */
 export const IN_CITY = SPACES.filter((s) => s.distanceKm <= CITY_RADIUS_KM)
 export const OUT_OF_CITY = SPACES.filter((s) => s.distanceKm > CITY_RADIUS_KM)
@@ -185,12 +207,12 @@ export function formatDistance(km: number): string {
  * é a licença dos dados, obriga a ele.
  */
 export const GREEN_META: Sourced = published(
-  'OpenStreetMap',
+  'OpenStreetMap · Copernicus DEM',
   'Carta aberta',
   `© colaboradores do OpenStreetMap (ODbL), obtidos em ${new Date(GREEN_FETCHED_AT).toLocaleDateString(
     'pt-PT',
     { day: 'numeric', month: 'long', year: 'numeric' },
-  )}. As áreas são medidas no polígono.`,
+  )}. As áreas são medidas no polígono; o relevo é o modelo Copernicus de 30 m.`,
 )
 
 /** Sem geometria não há mapa — e um mapa vazio diz-se, não se disfarça. */

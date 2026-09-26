@@ -1,0 +1,11 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>html, body { margin: 0; background: #000; overflow: hidden } canvas { display: block }</style>
+<script src="comum.js"></script>
+<script>
+  // index.html?estilo=lino | caderno
+  document.write(`<script src="${new URLSearchParams(location.search).get('estilo')}.js"><\/script>`)
+</script>
+</head><body><canvas id="c" width="1920" height="1080"></canvas>
+<span style="font-family:Gabriola;position:absolute;left:-999px">.</span>
+</body></html>

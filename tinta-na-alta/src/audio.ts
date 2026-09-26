@@ -7,8 +7,10 @@
  * precoces das fachadas próximas e uma cauda de pedra.
  */
 import * as THREE from 'three'
+import { MISSOES } from './missoes/registo'
 
-export type Personagem = 'radio' | 'fadista' | { inimigo: number }
+/** Quem fala: a Central (rádio), quem o jogador protege (com o nome da legenda), ou um Borrão (com nome, se o tiver). */
+export type Personagem = 'radio' | { protegido: string } | { inimigo: number; nome?: string }
 
 export class Som {
   ctx!: AudioContext
@@ -26,7 +28,8 @@ export class Som {
   legenda: (quem: string, texto: string) => void = () => {}
   textos: Record<string, string> = {}
 
-  async iniciar() {
+  /** As falas das outras missões (`<id>_…`) ficam por descarregar. */
+  async iniciar(missao: string) {
     if (this.pronto) return
     this.ctx = new AudioContext()
     this.mestre = this.ctx.createGain()
@@ -46,8 +49,10 @@ export class Som {
     this.ruidoRosa = this.bufferRuido(4, 'castanho')
     this.pronto = true
     this.ambiente()
-    const falas = await (await fetch(import.meta.env.BASE_URL + 'falas.json')).json()
-    for (const [id, f] of Object.entries(falas)) this.textos[id] = (f as { texto: string }).texto
+    const todas: Record<string, { texto: string }> = await (await fetch(import.meta.env.BASE_URL + 'falas.json')).json()
+    const outras = MISSOES.map((m) => m.id + '_').filter((p) => p !== missao + '_')
+    const falas = Object.fromEntries(Object.entries(todas).filter(([id]) => !outras.some((p) => id.startsWith(p))))
+    for (const [id, f] of Object.entries(falas)) this.textos[id] = f.texto
     await Promise.all(Object.keys(falas).map(async (id) => {
       try {
         const b = await (await fetch(`${import.meta.env.BASE_URL}vozes/${id}.wav`)).arrayBuffer()
@@ -300,6 +305,18 @@ export class Som {
     }
   }
 
+  /** Alguém sem fôlego: ar a entrar e a sair pela boca, rouco. */
+  ofegar(pos: THREE.Vector3, vezes = 3) {
+    if (!this.pronto) return
+    const { entrada } = this.espacial(pos, 25)
+    const t = this.ctx.currentTime
+    for (let i = 0; i < vezes; i++) {
+      const t0 = t + i * 0.62 + Math.random() * 0.06
+      this.ruidoEm(entrada, t0, 0.2, 'bandpass', 1300 + Math.random() * 300, 2.2, 0.28, 0.06)
+      this.ruidoEm(entrada, t0 + 0.26, 0.3, 'bandpass', 800 + Math.random() * 200, 1.8, 0.38, 0.04, 500)
+    }
+  }
+
   /** Corda solta: nós a desatar. */
   corda() {
     if (!this.pronto) return
@@ -339,7 +356,24 @@ export class Som {
     }
   }
 
-  /** Sino da Sé: parciais inarmónicos de um sino de bronze. */
+  /**
+   * Sino grande e grave (uma badalada): os mesmos parciais do \`sino\` uma
+   * oitava abaixo, com o zumbido que fica no ar muito depois do golpe. Ouve-se
+   * em todo o nível.
+   */
+  sinoGrave(pos: THREE.Vector3) {
+    if (!this.pronto) return
+    const { entrada } = this.espacial(pos, 1500, 0.6)
+    const base = 98
+    const t = this.ctx.currentTime
+    for (const [r, g, d] of [[0.5, 0.45, 11], [1, 0.5, 8], [1.19, 0.3, 6], [1.5, 0.2, 5], [2, 0.16, 4], [2.52, 0.1, 3], [3.01, 0.07, 2.2], [4.1, 0.04, 1.4]]) {
+      this.tom(entrada, t, d, base * r, base * r * 0.998, g * 0.6)
+    }
+    // O batido do badalo: metal contra metal, curto.
+    this.ruidoEm(entrada, t, 0.06, 'bandpass', 900, 1.5, 0.35)
+  }
+
+  /** Sino: parciais inarmónicos de um sino de bronze. */
   sino(pos: THREE.Vector3, badaladas = 1) {
     if (!this.pronto) return
     const { entrada } = this.espacial(pos, 400)
@@ -415,15 +449,15 @@ export class Som {
   // ---------------------------------------------------------------- falas --
 
   /**
-   * Diz uma fala. Prioridade: rádio 3, fadista 2, inimigos 1 (e os inimigos
+   * Diz uma fala. Prioridade: rádio 3, protegido 2, inimigos 1 (e os inimigos
    * não falam uns por cima dos outros).
    */
   falar(id: string, quem: Personagem, pos: THREE.Vector3 | null = null, forcar = false) {
     if (!this.pronto) return 0
     const buf = this.vozes.get(id)
     const agora = this.ctx.currentTime
-    const prioridade = quem === 'radio' ? 3 : quem === 'fadista' ? 2 : 1
-    if (typeof quem === 'object') {
+    const prioridade = quem === 'radio' ? 3 : 'protegido' in quem ? 2 : 1
+    if (typeof quem === 'object' && 'inimigo' in quem) {
       if (agora - this.ultimaFalaInimigo < 1.6 && !forcar) return 0
       this.ultimaFalaInimigo = agora
     }
@@ -433,7 +467,7 @@ export class Som {
         try { this.falaActual.fonte.stop() } catch { /* já parou */ }
       }
     }
-    const nome = quem === 'radio' ? 'Central' : quem === 'fadista' ? 'Fadista' : 'Borrão'
+    const nome = quem === 'radio' ? 'Central' : 'protegido' in quem ? quem.protegido : quem.nome ?? 'Borrão'
     this.legenda(nome, this.textos[id] ?? '')
     if (!buf) return 2.5
     const s = this.ctx.createBufferSource()
@@ -450,7 +484,7 @@ export class Som {
       this.ruidoEm(this.mestre, agora, 0.06, 'bandpass', 2000, 1, 0.15)
       this.ruidoEm(this.mestre, agora + buf.duration, 0.1, 'bandpass', 2000, 1, 0.15)
       saida = g
-    } else if (quem === 'fadista') {
+    } else if ('protegido' in quem) {
       s.playbackRate.value = 0.86 // um pouco mais grave que a voz original
       const { entrada } = this.espacial(pos, 40, 1, true)
       const g = this.ctx.createGain(); g.gain.value = 1.6

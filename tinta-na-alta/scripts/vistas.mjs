@@ -1,11 +1,11 @@
 // Várias capturas numa só sessão (Chrome headless com GPU).
-//   node scripts/vistas.mjs <pasta> '<json>'   json: [{ "nome", "de": [x, y], "para": [x, y], "pitch"?, "limpar"? }]
+//   node scripts/vistas.mjs <pasta> '<json>' [url]   json: [{ "nome", "de": [x, y], "para": [x, y], "pitch"?, "limpar"? }]
 // Coordenadas do nível: x para nascente, y para norte.
 import { spawn } from 'node:child_process'
 import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-const [pasta, json, url = 'http://localhost:5190/tinta-na-alta/?auto'] = process.argv.slice(2)
+const [pasta, json, url = 'http://localhost:5190/tinta-na-alta/?m=serenata&auto'] = process.argv.slice(2)
 const vistas = JSON.parse(json)
 const chrome = 'C:/Program Files/Google/Chrome/Application/chrome.exe'
 const porta = 9333 + Math.floor(Math.random() * 500)

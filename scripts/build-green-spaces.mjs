@@ -28,6 +28,14 @@
  *
  *   O que entra. `leisure=park|garden|nature_reserve`, `landuse=forest` e
  *   `natural=wood`, dentro do município, COM NOME e sem acesso privado.
+ *   Um jardim de bilhete (`access=customers` com `fee=yes`) entra, marcado
+ *   como pago: os Jardins da Quinta das Lágrimas abrem a quem entra, e
+ *   tirá-los da lista por terem porteiro dizia que não existem.
+ *
+ *   Um lugar partido em dois na carta — "Parque Verde do Mondego" e
+ *   "Parque Verde do Mondego - Entrada Poente" — é um lugar só para quem
+ *   lá vai. Um nome que seja outro nome da lista seguido de " - qualquer
+ *   coisa" junta-se a ele: as áreas somam-se e a forma fica com as partes.
  *
  *   O que fica de fora, e porquê. Sem nome: as 90 manchas de `wood` e as
  *   74 de `forest` anónimas são pinhal e eucaliptal de produção nas serras
@@ -40,16 +48,39 @@
  *   quintais de moradia, mapeados por quem passou.
  */
 
-import { writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
 import { geoPath, geoTransverseMercator, geoArea, geoCentroid, geoContains } from 'd3-geo'
+import { fromUrl } from 'geotiff'
+import sharp from 'sharp'
 
 import { roundingContext, polylabel, rewind, projectedRings } from './lib/geo.mjs'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const OUT = join(ROOT, 'lib', 'green-spaces.ts')
+
+/**
+ * A última resposta do Overpass fica guardada. Com `--offline` o gerador
+ * refaz tudo a partir dela — o desenho do relevo e das estradas afina-se
+ * sem voltar a pedir o concelho inteiro a um serviço que falha por carga.
+ */
+const CACHE = join(ROOT, 'scripts', 'data', 'green')
+const OVERPASS_CACHE = join(CACHE, 'overpass.json')
+const OFFLINE = process.argv.includes('--offline')
+
+/** O relevo sai em imagem, ao lado dos dados que o site serve. */
+const RELIEF_DIR = join(ROOT, 'public', 'data')
+
+/**
+ * O mesmo Copernicus DEM GLO-30 que mede o desnível dos trilhos, e da
+ * mesma cache: se o gerador dos trilhos já o descarregou, não se descarrega
+ * outra vez. Coimbra cabe inteira no mosaico N40 W009.
+ */
+const DEM_CACHE = join(ROOT, 'scripts', 'data', 'trilhos', 'cache')
+const DEM_TILE = 'Copernicus_DSM_COG_10_N40_00_W009_00_DEM'
+const DEM_URL = `https://copernicus-dem-30m.s3.amazonaws.com/${DEM_TILE}/${DEM_TILE}.tif`
 
 const PARISHES_URL = 'https://json.geoapi.pt/municipio/coimbra/freguesias'
 
@@ -81,6 +112,13 @@ area["boundary"="administrative"]["admin_level"="7"]["name"="Coimbra"]->.a;
   relation["natural"="water"]["water"="river"](area.a);
   way["waterway"="riverbank"](area.a);
   way["waterway"="river"](area.a);
+
+  // As estradas, pela mesma razão de um só pedido. Não são dados: são o
+  // que permite reconhecer a cidade por baixo das manchas. As principais
+  // no concelho inteiro; as terciárias só perto do centro, onde o mapa
+  // aproxima e sem elas a malha fica vazia.
+  way["highway"~"^(motorway|trunk|primary|secondary)$"](area.a);
+  way["highway"="tertiary"](around:4500,40.2089,-8.4295);
 );
 out geom;`
 
@@ -96,6 +134,31 @@ const CENTRE = [-8.4295, 40.2089]
 
 /** Raio de Coimbra a pé. Acima disto a ficha diz "fora da cidade". */
 const CITY_RADIUS_KM = 3
+
+/**
+ * Os pontos por onde o leitor se orienta no mapa da cidade.
+ *
+ * A Portagem é a origem de todas as distâncias da página — sem ela
+ * marcada, "a 700 m" não se mede contra nada. A Universidade é o que toda a
+ * gente sabe onde fica. As coordenadas são as mesmas do Visitar
+ * (`lib/attractions.ts`), para as duas páginas porem a Alta no mesmo sítio.
+ */
+const LANDMARKS = [
+  { id: 'portagem', name: 'Portagem', lonlat: CENTRE },
+  { id: 'universidade', name: 'Universidade', lonlat: [-8.426, 40.20739] },
+]
+
+/**
+ * Onde escrever "Mondego". O ponto é aproximado; o gerador prende-o ao
+ * eixo do rio e roda o nome pela direcção da corrente ali.
+ */
+const RIVER_LABEL = { name: 'Mondego', osmName: 'Rio Mondego', lonlat: [-8.4255, 40.1985] }
+
+/**
+ * Largura das imagens do relevo, em píxeis. O DEM tem 30 m por célula: o
+ * concelho, a 900 px, fica perto disso; a cidade é interpolada.
+ */
+const RELIEF_PX = { concelho: 900, cidade: 1100 }
 
 /** Raio autálico da Terra (IUGG), em metros. */
 const EARTH_RADIUS = 6371007.2
@@ -140,6 +203,18 @@ async function fetchJson(url, init) {
 }
 
 async function fetchOverpass() {
+  if (OFFLINE) {
+    if (!existsSync(OVERPASS_CACHE)) throw new Error(`--offline sem ${OVERPASS_CACHE}`)
+    process.stdout.write(`A ler ${OVERPASS_CACHE}\n`)
+    return JSON.parse(readFileSync(OVERPASS_CACHE, 'utf8'))
+  }
+  const osm = await fetchOverpassLive()
+  mkdirSync(CACHE, { recursive: true })
+  writeFileSync(OVERPASS_CACHE, JSON.stringify(osm))
+  return osm
+}
+
+async function fetchOverpassLive() {
   const failures = []
   for (const mirror of OVERPASS_MIRRORS) {
     try {
@@ -319,6 +394,171 @@ function toPath(lines, digits, close = true) {
     .join('')
 }
 
+/* ── Relevo ───────────────────────────────────────────────────────────────
+   Sombreado de encosta a partir do Copernicus DEM, desenhado já na
+   projecção do mapa: cada píxel da imagem é um ponto do viewBox, invertido
+   para longitude e latitude e medido no DEM. A imagem assenta por baixo das
+   manchas sem nenhuma conversão no browser.
+
+   Sai em duas tintas numa só imagem: preto onde a encosta está virada
+   para longe da luz, branco onde está virada para ela, transparente no
+   plano. Sobre o papel escurece e aclara sem mudar a cor do fundo. */
+
+async function loadDem() {
+  const bin = join(DEM_CACHE, `${DEM_TILE}.f32`)
+  const metaFile = join(DEM_CACHE, `${DEM_TILE}.json`)
+  let meta
+  let data
+  if (existsSync(bin) && existsSync(metaFile)) {
+    meta = JSON.parse(readFileSync(metaFile, 'utf8'))
+    const buf = readFileSync(bin)
+    data = new Float32Array(buf.buffer, buf.byteOffset, buf.byteLength / 4)
+  } else {
+    process.stdout.write(`A obter ${DEM_URL}\n`)
+    const img = await (await fromUrl(DEM_URL)).getImage()
+    const [ox, oy] = img.getOrigin()
+    const [rx, ry] = img.getResolution()
+    const [raster] = await img.readRasters({ samples: [0] })
+    meta = { ox, oy, rx, ry, w: img.getWidth(), h: img.getHeight() }
+    data = Float32Array.from(raster)
+  }
+  const { ox, oy, rx, ry, w, h } = meta
+  return (lon, lat) => {
+    const fx = (lon - ox) / rx - 0.5
+    const fy = (lat - oy) / ry - 0.5
+    const x = Math.min(Math.max(Math.floor(fx), 0), w - 2)
+    const y = Math.min(Math.max(Math.floor(fy), 0), h - 2)
+    const tx = Math.min(Math.max(fx - x, 0), 1)
+    const ty = Math.min(Math.max(fy - y, 0), 1)
+    const i = y * w + x
+    return (
+      (data[i] * (1 - tx) + data[i + 1] * tx) * (1 - ty) +
+      (data[i + w] * (1 - tx) + data[i + w + 1] * tx) * ty
+    )
+  }
+}
+
+/**
+ * Desfoque gaussiano separável, no próprio sítio.
+ *
+ * O Copernicus é um modelo de SUPERFÍCIE: mede o topo das copas e dos
+ * telhados. Sem desfoque, cada quarteirão e cada pinhal saem em grão — o
+ * relevo que interessa (a colina da Alta, o vale do Mondego) fica debaixo
+ * de ruído, e a imagem pesa o triplo porque o ruído não comprime.
+ */
+function gaussian(z, W, H, sigma) {
+  if (!sigma) return
+  const r = Math.ceil(sigma * 3)
+  const k = Array.from({ length: 2 * r + 1 }, (_, i) => Math.exp(-((i - r) ** 2) / (2 * sigma * sigma)))
+  const sum = k.reduce((a, b) => a + b, 0)
+  const tmp = new Float32Array(z.length)
+  for (let j = 0; j < H; j++) {
+    for (let i = 0; i < W; i++) {
+      let v = 0
+      for (let t = -r; t <= r; t++) v += z[j * W + Math.min(Math.max(i + t, 0), W - 1)] * k[t + r]
+      tmp[j * W + i] = v / sum
+    }
+  }
+  for (let j = 0; j < H; j++) {
+    for (let i = 0; i < W; i++) {
+      let v = 0
+      for (let t = -r; t <= r; t++) v += tmp[Math.min(Math.max(j + t, 0), H - 1) * W + i] * k[t + r]
+      z[j * W + i] = v / sum
+    }
+  }
+}
+
+/**
+ * Uma janela do viewBox em sombreado. `metresPerUnit` diz quanto mede uma
+ * unidade do desenho no terreno — sem ele o declive sai em unidades
+ * misturadas e o relevo fica achatado ou em penhasco consoante a escala.
+ */
+async function renderRelief({ box, widthPx, projection, height, metresPerUnit, exaggeration, blur, file }) {
+  const W = widthPx
+  const H = Math.round((widthPx * box.h) / box.w)
+  const unitsPerPx = box.w / W
+  const z = new Float32Array(W * H)
+  for (let j = 0; j < H; j++) {
+    for (let i = 0; i < W; i++) {
+      const lonlat = projection.invert([box.x + (i + 0.5) * unitsPerPx, box.y + (j + 0.5) * unitsPerPx])
+      z[j * W + i] = height(lonlat[0], lonlat[1]) * exaggeration
+    }
+  }
+  gaussian(z, W, H, blur)
+
+  // Horn (1981), a mesma derivada que o gdaldem usa. Luz de noroeste a 45°,
+  // a convenção cartográfica: com luz de sul o relevo lê-se invertido.
+  const cell = unitsPerPx * metresPerUnit
+  // O ângulo da luz na convenção da ESRI: 315° de bússola passam a 135°
+  // matemáticos, e o aspecto sai do atan2 no mesmo referencial.
+  const azimuth = ((360 - 315 + 90) * Math.PI) / 180
+  const zenith = (45 * Math.PI) / 180
+  const flat = Math.cos(zenith)
+  const at = (i, j) => z[Math.min(Math.max(j, 0), H - 1) * W + Math.min(Math.max(i, 0), W - 1)]
+  const rgba = Buffer.alloc(W * H * 4)
+  for (let j = 0; j < H; j++) {
+    for (let i = 0; i < W; i++) {
+      const dzdx =
+        (at(i + 1, j - 1) + 2 * at(i + 1, j) + at(i + 1, j + 1) -
+          (at(i - 1, j - 1) + 2 * at(i - 1, j) + at(i - 1, j + 1))) / (8 * cell)
+      const dzdy =
+        (at(i - 1, j + 1) + 2 * at(i, j + 1) + at(i + 1, j + 1) -
+          (at(i - 1, j - 1) + 2 * at(i, j - 1) + at(i + 1, j - 1))) / (8 * cell)
+      const slope = Math.atan(Math.hypot(dzdx, dzdy))
+      const aspect = Math.atan2(dzdy, -dzdx)
+      const shade =
+        Math.cos(zenith) * Math.cos(slope) +
+        Math.sin(zenith) * Math.sin(slope) * Math.cos(azimuth - aspect)
+      const delta = shade - flat
+      const o = (j * W + i) * 4
+      if (delta < 0) {
+        rgba[o + 3] = Math.round(Math.min(1, -delta * 1.6) * 255)
+      } else {
+        rgba[o] = rgba[o + 1] = rgba[o + 2] = 255
+        rgba[o + 3] = Math.round(Math.min(1, delta * 2.2) * 255)
+      }
+    }
+  }
+  mkdirSync(RELIEF_DIR, { recursive: true })
+  await sharp(rgba, { raw: { width: W, height: H, channels: 4 } })
+    .webp({ quality: 60, alphaQuality: 55, effort: 6 })
+    .toFile(join(RELIEF_DIR, file))
+  return { file, width: W, height: H }
+}
+
+/**
+ * Onde o nome do rio assenta e com que inclinação. O ponto pedido prende-se
+ * ao vértice mais próximo do eixo, e o ângulo é o do troço à volta dele —
+ * nunca de cabeça para baixo.
+ */
+function riverLabel(lines, xy) {
+  let best = null
+  for (const line of lines) {
+    for (let i = 1; i < line.length - 1; i++) {
+      const d = Math.hypot(line[i][0] - xy[0], line[i][1] - xy[1])
+      if (!best || d < best.d) best = { d, line, i }
+    }
+  }
+  if (!best) return null
+  const { line, i } = best
+  const a = line[Math.max(0, i - 3)]
+  const b = line[Math.min(line.length - 1, i + 3)]
+  let angle = (Math.atan2(b[1] - a[1], b[0] - a[0]) * 180) / Math.PI
+  if (angle > 90) angle -= 180
+  if (angle < -90) angle += 180
+  return { x: Number(line[i][0].toFixed(1)), y: Number(line[i][1].toFixed(1)), angle: Number(angle.toFixed(1)) }
+}
+
+/**
+ * O OSM aceita "fundacaoinesdecastro.com/jardim" sem protocolo, e um
+ * endereço assim num `href` é relativo: levava o leitor a uma página do
+ * próprio site que não existe.
+ */
+function absoluteUrl(url) {
+  if (!url) return null
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`
+}
+
 /** Distância de grande círculo, em km. */
 function distanceKm(a, b) {
   const rad = Math.PI / 180
@@ -359,8 +599,12 @@ async function main() {
    * do rio.
    */
   const isWater = (tags) => tags.natural === 'water' || Boolean(tags.waterway)
+  // As estradas também: têm nome, e sem esta separação a Avenida Fernão de
+  // Magalhães entrava na lista como parque.
+  const isRoad = (tags) => Boolean(tags.highway)
   const water = osm.elements.filter((el) => isWater(el.tags ?? {}))
-  const green = osm.elements.filter((el) => !isWater(el.tags ?? {}))
+  const roads = osm.elements.filter((el) => isRoad(el.tags ?? {}))
+  const green = osm.elements.filter((el) => !isWater(el.tags ?? {}) && !isRoad(el.tags ?? {}))
 
   for (const el of green) {
     const tags = el.tags ?? {}
@@ -368,7 +612,8 @@ async function main() {
       rejected.anonimo++
       continue
     }
-    if (tags.access === 'private' || tags.access === 'customers') {
+    const paid = tags.access === 'customers' && tags.fee === 'yes'
+    if (tags.access === 'private' || (tags.access === 'customers' && !paid)) {
       rejected.privado++
       continue
     }
@@ -422,10 +667,33 @@ async function main() {
       centre,
       parish: parish ? { code: parish.code, name: parish.name } : null,
       distanceKm: distanceKm(CENTRE, centre),
-      website: tags.website ?? tags['contact:website'] ?? null,
+      website: absoluteUrl(tags.website ?? tags['contact:website'] ?? null),
+      paid: paid || tags.fee === 'yes',
       osm: `${el.type}/${el.id}`,
       geometry,
     })
+  }
+
+  /* As partes de um lugar partido em dois na carta juntam-se ao todo. */
+  let merged = 0
+  for (const [id, part] of [...seen]) {
+    const base = part.name.match(/^(.+?)\s+[-–—]\s+.+$/)?.[1]
+    const host = base && seen.get(slugify(base))
+    if (!host) continue
+    const polygons = (g) => (g.type === 'MultiPolygon' ? g.coordinates : [g.coordinates])
+    host.geometry = {
+      type: 'MultiPolygon',
+      coordinates: [...polygons(host.geometry), ...polygons(part.geometry)],
+    }
+    // A freguesia fica a da parte maior: um parque nas duas margens não
+    // tem uma só, e a do centróide do conjunto podia cair no rio.
+    if (part.areaHa > host.areaHa) host.parish = part.parish
+    host.areaHa += part.areaHa
+    host.centre = geoCentroid(host.geometry)
+    host.distanceKm = distanceKm(CENTRE, host.centre)
+    host.paid = host.paid || part.paid
+    seen.delete(id)
+    merged++
   }
 
   const projection = geoTransverseMercator()
@@ -499,6 +767,8 @@ async function main() {
       const simplified = flat.map((r) => simplifyRing(r, SIMPLIFY_EPS))
       after += simplified.reduce((n, r) => n + r.length, 0)
       const label = polylabel(rings[0])
+      const xs = simplified.flat().map((p) => p[0])
+      const ys = simplified.flat().map((p) => p[1])
       // A geometria em graus já cumpriu o seu papel; o que segue para o
       // ficheiro é o caminho projectado.
       const { geometry, centre, ...rest } = s
@@ -514,6 +784,9 @@ async function main() {
           y: Number(label.y.toFixed(1)),
           r: Number(label.r.toFixed(1)),
         },
+        box: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)].map((v) =>
+          Number(v.toFixed(1)),
+        ),
         d: toPath(simplified, DIGITS),
       }
     })
@@ -550,14 +823,84 @@ async function main() {
     areas: toPath(waterAreas, DIGITS),
     lines: toPath(waterLines, DIGITS, false),
     rivers,
+    label: riverLabel(
+      water
+        .filter((el) => el.tags.waterway === 'river' && el.tags.name === RIVER_LABEL.osmName && el.geometry)
+        .map((el) => el.geometry.map((p) => projection([p.lon, p.lat]))),
+      projection(RIVER_LABEL.lonlat),
+    ),
   }
 
-  const fetchedAt = new Date().toISOString().slice(0, 10)
+  /* ── As estradas ─────────────────────────────────────────────────────────
+     Três traços, do mais grosso ao mais fino. Simplificam-se com mais
+     tolerância do que os jardins: uma estrada só tem de estar onde está,
+     não de ter o contorno certo. */
+  const ROAD_CLASS = {
+    motorway: 'major', trunk: 'major', primary: 'major',
+    secondary: 'secondary', tertiary: 'minor',
+  }
+  const roadLines = { major: [], secondary: [], minor: [] }
+  for (const el of roads) {
+    const cls = ROAD_CLASS[el.tags.highway]
+    if (!cls || !el.geometry) continue
+    roadLines[cls].push(simplifyRing(el.geometry.map((p) => projection([p.lon, p.lat])), cls === 'minor' ? 0.2 : 0.4))
+  }
+  const roadPaths = Object.fromEntries(
+    Object.entries(roadLines).map(([k, lines]) => [k, toPath(lines, DIGITS, false)]),
+  )
+
+  const landmarks = LANDMARKS.map(({ id, name, lonlat }) => {
+    const [x, y] = projection(lonlat)
+    return { id, name, x: Number(x.toFixed(1)), y: Number(y.toFixed(1)) }
+  })
+
+  /* ── O relevo, nas duas janelas do mapa ─────────────────────────────── */
+  const dem = await loadDem()
+  const metresPerUnit = 1000 / unitsPerKm
+  // A mesma caixa que o mapa calcula para a escala da cidade (BOXES em
+  // GreenFigure), a partir dos mesmos números arredondados.
+  const cityBox = {
+    x: focus.x - focus.r * 1.15,
+    y: focus.y - focus.r * 1.15,
+    w: focus.r * 2.3,
+    h: focus.r * 2.3,
+  }
+  const relief = {
+    concelho: await renderRelief({
+      box: { x: 0, y: 0, w: WIDTH, h: height },
+      widthPx: RELIEF_PX.concelho,
+      projection,
+      height: dem,
+      metresPerUnit,
+      exaggeration: 2,
+      blur: 1.4,
+      file: 'relevo-concelho.webp',
+    }),
+    cidade: await renderRelief({
+      box: cityBox,
+      widthPx: RELIEF_PX.cidade,
+      projection,
+      height: dem,
+      metresPerUnit,
+      exaggeration: 1.5,
+      blur: 3,
+      file: 'relevo-cidade.webp',
+    }),
+  }
+  relief.concelho.box = { x: 0, y: 0, w: WIDTH, h: height }
+  relief.cidade.box = Object.fromEntries(Object.entries(cityBox).map(([k, v]) => [k, Number(v.toFixed(3))]))
+
+  // Com --offline a data é a da cópia guardada, não a de hoje: a carta
+  // não ficou mais fresca por se ter redesenhado.
+  const fetchedAt = (OFFLINE ? statSync(OVERPASS_CACHE).mtime : new Date()).toISOString().slice(0, 10)
   const osmTimestamp = osm.osm3s?.timestamp_osm_base?.slice(0, 10) ?? fetchedAt
 
   writeFileSync(
     OUT,
-    render({ spaces, outline, height, focus, water: waterPaths, fetchedAt, osmTimestamp, rejected }),
+    render({
+      spaces, outline, height, focus, water: waterPaths, roads: roadPaths, landmarks, relief,
+      fetchedAt, osmTimestamp, rejected, merged,
+    }),
     'utf8',
   )
 
@@ -570,14 +913,16 @@ async function main() {
       `(${rivers.join(', ')})\n` +
       `Recusados: ${rejected.anonimo} sem nome, ${rejected.privado} privados, ` +
       `${rejected.pequeno} abaixo de ${MIN_AREA_HA} ha, ${rejected.fora} fora do município, ` +
-      `${rejected.duplicado} repetidos\n` +
+      `${rejected.duplicado} repetidos; ${merged} partes juntas a outro lugar\n` +
+      `Estradas: ${Object.entries(roadPaths).map(([k, d]) => `${k} ${(d.length / 1024).toFixed(0)} KB`).join(', ')}\n` +
+      `Relevo: ${Object.values(relief).map((r) => `${r.file} ${r.width}×${r.height}`).join(', ')}\n` +
       `Escrito ${OUT}\n`,
   )
 }
 
 const quote = (v) => (v === null ? 'null' : `'${String(v).replace(/'/g, "\\'")}'`)
 
-function render({ spaces, outline, height, focus, water, fetchedAt, osmTimestamp, rejected }) {
+function render({ spaces, outline, height, focus, water, roads, landmarks, relief, fetchedAt, osmTimestamp, rejected, merged }) {
   const rows = spaces
     .map(
       (s) =>
@@ -592,8 +937,10 @@ function render({ spaces, outline, height, focus, water, fetchedAt, osmTimestamp
         `    lat: ${s.lat},\n` +
         `    lon: ${s.lon},\n` +
         `    website: ${quote(s.website)},\n` +
+        `    paid: ${s.paid},\n` +
         `    osm: ${quote(s.osm)},\n` +
         `    label: { x: ${s.label.x}, y: ${s.label.y}, r: ${s.label.r} },\n` +
+        `    box: [${s.box.join(', ')}],\n` +
         `    d: '${s.d}',\n` +
         `  },`,
     )
@@ -611,8 +958,9 @@ function render({ spaces, outline, height, focus, water, fetchedAt, osmTimestamp
  * sem transformação nenhuma.
  *
  * Esta extracção recusou ${rejected.anonimo} polígonos sem nome, ${rejected.privado} de acesso
- * privado e ${rejected.pequeno} abaixo de ${MIN_AREA_HA} ha. Os critérios e a razão de cada
- * um estão no cabeçalho do gerador — quem discordar deles vê ali o que mudar.
+ * privado e ${rejected.pequeno} abaixo de ${MIN_AREA_HA} ha, e juntou ${merged} parte(s) ao lugar de
+ * que fazem parte. Os critérios e a razão de cada um estão no cabeçalho do
+ * gerador — quem discordar deles vê ali o que mudar.
  */
 
 /** O que a coisa é para quem lá vai, que nem sempre é o que o OSM diz. */
@@ -635,10 +983,14 @@ export interface GreenSpace {
   lat: number
   lon: number
   website: string | null
+  /** Entrada paga. Aberto a quem entra, mas com bilhete. */
+  paid: boolean
   /** Elemento na carta de origem, para quem quiser conferir ou corrigir. */
   osm: string
   /** Onde pousar o nome no mapa, e que espaço há para ele. */
   label: { x: number; y: number; r: number }
+  /** Caixa da forma no desenho: x0, y0, x1, y1. */
+  box: [number, number, number, number]
   /** Caminho SVG, em unidades do viewBox. */
   d: string
 }
@@ -662,6 +1014,30 @@ export const WATER = {
   lines: '${water.lines}',
   /** Os rios com nome que o eixo desenha. */
   rivers: ${JSON.stringify(water.rivers)},
+  /** Onde escrever o nome do Mondego, já preso ao eixo e rodado com ele. */
+  label: ${JSON.stringify(water.label)} as { x: number; y: number; angle: number } | null,
+}
+
+/**
+ * As estradas, só para orientar: principais no concelho, secundárias, e as
+ * terciárias perto do centro. Linhas abertas, na projecção do resto.
+ */
+export const ROADS = {
+  major: '${roads.major}',
+  secondary: '${roads.secondary}',
+  minor: '${roads.minor}',
+}
+
+/** Os pontos por onde o leitor se orienta. A Portagem é a origem das distâncias. */
+export const LANDMARKS: { id: string; name: string; x: number; y: number }[] = ${JSON.stringify(landmarks)}
+
+/**
+ * O relevo sombreado de cada escala, em \`public/data\`, e a janela do
+ * desenho que cada imagem cobre. Copernicus DEM GLO-30.
+ */
+export const RELIEF = {
+  concelho: { href: '/data/${relief.concelho.file}', ...${JSON.stringify(relief.concelho.box)} },
+  cidade: { href: '/data/${relief.cidade.file}', ...${JSON.stringify(relief.cidade.box)} },
 }
 
 /**

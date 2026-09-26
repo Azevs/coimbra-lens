@@ -8,6 +8,7 @@ const AIR_URL =
   'https://air-quality-api.open-meteo.com/v1/air-quality' +
   '?latitude=40.2033&longitude=-8.4195' +
   '&current=european_aqi,pm10,pm2_5,nitrogen_dioxide,ozone,sulphur_dioxide,' +
+  'european_aqi_pm2_5,european_aqi_pm10,european_aqi_nitrogen_dioxide,european_aqi_ozone,' +
   'alder_pollen,birch_pollen,grass_pollen,olive_pollen' +
   '&timezone=Europe%2FLisbon'
 
@@ -32,6 +33,11 @@ export interface AirQualityPayload {
   pm10: number | null
   no2: number | null
   o3: number | null
+  /**
+   * Sub-índice europeu de cada poluente, na mesma escala do índice geral:
+   * o índice é o pior deles, e é isto que diz qual o está a puxar.
+   */
+  subIndex: { pm25: number | null; pm10: number | null; no2: number | null; o3: number | null }
   pollen: Pollen[]
   meta: Sourced
 }
@@ -92,6 +98,7 @@ function noData(note: string): AirQualityPayload {
     pm10: null,
     no2: null,
     o3: null,
+    subIndex: { pm25: null, pm10: null, no2: null, o3: null },
     pollen: [],
     meta: unavailable(SOURCE, note),
   }
@@ -125,6 +132,12 @@ export async function GET() {
       pm10: round(c.pm10),
       no2: round(c.nitrogen_dioxide),
       o3: round(c.ozone),
+      subIndex: {
+        pm25: round(c.european_aqi_pm2_5, 0),
+        pm10: round(c.european_aqi_pm10, 0),
+        no2: round(c.european_aqi_nitrogen_dioxide, 0),
+        o3: round(c.european_aqi_ozone, 0),
+      },
       pollen,
       // A API devolve hora local sem fuso; anexamos o offset de Lisboa.
       meta: live(SOURCE, c.time ? new Date(`${c.time}:00`).toISOString() : null),

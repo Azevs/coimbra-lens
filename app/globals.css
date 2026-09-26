@@ -85,6 +85,36 @@
   --map-4: #5A8195;
   --map-5: #2F5A74;
 
+  /* A rampa divergente, para o que pode ser perda ou ganho (a variação da
+     população). Três degraus de perda, do barro ao barro claro, e dois de
+     ganho, que acabam no mesmo azul da rampa sequencial. Não tem degrau
+     neutro: perder pouco ainda é perder. Não entra no check:contrast pelas
+     mesmas razões. */
+  --div-1: #8E4322;
+  --div-2: #C27A55;
+  --div-3: #E6C3AA;
+  --div-4: #93ABB4;
+  --div-5: #2F5A74;
+
+  /* ── Verdes do mapa das zonas verdes ─────────────────────────────────
+     Quatro famílias, todas verdes, e separadas por luminosidade e não só
+     por matiz: da mata, a mais escura, ao jardim, o mais claro. Os parques
+     andaram em azul e liam-se como água à beira do Mondego; os jardins
+     andaram em violeta e não pareciam verde nenhum.
+
+     O jardim é claro de mais para os 3:1 sobre o papel; quem lhe dá o
+     contorno é o `-edge`, que passa. Os `-text` são as mesmas famílias
+     escurecidas para texto pequeno. */
+  --green-reserva:      #1F6B5C;
+  --green-mata:         #2F5530;
+  --green-parque:       #558838;
+  --green-jardim-fill:  #A8BC66;
+  --green-jardim:       #5B7F1F;
+  --green-reserva-text: #1A5A4D;
+  --green-mata-text:    #2F5530;
+  --green-parque-text:  #34652F;
+  --green-jardim-text:  #4E6818;
+
   /* ── Semântica de estado ──────────────────────────────
      Bom → mau. Usada por índices e limiares, nunca como cor de marca. */
   --state-good: var(--tone-teal);
@@ -414,14 +444,20 @@ input[type='range']::-moz-range-thumb {
    que faziam pattern matching em strings de estilos inline e falhavam em
    silêncio sempre que um valor mudava. */
 
-/* Quatro módulos de dados lado a lado — clima, ar, água, rio. */
+/* Três módulos de dados lado a lado — tempo, ar, água. O rio vem por baixo, a toda a largura. */
 .grid-modules {
   display: grid;
   gap: 1.5rem;
   grid-template-columns: 1fr;
 }
-@media (min-width: 640px)  { .grid-modules { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 1120px) { .grid-modules { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 640px) {
+  .grid-modules { grid-template-columns: repeat(2, 1fr); }
+  .grid-modules > :nth-child(3):last-child { grid-column: 1 / -1; }
+}
+@media (min-width: 1020px) {
+  .grid-modules { grid-template-columns: repeat(3, 1fr); }
+  .grid-modules > :nth-child(3):last-child { grid-column: auto; }
+}
 
 /* Dois painéis de igual peso. */
 .grid-split {
@@ -458,13 +494,134 @@ input[type='range']::-moz-range-thumb {
 }
 @media (min-width: 760px) { .grid-cards { grid-template-columns: repeat(2, 1fr); } }
 
-/* Previsão: 7 dias não cabem num telemóvel — passam a 4 + 3. */
-.grid-forecast {
+/* Hoje: a semana ao lado dos avisos. */
+.grid-semana {
   display: grid;
-  gap: 0.5rem;
-  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  grid-template-columns: 1fr;
+  margin: 3rem 0 3.5rem;
 }
-@media (min-width: 600px) { .grid-forecast { grid-template-columns: repeat(7, 1fr); } }
+@media (min-width: 960px) { .grid-semana { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); } }
+
+/* ── Faixa do dia ───────────────────────────────────────────────────────
+   As próximas 24 horas, com o céu de margem a margem do ecrã e os dados
+   na coluna do texto. O céu tem a cor da hora, a
+   temperatura é o horizonte e a terra por baixo é o próprio papel da
+   página — a faixa sai do fundo em vez de ser uma caixa pousada nele. */
+.dia { margin: 0; }
+.dia-cabeca {
+  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
+  gap: 0.5rem 1.5rem; margin-bottom: 1rem;
+}
+.dia-legenda {
+  display: flex; gap: 1.25rem; font-family: var(--font-jetbrains); font-size: 11px;
+  color: var(--text-secondary);
+}
+.dia-legenda > span { display: inline-flex; align-items: center; gap: 6px; }
+.dia-leg-linha { width: 16px; height: 2px; background: var(--text-primary); }
+.dia-leg-chuva {
+  width: 6px; height: 12px; border-radius: 1px;
+  background: linear-gradient(180deg, #8FA9BE, #D5DEE5);
+}
+
+.dia-faixa {
+  position: relative;
+  height: clamp(240px, 26vw, 340px);
+  touch-action: pan-y;
+  cursor: crosshair;
+}
+.dia-faixa-vazia { background: var(--bg-sunken); opacity: 0.5; }
+
+.dia-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; }
+.dia-terra { fill: var(--bg-primary); }
+.dia-horizonte { fill: none; stroke: var(--text-primary); stroke-width: 2; stroke-linejoin: round; }
+.dia-sol-fio { stroke: rgba(255, 255, 255, 0.55); stroke-width: 1; stroke-dasharray: 2 3; }
+.dia-meia-noite { stroke: rgba(255, 255, 255, 0.18); stroke-width: 1; }
+
+.dia-estrela {
+  position: absolute; border-radius: 50%; background: #fff; opacity: 0.7; pointer-events: none;
+}
+
+.dia-sol, .dia-dia {
+  position: absolute; top: 12px; transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
+  font-family: var(--font-jetbrains); font-size: 11px; letter-spacing: 0.04em;
+  color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45); pointer-events: none;
+}
+.dia-sol { top: calc(12% - 16px); }
+.dia-dia {
+  top: auto; bottom: 34px; transform: translateX(6px);
+  color: var(--text-tertiary); text-shadow: none; text-transform: uppercase; letter-spacing: 0.14em;
+}
+
+/* Valores marcados na linha: agora, máxima e mínima. */
+.dia-marca { position: absolute; width: 0; height: 0; pointer-events: none; }
+.dia-marca::before {
+  content: ''; position: absolute; left: -5px; top: -5px; width: 10px; height: 10px; border-radius: 50%;
+  background: var(--text-primary); box-shadow: 0 0 0 2.5px var(--bg-primary);
+}
+.dia-marca-valor {
+  position: absolute; top: 12px; left: 0; transform: translateX(-50%);
+  font-family: var(--font-fraunces); font-weight: 600; font-size: clamp(1.1rem, 1.6vw, 1.45rem);
+  line-height: 1; color: var(--text-primary); white-space: nowrap;
+}
+.dia-marca.is-max::before { background: var(--tone-crimson); }
+.dia-marca.is-max .dia-marca-valor { color: var(--tone-crimson-text); }
+.dia-marca.is-min::before { background: var(--tone-blue); }
+.dia-marca.is-min .dia-marca-valor { color: var(--tone-blue-text); }
+.dia-marca.is-agora .dia-marca-valor { transform: none; left: 10px; }
+
+.dia-eixo { position: absolute; left: 0; right: 0; bottom: 10px; height: 16px; pointer-events: none; }
+.dia-eixo > span {
+  position: absolute; transform: translateX(-50%);
+  font-family: var(--font-jetbrains); font-size: 11px; color: var(--text-tertiary);
+}
+.dia-eixo > span:first-child { transform: none; padding-left: 6px; }
+@media (max-width: 700px) { .dia-eixo-3 { display: none; } }
+
+.dia-foco { position: absolute; top: 0; bottom: 0; width: 0; pointer-events: none; }
+.dia-foco::before {
+  content: ''; position: absolute; top: 0; bottom: 0; left: -0.5px; width: 1px;
+  background: rgba(128, 128, 128, 0.6);
+}
+.dia-foco-ponto {
+  position: absolute; left: -6px; width: 12px; height: 12px; margin-top: -6px; border-radius: 50%;
+  background: var(--bg-primary); border: 2px solid var(--text-primary);
+}
+.dia-foco-cartao {
+  position: absolute; top: 12px; left: 10px; white-space: nowrap;
+  padding: 6px 10px; border-radius: 3px; background: var(--bg-raised);
+  border: 1px solid var(--border-panel); box-shadow: 0 4px 14px rgba(20, 23, 28, 0.12);
+  font-family: var(--font-jetbrains); font-size: 12px; color: var(--text-primary);
+}
+.dia-foco-cartao.a-esquerda { left: auto; right: 10px; }
+
+.dia-rodape { margin-top: 0.25rem; }
+
+/* A semana: da mínima à máxima, numa escala comum aos sete dias. */
+.semana { list-style: none; margin: 0 0 0.5rem; padding: 0; }
+.semana-dia {
+  display: grid; align-items: center; gap: 0 0.875rem;
+  grid-template-columns: 5.5rem 20px 2.25rem minmax(0, 1fr) 2.25rem 4.5rem;
+  padding: 0.7rem 0; border-top: 1px solid var(--border-subtle);
+}
+.semana-dia:first-child { border-top: none; }
+.semana-nome { font-size: 0.875rem; color: var(--text-primary); text-transform: capitalize; }
+.semana-dia:first-child .semana-nome { font-weight: 600; }
+.semana-min, .semana-max { font-family: var(--font-jetbrains); font-size: 13px; }
+.semana-min { color: var(--text-tertiary); text-align: right; }
+.semana-max { color: var(--text-primary); }
+.semana-pista { position: relative; height: 6px; border-radius: 3px; background: var(--bg-sunken); }
+.semana-barra { position: absolute; top: 0; bottom: 0; border-radius: 3px; min-width: 6px; }
+.semana-chuva {
+  display: inline-flex; align-items: center; gap: 4px; justify-content: flex-end;
+  font-family: var(--font-jetbrains); font-size: 11px; color: var(--tone-blue-text);
+}
+@media (max-width: 520px) {
+  .semana-dia { grid-template-columns: 4.25rem 18px 2rem minmax(0, 1fr) 2rem; gap: 0 0.6rem; }
+  .semana-chuva { grid-column: 4 / 6; justify-content: flex-start; margin-top: 2px; }
+  .semana-chuva:empty { display: none; }
+}
 
 /* Mapa com painel lateral — o painel passa para baixo em ecrã estreito. */
 .grid-map-side {
@@ -1784,23 +1941,48 @@ footer a {
   white-space: nowrap;
 }
 
+.parish-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+/* Cinco grandezas não cabem numa linha de telemóvel: o grupo parte-se, e
+   cada botão leva o seu próprio filete para as linhas se fecharem. */
+.parish-metrics[hidden] { display: none; }
+.parish-metric-set { flex-wrap: wrap; }
+/* Num ecrã estreito as cinco grandezas vão para uma grelha de três e duas,
+   com o filete desenhado pelo intervalo de um píxel entre as células. */
+@media (max-width: 719px) {
+  .parish-metric-set {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1px;
+    width: 100%;
+    background: var(--border-strong);
+  }
+  .parish-metric-set .parish-metric { grid-column: span 2; background: var(--bg-primary); border: 0; }
+  .parish-metric-set .parish-metric:nth-child(n + 4) { grid-column: span 3; }
+  .parish-metric-set .parish-metric.is-on { background: var(--text-primary); }
+}
+.parish-legend-note { margin: 0; align-self: center; }
+
 .parish-layout {
   display: grid;
   gap: 2rem;
   grid-template-columns: minmax(0, 1fr);
 }
-/* A coluna do painel só abre quando sobra carta que chegue à esquerda: a
-   300px de painel mais 2,5rem de goteira, abaixo dos 1240px de ecrã o mapa
-   ficava mais estreito do que os nomes que tem de segurar. Em vez de o
-   apertar, o painel desce para debaixo dele. */
+/* A tabela só sobe para o lado do mapa quando sobra carta que chegue à
+   esquerda. Abaixo dos 1240px de ecrã desce para debaixo dele, e o cartão
+   da freguesia escolhida passa a colar-se ao fundo do ecrã. */
 @media (min-width: 1240px) {
   .parish-layout {
-    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-columns: minmax(0, 1fr) 430px;
     gap: 2.5rem;
     align-items: start;
   }
-  /* A carta é alta; o painel acompanha a leitura em vez de fugir. */
-  .parish-detail { position: sticky; top: 120px; }
+  /* A carta fica enquanto a tabela passa: é contra ela que cada linha se
+     lê. Cabe no ecrã pelo tecto da altura, lá em baixo. */
+  .parish-figure { position: sticky; top: 110px; }
 }
 
 /* A carta é mais alta do que larga. Sem tecto, num portátil ficava mais
@@ -1814,13 +1996,46 @@ footer a {
      SVG sem width vale por omissão. */
   width: 100%;
   justify-self: center;
-  max-width: min(100%, max(340px, calc((100vh - 11rem) * var(--map-ratio, 0.84))));
+  margin: 0;
+  max-width: min(100%, max(340px, calc((100vh - 10rem) * var(--map-ratio, 0.84))));
 }
 
+/* Os rios continuam para lá do desenho; a caixa corta-os. */
 .parish-map {
   display: block;
   width: 100%;
   height: auto;
+  overflow: hidden;
+}
+
+/* O relevo é chão, não dado. Fora do concelho é papel com sombra; dentro,
+   multiplica-se sobre as cores das classes, que continuam a ler-se. */
+.parish-relief-out { opacity: 0.4; pointer-events: none; }
+.parish-relief { opacity: 0.45; mix-blend-mode: multiply; pointer-events: none; }
+
+.parish-water path {
+  fill: color-mix(in srgb, var(--tone-blue) 30%, white);
+  stroke: none;
+  pointer-events: none;
+}
+.parish-water .parish-river {
+  fill: none;
+  stroke: color-mix(in srgb, var(--tone-blue) 55%, white);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.parish-river-label {
+  font-family: var(--font-fraunces), 'Fraunces', Georgia, serif;
+  font-style: italic;
+  letter-spacing: 0.12em;
+  text-anchor: middle;
+  fill: var(--tone-blue-text);
+  stroke: color-mix(in srgb, var(--tone-blue) 18%, white);
+  paint-order: stroke fill;
+  stroke-linejoin: round;
+  pointer-events: none;
 }
 
 /* O filete entre freguesias é a cor do papel, e mede-se em pixéis e não em
@@ -1832,7 +2047,7 @@ footer a {
   vector-effect: non-scaling-stroke;
   cursor: pointer;
   outline: none;
-  transition: fill 0.25s ease;
+  transition: fill 0.25s ease, fill-opacity 0.6s ease;
 }
 
 .parish-outline,
@@ -1843,7 +2058,7 @@ footer a {
   vector-effect: non-scaling-stroke;
   pointer-events: none;
 }
-.parish-outline { stroke: var(--text-primary); stroke-width: 1.5; }
+.parish-outline { stroke: var(--text-primary); stroke-width: 1.5; transition: opacity 0.6s ease; }
 .parish-active { stroke: var(--text-primary); stroke-width: 2; }
 .parish-selected { stroke: var(--accent); stroke-width: 3; }
 
@@ -1864,6 +2079,95 @@ footer a {
   stroke: var(--text-primary);
 }
 .parish-label-selected { font-weight: 700; }
+.parish-square-value {
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+  font-weight: 500;
+  font-feature-settings: 'tnum' 1;
+}
+
+.parish-scalebar path { fill: none; stroke: var(--text-primary); }
+.parish-scalebar text,
+.parish-key text {
+  font-family: var(--font-jetbrains), monospace;
+  fill: var(--text-primary);
+  stroke: var(--bg-primary);
+  paint-order: stroke fill;
+}
+.parish-key rect {
+  fill: none;
+  stroke: var(--text-primary);
+  stroke-dasharray: 4 3;
+  vector-effect: non-scaling-stroke;
+}
+
+/* ── As duas vistas ──────────────────────────────────────────────────────
+   Na vista proporcional, cada quadrado está desenhado no seu sítio final.
+   Na do mapa, o CSS encolhe-o à área que a freguesia tem no desenho e
+   pousa-o em cima dela, invisível; ao trocar de vista, cada um sai da sua
+   freguesia e cresce ou encolhe até à população que ela tem. */
+.parish-square {
+  stroke: var(--bg-primary);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+  cursor: pointer;
+  outline: none;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: translate(var(--dx), var(--dy)) scale(var(--s0));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) calc(var(--i) * 18ms),
+    opacity 0.45s ease calc(var(--i) * 18ms),
+    fill 0.25s ease;
+}
+.parish-map.is-proporcional .parish-square {
+  transform: none;
+  opacity: 1;
+  pointer-events: auto;
+}
+.parish-square:focus-visible { stroke: var(--accent); stroke-width: 2.5; }
+
+.parish-square-labels,
+.parish-prop-only {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.parish-map.is-proporcional .parish-square-labels,
+.parish-map.is-proporcional .parish-prop-only {
+  opacity: 1;
+  transition: opacity 0.4s ease 0.75s;
+}
+.parish-map-only { transition: opacity 0.4s ease 0.3s; }
+.parish-map.is-proporcional .parish-map-only { opacity: 0; transition: opacity 0.25s ease; }
+
+/* Onde vivem: as freguesias ficam papel, com os nomes recolhidos, e as
+   espigas levantam-se do sítio de cada subsecção. Continuam a poder
+   escolher-se — é por elas que a espiga diz de que freguesia é. */
+.parish-map.is-pessoas .parish-shape { fill-opacity: 0.22; }
+.parish-map.is-pessoas .parish-names { opacity: 0; transition: opacity 0.25s ease; }
+.parish-spikes path,
+.parish-spike-key {
+  fill: color-mix(in srgb, var(--accent) 30%, transparent);
+  stroke: var(--accent);
+  stroke-width: 0.8;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+.parish-spikes path.is-chosen {
+  fill: color-mix(in srgb, var(--text-primary) 55%, transparent);
+  stroke: var(--text-primary);
+}
+
+/* O mapa não desaparece: fica como sombra por trás dos quadrados, para se
+   ver de onde saiu cada um. */
+.parish-map.is-proporcional .parish-shape { fill-opacity: 0.16; pointer-events: none; }
+.parish-map.is-proporcional .parish-relief,
+.parish-map.is-proporcional .parish-water { opacity: 0.25; transition: opacity 0.6s ease; }
+.parish-map.is-proporcional .parish-outline { opacity: 0.35; }
+.parish-relief,
+.parish-water { transition: opacity 0.6s ease; }
 
 .parish-tip {
   position: absolute;
@@ -1887,6 +2191,64 @@ footer a {
 }
 .parish-tip-value { font-size: 15px; }
 
+.parish-hint {
+  margin: 0 0 1.25rem;
+  max-width: 64ch;
+  min-height: 3em;
+  font-family: var(--font-ibm-plex), 'IBM Plex Sans', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  text-wrap: pretty;
+}
+.parish-aside-hint { margin: 0 0 1rem; padding-top: 1rem; border-top: 3px solid var(--text-primary); }
+
+/* ── A freguesia escolhida ───────────────────────────────────────────── */
+.parish-detail {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+.parish-detail-aside {
+  padding-top: 1rem;
+  margin-bottom: 1.5rem;
+  border-top: 3px solid var(--accent);
+}
+.parish-locator { width: 72px; height: auto; display: block; }
+.parish-locator-all { fill: var(--bg-sunken); stroke: var(--text-tertiary); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.parish-locator-one { fill: var(--accent); stroke: var(--accent); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.parish-detail-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.parish-detail-name {
+  font-size: 1.25rem;
+  line-height: 1.2;
+  margin: 0.375rem 0 0.75rem;
+  text-wrap: balance;
+}
+.parish-detail-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.4rem 0;
+  border-top: 1px solid var(--border-subtle);
+}
+.parish-detail-row .font-data {
+  font-size: 13px;
+  color: var(--text-primary);
+  text-align: right;
+}
+.parish-detail-vs {
+  display: block;
+  font-family: var(--font-ibm-plex), 'IBM Plex Sans', sans-serif;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
 .parish-detail-close {
   background: none;
   border: 0;
@@ -1897,27 +2259,378 @@ footer a {
   color: var(--text-secondary);
   text-decoration: underline;
   text-underline-offset: 3px;
+  min-height: 24px;
 }
 
-/* Em telemóvel a carta inteira tem 340px de largura: o nome de uma
-   freguesia ficaria a 8px, abaixo do mínimo legível do painel. Em vez de o
-   encolher até deixar de se ler, sai — e a freguesia diz o nome quando
-   for tocada. */
-.parish-hint { display: none; }
-@media (max-width: 719px) {
-  .parish-label { display: none; }
-  .parish-hint { display: block; margin-bottom: 0.75rem; }
+/* As idades: jovens a azul, idosos a barro, e o grosso dos adultos em
+   papel — a leitura que interessa é a das duas pontas. */
+.parish-ages { margin: 1rem 0 0; }
+.parish-ages figcaption { margin-bottom: 0.375rem; }
+.parish-ages-bar { display: flex; width: 100%; }
+.parish-ages-bar.is-parish { height: 12px; }
+.parish-ages-bar.is-municipality { height: 4px; margin-top: 3px; opacity: 0.75; }
+.parish-ages .age-0 { background: var(--map-3); }
+.parish-ages .age-1 { background: var(--map-2); }
+.parish-ages .age-2 { background: var(--bg-sunken); }
+.parish-ages .age-3 { background: var(--div-2); }
+.parish-ages-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.875rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-ibm-plex), 'IBM Plex Sans', sans-serif;
+  font-size: 11.5px;
+  color: var(--text-secondary);
 }
+.parish-ages-key li { display: inline-flex; align-items: center; gap: 0.3rem; }
+.parish-ages-key li > span:first-child { width: 9px; height: 9px; display: inline-block; }
+.parish-ages-key .font-data { font-size: 11.5px; color: var(--text-primary); }
+.parish-ages-note { margin: 0.25rem 0 0; font-size: 11px; }
+.parish-detail-half {
+  margin: 0.875rem 0 0;
+  font-family: var(--font-ibm-plex), 'IBM Plex Sans', sans-serif;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+.parish-detail-half strong { color: var(--text-primary); font-weight: 600; }
+
+/* No telemóvel e enquanto a tabela estiver debaixo do mapa, o cartão
+   cola-se ao fundo do ecrã. Numa secretária é o do lado que conta. */
+.parish-detail-sheet {
+  position: fixed;
+  z-index: 40;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 0.875rem 1rem 0.5rem;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-panel);
+  border-top: 3px solid var(--accent);
+  box-shadow: var(--shadow-lg);
+  grid-template-columns: 56px minmax(0, 1fr);
+  animation: parish-sheet-in 0.25s ease-out;
+}
+.parish-detail-sheet .parish-locator { width: 56px; }
+.parish-detail-sheet .parish-detail-name { font-size: 1.0625rem; margin-bottom: 0.5rem; }
+.parish-detail-sheet .parish-detail-rows {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 1rem;
+}
+.parish-detail-sheet .parish-detail-vs { display: none; }
+.parish-detail-sheet .is-extra { display: none; }
+/* Em duas colunas não há largura para nome e valor lado a lado: o valor
+   desce para debaixo do nome. */
+.parish-detail-sheet .parish-detail-row {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  padding: 0.3rem 0;
+}
+.parish-detail-sheet .parish-detail-row .font-data { text-align: left; white-space: nowrap; }
+@keyframes parish-sheet-in {
+  from { transform: translateY(1rem); opacity: 0; }
+}
+@media (min-width: 1240px) {
+  .parish-detail-sheet { display: none; }
+}
+@media (max-width: 1239px) {
+  .parish-detail-aside,
+  .parish-aside-hint { display: none; }
+}
+
+/* ── A tabela ─────────────────────────────────────────────────────────── */
+.parish-table-wrap { overflow-x: auto; }
+.parish-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-ibm-plex), 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+}
+.parish-table thead th {
+  padding: 0 0 0.375rem;
+  border-bottom: 1px solid var(--text-primary);
+  text-align: left;
+  font-weight: 600;
+}
+.parish-table th.is-num,
+.parish-table td.is-num { text-align: right; }
+.parish-table thead button {
+  all: unset;
+  cursor: pointer;
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+.parish-table thead button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.parish-table thead th.is-painted button,
+.parish-table thead th[aria-sort='ascending'] button,
+.parish-table thead th[aria-sort='descending'] button { color: var(--text-primary); }
+.parish-table thead th.is-painted button { box-shadow: inset 0 -2px 0 var(--map-4); }
+.parish-sort { display: inline-block; width: 0.9em; text-align: center; }
+
+.parish-table tbody tr {
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background 0.15s ease;
+}
+.parish-table tbody tr.is-active { background: var(--bg-sunken); }
+.parish-table tbody tr.is-selected { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+.parish-table tbody tr.is-selected th { box-shadow: inset 3px 0 0 var(--accent); }
+.parish-table tbody th,
+.parish-table tbody td { padding: 0.3rem 0; vertical-align: middle; }
+.parish-table tbody td { padding-left: 0.75rem; }
+.parish-table tbody th { font-weight: 400; text-align: left; }
+.parish-table tbody th button {
+  all: unset;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-height: 32px;
+  padding-left: 0.375rem;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.parish-table tbody tr.is-selected th button { font-weight: 600; }
+.parish-table tbody th button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.parish-table .font-data { font-size: 12.5px; color: var(--text-primary); }
+.parish-thumb { width: 26px; height: 26px; flex: none; display: block; }
+.parish-thumb path { stroke: var(--text-primary); stroke-width: 1; vector-effect: non-scaling-stroke; transition: fill 0.25s ease; }
+
+.parish-bar {
+  display: block;
+  height: 3px;
+  margin-top: 3px;
+  margin-left: auto;
+  width: 100%;
+  max-width: 88px;
+  background: var(--border-subtle);
+}
+.parish-bar span { display: block; height: 100%; margin-left: auto; }
+.parish-bar.is-div { position: relative; }
+.parish-bar.is-div span { position: absolute; top: 0; margin: 0; }
+.parish-bar.is-div::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  bottom: -2px;
+  width: 1px;
+  background: var(--text-tertiary);
+}
+
+.parish-table tfoot th,
+.parish-table tfoot td {
+  padding: 0.5rem 0 0;
+  border-top: 1px solid var(--text-primary);
+  font-weight: 600;
+  text-align: left;
+}
+.parish-table tfoot td { text-align: right; padding-left: 0.75rem; font-size: 12.5px; }
+.parish-table tfoot th { padding-left: 0.375rem; }
+
+@media (max-width: 479px) {
+  .parish-col-area { display: none; }
+}
+
+/* ── As dezoito peças do topo ────────────────────────────────────────── */
+.green-hero-foot.parish-hero-foot { align-items: center; }
+.pieces { margin: 0; }
+.pieces-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 460px;
+  overflow: visible;
+}
+@media (max-width: 719px) { .pieces-svg { max-height: 340px; } }
+
+/* Cada peça afasta-se do centro na sua direcção. O afastamento é a própria
+   posição da peça; a animação só parte do concelho inteiro até lá. */
+.pieces-piece {
+  stroke: var(--text-primary);
+  stroke-width: 1.1;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  cursor: pointer;
+  outline: none;
+  transform: translate(var(--dx), var(--dy));
+  transition: fill 0.2s ease;
+  animation: pieces-apart 1.1s cubic-bezier(0.3, 0.7, 0.2, 1) calc(0.35s + var(--i) * 30ms) backwards;
+}
+@keyframes pieces-apart {
+  from { transform: translate(0, 0); }
+}
+.pieces-piece:hover,
+.pieces-piece.is-active,
+.pieces-piece:focus-visible { fill: color-mix(in srgb, var(--accent) 45%, var(--bg-raised)); }
+.pieces-piece.is-selected { fill: var(--accent); }
+
+.pieces-caption {
+  margin-top: 1rem;
+  font-family: var(--font-ibm-plex), 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
+  min-height: 2.9em;
+}
+.pieces-caption strong { font-weight: 600; }
+.pieces-caption .ui-note { font-size: 12px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .parish-shape { transition: none; }
+  .parish-shape,
+  .parish-square,
+  .parish-square-labels,
+  .parish-prop-only,
+  .parish-map-only,
+  .parish-relief,
+  .parish-water,
+  .parish-outline,
+  .parish-thumb path,
+  .parish-table tbody tr { transition: none !important; }
+  .pieces-piece,
+  .parish-detail-sheet { animation: none; }
 }
 
 /* ── Zonas verdes ─────────────────────────────────────────────────────────
    A carta do verde partilha a projecção e o viewBox com a das freguesias,
    mas não o desenho: ali pinta-se todo o território por classes, aqui há
-   formas soltas sobre o papel. Daí um bloco próprio em vez de reaproveitar
+   formas soltas sobre o relevo. Daí um bloco próprio em vez de reaproveitar
    `.parish-*`, que teria de crescer com excepções para os dois casos. */
+
+/* As secções desta página seguem-se umas às outras sem o intervalo de
+   capítulo das outras páginas: o herbário, o mapa e a lista são a mesma
+   coisa vista de três maneiras. */
+.green-section { padding-top: 3.5rem; padding-bottom: 3.5rem; }
+@media (min-width: 768px) {
+  .green-section { padding-top: 4.5rem; padding-bottom: 4.5rem; }
+}
+
+/* ── O herbário ────────────────────────────────────────────────────────── */
+
+/* A frase de abertura e o herbário partilham o pé do título: lado a lado
+   num ecrã largo, para a primeira coisa que se vê de verde caber no
+   primeiro ecrã; um por baixo do outro no telemóvel. */
+.green-hero-foot {
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--border-panel);
+  display: grid;
+  gap: 2.5rem;
+}
+@media (min-width: 1100px) {
+  .green-hero-foot {
+    grid-template-columns: minmax(0, 30rem) minmax(0, 1fr);
+    gap: 3.5rem;
+    align-items: start;
+  }
+}
+.herbarium {
+  --herb-s: 1.2;
+  margin: 0;
+}
+@media (min-width: 720px) { .herbarium { --herb-s: 1.6; } }
+@media (min-width: 1100px) { .herbarium { --herb-s: 1.3; } }
+
+.herbarium-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.herbarium-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.herbarium-bar span {
+  display: block;
+  height: 5px;
+  border: 1.25px solid var(--text-primary);
+  border-top: 0;
+}
+
+/* As formas assentam todas na mesma linha de base, como espécimes numa
+   prancha: a de baixo é o chão comum, e a altura de cada uma lê-se contra
+   a da vizinha. */
+.herbarium-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1.25rem 0.875rem;
+}
+.herbarium-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+/* O botão é maior do que a forma quando ela é pequena: um jardim de meio
+   hectare desenha-se com quatro píxeis, e quatro píxeis não se acertam. */
+.herbarium-shape {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  border-radius: 2px;
+}
+.herbarium-shape svg { display: block; overflow: visible; }
+.herbarium-shape path {
+  stroke-width: 0.75;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  transition: opacity 0.2s ease;
+}
+.herbarium-shape:hover path,
+.herbarium-shape:focus-visible path { opacity: 0.78; }
+.herbarium-shape:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.herbarium-shape.is-selected path { stroke: var(--accent); stroke-width: 2.5; }
+
+.herbarium-name {
+  min-height: 1.5em;
+  margin-top: 0.375rem;
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+@media (max-width: 1099px) { .herbarium-name { display: none; } }
+
+.herbarium-caption {
+  min-height: 3em;
+  margin-top: 1.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.herbarium-caption strong {
+  font-family: var(--font-fraunces), 'Fraunces', Georgia, serif;
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+.herbarium-caption .ui-note { font-size: 12px; }
+
+/* ── O mapa ────────────────────────────────────────────────────────────── */
 
 .green-controls {
   display: flex;
@@ -1926,6 +2639,9 @@ footer a {
   justify-content: space-between;
   gap: 1rem 1.5rem;
   margin-bottom: 1.25rem;
+  /* Quem escolhe no herbário ou na lista desce até aqui; a barra de
+     navegação fica por cima e não pode tapar os controlos. */
+  scroll-margin-top: 7.5rem;
 }
 
 .green-scales {
@@ -1971,10 +2687,10 @@ footer a {
 .green-legend-item.is-off { color: var(--text-secondary); }
 .green-legend-item.is-off .green-legend-swatch { background: none !important; }
 .green-legend-swatch {
-  width: 11px;
-  height: 11px;
+  width: 12px;
+  height: 12px;
   border-radius: 2px;
-  border: 1px solid var(--border-strong);
+  border: 1.5px solid var(--border-strong);
   flex-shrink: 0;
 }
 .green-legend-count {
@@ -1994,7 +2710,8 @@ footer a {
     gap: 2.5rem;
     align-items: start;
   }
-  .green-detail { position: sticky; top: 120px; }
+  /* A ficha acompanha a carta enquanto ela está no ecrã. */
+  .green-aside { position: sticky; top: 7rem; }
 }
 
 /* O mesmo tecto de altura da carta das freguesias, pela mesma razão: sem
@@ -2015,12 +2732,29 @@ footer a {
   background: var(--bg-sunken);
 }
 
+/* O relevo é chão, não dado: escurece e aclara o papel sem lhe mudar a cor. */
+.green-relief { opacity: 0.55; pointer-events: none; }
+
+/* As estradas orientam e mais nada: traço de lápis, mais fino do que
+   qualquer contorno de jardim. */
+.green-roads path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+.green-road-major { stroke: rgba(20, 23, 28, 0.34); stroke-width: 1.5; }
+.green-road-secondary { stroke: rgba(20, 23, 28, 0.26); stroke-width: 1.1; }
+.green-road-minor { stroke: rgba(20, 23, 28, 0.2); stroke-width: 0.8; }
+
 /* As freguesias por baixo são contexto, não dados: o traço mais fino que o
    ecrã consegue, e nenhuma área pintada. */
 .green-context path {
   fill: none;
   stroke: var(--border-strong);
   stroke-width: 0.75;
+  stroke-dasharray: 3 3;
   vector-effect: non-scaling-stroke;
 }
 
@@ -2040,15 +2774,26 @@ footer a {
   opacity: 0.7;
   vector-effect: non-scaling-stroke;
 }
+.green-radius-label {
+  font-family: var(--font-jetbrains), monospace;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-anchor: middle;
+  fill: var(--accent-text);
+  stroke: var(--bg-sunken);
+  paint-order: stroke fill;
+  stroke-linejoin: round;
+}
 
 .green-shape {
   cursor: pointer;
   outline: none;
 }
+/* O contorno vem da família (`KINDS.edge`), no atributo. Aqui só a
+   espessura, em pixéis do ecrã. */
 .green-shape path,
 .green-shape circle {
-  stroke: var(--bg-primary);
-  stroke-width: 0.75;
+  stroke-width: 0.9;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
   transition: opacity 0.2s ease;
@@ -2056,11 +2801,11 @@ footer a {
 .green-shape:hover path,
 .green-shape:focus-visible path,
 .green-shape:hover circle,
-.green-shape:focus-visible circle { opacity: 0.82; }
+.green-shape:focus-visible circle { opacity: 0.8; }
 
 /* O disco por baixo das formas pequenas é uma marca de posição, não o
    desenho do lugar — fica mais claro do que ele para não se confundirem. */
-.green-marker { opacity: 0.55; }
+.green-marker { fill-opacity: 0.6; }
 
 .green-active,
 .green-selected {
@@ -2075,17 +2820,52 @@ footer a {
 .green-active { stroke: var(--text-primary); stroke-width: 2; }
 .green-selected { stroke: var(--accent); stroke-width: 2.5; }
 
+/* O alinhamento de cada nome vem no atributo, porque uns escrevem-se por
+   dentro da forma e outros ao lado dela. */
 .green-label {
   font-family: var(--font-ibm-plex), 'IBM Plex Sans', sans-serif;
   font-weight: 600;
-  text-anchor: middle;
   fill: var(--text-primary);
   stroke: var(--bg-sunken);
   paint-order: stroke fill;
   stroke-linejoin: round;
   pointer-events: none;
 }
-.green-label.is-selected { font-weight: 700; }
+.green-label.is-selected { font-weight: 700; fill: var(--accent-text); }
+
+.green-river-label {
+  font-family: var(--font-fraunces), 'Fraunces', Georgia, serif;
+  font-style: italic;
+  letter-spacing: 0.12em;
+  text-anchor: middle;
+  fill: var(--tone-blue-text);
+  stroke: color-mix(in srgb, var(--tone-blue) 30%, white);
+  paint-order: stroke fill;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.green-landmark { pointer-events: none; }
+.green-landmark circle { fill: var(--accent); stroke: var(--bg-raised); }
+.green-landmark rect { fill: var(--text-primary); stroke: var(--bg-raised); }
+.green-landmark text {
+  font-family: var(--font-jetbrains), monospace;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  fill: var(--text-primary);
+  stroke: var(--bg-sunken);
+  paint-order: stroke fill;
+  stroke-linejoin: round;
+}
+.green-landmark-portagem text { fill: var(--accent-text); }
+
+.green-scalebar path { fill: none; stroke: var(--text-primary); }
+.green-scalebar text {
+  font-family: var(--font-jetbrains), monospace;
+  fill: var(--text-primary);
+  stroke: var(--bg-sunken);
+  paint-order: stroke fill;
+}
 
 .green-detail-close {
   background: none;
@@ -2101,7 +2881,6 @@ footer a {
 
 .green-hint { display: none; }
 @media (max-width: 719px) {
-  .green-label { display: none; }
   .green-hint { display: block; margin-bottom: 0.75rem; }
 }
 
@@ -2142,40 +2921,52 @@ footer a {
 
 .green-rows { list-style: none; margin: 0; padding: 0; }
 
-/* Uma grelha e não uma tabela: os cinco campos alinham em coluna sem que a
-   barra, que é a única parte elástica, aperte o nome. */
+/* Cada linha é um botão que ocupa a largura toda. Uma grelha e não uma
+   tabela: os campos alinham em coluna sem que o nome, que é a única parte
+   elástica, seja apertado pelos números. */
 .green-row {
   display: grid;
-  grid-template-columns: 3px minmax(0, 1fr) auto;
+  width: 100%;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
   grid-template-areas:
-    'kind name area'
-    'kind bar  dist';
+    'thumb name area'
+    'thumb name dist';
   align-items: center;
-  gap: 0.25rem 0.875rem;
-  padding: 0.75rem 0;
+  gap: 0.125rem 0.875rem;
+  padding: 0.625rem 0.5rem 0.625rem 0;
+  background: none;
+  border: 0;
   border-bottom: 1px solid var(--border-subtle);
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  transition: background 0.15s ease;
 }
 @media (min-width: 720px) {
   .green-row {
-    grid-template-columns: 3px minmax(9rem, 1fr) minmax(0, 1.1fr) 5.5rem 4.5rem;
-    grid-template-areas: 'kind name bar area dist';
+    grid-template-columns: 44px minmax(0, 1fr) 7rem 5.5rem 4.5rem;
+    grid-template-areas: 'thumb name go area dist';
   }
 }
+.green-row:hover { background: var(--bg-secondary); }
+.green-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.green-row.is-selected { background: var(--bg-secondary); box-shadow: inset 3px 0 0 var(--accent); }
 
-.green-row-kind {
-  grid-area: kind;
-  align-self: stretch;
-  border-radius: 2px;
+.green-row-thumb {
+  grid-area: thumb;
+  width: 40px;
+  height: 40px;
+  overflow: visible;
 }
+.green-row-thumb path {
+  stroke-width: 0.9;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+@media (min-width: 720px) { .green-row-thumb { width: 44px; height: 44px; } }
+
 .green-row-name { grid-area: name; display: flex; flex-direction: column; gap: 2px; }
-.green-row-bar {
-  grid-area: bar;
-  height: 6px;
-  background: var(--bg-sunken);
-  border-radius: 2px;
-  overflow: hidden;
-}
-.green-row-bar span { display: block; height: 100%; border-radius: 2px; }
 .green-row-area {
   grid-area: area;
   font-size: 13px;
@@ -2184,12 +2975,27 @@ footer a {
   white-space: nowrap;
 }
 .green-row-dist { grid-area: dist; text-align: right; white-space: nowrap; }
+/* A indicação de que a linha leva ao mapa só aparece sob o rato: repetida
+   em trinta linhas seria ruído. */
+.green-row-go {
+  grid-area: go;
+  display: none;
+  text-align: right;
+  color: var(--accent-text);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+@media (min-width: 720px) { .green-row-go { display: block; } }
+.green-row:hover .green-row-go,
+.green-row:focus-visible .green-row-go { opacity: 1; }
 
 @media (prefers-reduced-motion: reduce) {
   .green-shape path,
-  .green-shape circle { transition: none; }
+  .green-shape circle,
+  .herbarium-shape path,
+  .green-row,
+  .green-row-go { transition: none; }
 }
-
 
 .green-tip {
   position: absolute;
@@ -2213,11 +3019,11 @@ footer a {
 }
 .green-tip-value { font-size: 15px; }
 
-/* A água. Fica atrás de tudo o que é verde e à frente das freguesias: é
-   terreno, não é dado. Não leva o azul dos parques — leva-o clareado, para
-   se ler como rio e nunca se confundir com uma zona que se possa escolher.
-   Clareado com branco e não com o papel: o papel é quente, e o azul
-   diluído nele dava cinzento em vez de rio. */
+/* A água. Fica atrás de tudo o que é verde: é terreno, não é dado. Leva
+   um azul clareado, para se ler como rio e nunca se confundir com uma zona
+   que se possa escolher — nenhuma das quatro famílias é azul. Clareado com
+   branco e não com o papel: o papel é quente, e o azul diluído nele dava
+   cinzento em vez de rio. */
 .green-water path {
   fill: color-mix(in srgb, var(--tone-blue) 30%, white);
   stroke: none;
@@ -3546,3 +4352,110 @@ footer a {
 .trilhos-chip-familia:not(.is-on) { border-style: dashed; color: var(--text-tertiary); }
 .trilhos-chip-familia:not(.is-on) .trilho-marca-traco { opacity: 0.45; }
 @media (max-width: 639px) { .trilhos-carta { height: 58svh; min-height: 340px; } }
+
+/* ── Hoje: os cartões de detalhe ───────────────────────────────────────── */
+.tempo-vento {
+  display: flex; align-items: center; gap: 1rem;
+  padding-bottom: 1.1rem; margin-bottom: 0.9rem; border-bottom: 1px solid var(--border-subtle);
+}
+.tempo-vento-titulo { display: block; font-size: 0.875rem; color: var(--text-primary); margin-bottom: 2px; }
+.tempo-vento-num {
+  display: block; font-family: var(--font-fraunces); font-weight: 600; font-size: 2rem; line-height: 1.1;
+  color: var(--tone-teal-text);
+}
+.tempo-vento-num small { font-family: var(--font-jetbrains); font-size: 12px; font-weight: 400; color: var(--text-secondary); }
+.rosa-seta { transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1); }
+
+.tempo-linha {
+  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 6px 1rem;
+  padding: 0.55rem 0; border-bottom: 1px solid var(--border-subtle);
+}
+.tempo-valor { font-family: var(--font-jetbrains); font-size: 13px; color: var(--text-primary); text-align: right; }
+.tempo-barra, .tempo-uv-escala { grid-column: 1 / -1; display: flex; gap: 3px; height: 4px; }
+.tempo-barra { background: var(--bg-sunken); border-radius: 2px; overflow: hidden; }
+.tempo-barra > i { display: block; height: 100%; background: var(--tone-blue); border-radius: 2px; transition: width 1s ease; }
+.tempo-uv-escala > i { flex: 1; border-radius: 2px; background: var(--bg-sunken); }
+
+.ar-frase { margin: 0 0 1.1rem; font-size: 0.875rem; line-height: 1.6; color: var(--text-secondary); }
+.ar-estado {
+  display: inline-block; padding: 2px 10px; border-radius: 3px; border: 1px solid;
+  font-weight: 700; font-size: 12px; font-family: var(--font-ibm-plex);
+}
+.ar-poluente, .ar-escala {
+  display: grid; grid-template-columns: 3.25rem minmax(0, 1fr) 5.5rem; align-items: center; gap: 0 0.75rem;
+}
+.ar-poluente { padding: 0.45rem 0; }
+.ar-escala { margin-bottom: 0.15rem; }
+.ar-escala-marcas {
+  display: flex; justify-content: space-between;
+  font-family: var(--font-jetbrains); font-size: 10px; color: var(--text-tertiary);
+}
+.ar-nome { font-family: var(--font-jetbrains); font-size: 12px; color: var(--text-secondary); }
+.ar-poluente.is-dominante .ar-nome { color: var(--text-primary); font-weight: 700; }
+/* A pista tem as bandas do índice, de 20 em 20, como régua de fundo. */
+.ar-pista {
+  position: relative; height: 8px; border-radius: 4px; overflow: hidden;
+  background:
+    linear-gradient(90deg,
+      transparent calc(20% - 1px), var(--bg-primary) calc(20% - 1px), var(--bg-primary) 20%, transparent 20%,
+      transparent calc(40% - 1px), var(--bg-primary) calc(40% - 1px), var(--bg-primary) 40%, transparent 40%,
+      transparent calc(60% - 1px), var(--bg-primary) calc(60% - 1px), var(--bg-primary) 60%, transparent 60%,
+      transparent calc(80% - 1px), var(--bg-primary) calc(80% - 1px), var(--bg-primary) 80%, transparent 80%),
+    var(--bg-sunken);
+}
+.ar-pista > i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
+.ar-conc { font-family: var(--font-jetbrains); font-size: 12px; color: var(--text-primary); text-align: right; white-space: nowrap; }
+.ar-conc small { color: var(--text-tertiary); font-size: 10px; }
+.ar-polen-resumo {
+  display: grid; gap: 4px; margin: 1rem 0 0; padding-top: 0.875rem; border-top: 1px solid var(--border-subtle);
+  font-size: 0.8125rem; line-height: 1.55; color: var(--text-secondary);
+}
+
+/* O rio, a toda a largura: os factos à esquerda, catorze dias à direita. */
+.rio { display: grid; gap: 1.75rem; grid-template-columns: 1fr; }
+@media (min-width: 900px) { .rio { grid-template-columns: minmax(15rem, 1fr) minmax(0, 2.6fr); gap: 3rem; } }
+.rio-alerta {
+  padding: 7px 10px; border-radius: 3px; margin-bottom: 0.75rem;
+  background: rgba(176, 125, 58, 0.15); border: 1px solid rgba(176, 125, 58, 0.45);
+  font-size: 12px; color: var(--tone-amber-text); font-weight: 600; line-height: 1.45;
+}
+.rio-valor { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 0.5rem; margin-bottom: 1rem; }
+.rio-num { font-family: var(--font-fraunces); font-weight: 600; font-size: 3rem; line-height: 1; color: var(--tone-blue-text); }
+.rio-unid { font-family: var(--font-jetbrains); font-size: 13px; color: var(--text-secondary); }
+.rio-tendencia { flex-basis: 100%; margin-top: 6px; font-size: 13px; font-weight: 600; }
+.rio-factos { margin: 0 0 0.5rem; }
+.rio-factos > div { padding: 0.55rem 0; border-top: 1px solid var(--border-subtle); }
+.rio-factos dt { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-tertiary); }
+.rio-factos dd { margin: 2px 0 0; font-family: var(--font-jetbrains); font-size: 13px; color: var(--text-primary); }
+
+.rio-grafico { align-self: end; padding-top: 1.75rem; }
+.rio-area { position: relative; height: clamp(170px, 18vw, 230px); margin-left: 2rem; }
+.rio-area > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.rio-grelha-linha { position: absolute; left: 0; right: 0; height: 0; border-top: 1px dashed var(--border-subtle); }
+.rio-grelha-linha > span {
+  position: absolute; right: calc(100% + 8px); top: -7px;
+  font-family: var(--font-jetbrains); font-size: 10px; color: var(--text-tertiary);
+}
+.rio-ponto {
+  position: absolute; width: 11px; height: 11px; margin: -5.5px 0 0 -5.5px; border-radius: 50%;
+  background: var(--tone-blue); box-shadow: 0 0 0 2.5px var(--bg-secondary), 0 0 0 7px rgba(47, 90, 116, 0.18);
+}
+.rio-hoje {
+  position: absolute; top: -1.4rem; transform: translateX(-50%);
+  font-family: var(--font-jetbrains); font-size: 11px; font-weight: 700; color: var(--text-primary);
+}
+.rio-tramo {
+  position: absolute; bottom: 8px; text-align: center; pointer-events: none;
+  font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--tone-blue-text);
+}
+.rio-tramo.is-previsto { opacity: 0.75; }
+.rio-pico {
+  position: absolute; transform: translate(-50%, calc(-100% - 8px));
+  font-family: var(--font-jetbrains); font-size: 12px; font-weight: 700; color: var(--tone-blue-text);
+}
+.rio-eixo { position: relative; height: 1.5rem; margin: 0.5rem 0 0 2rem; }
+.rio-eixo > span {
+  position: absolute; transform: translateX(-50%); white-space: nowrap;
+  font-family: var(--font-jetbrains); font-size: 10px; color: var(--text-tertiary);
+}
+@media (max-width: 1100px) { .rio-eixo-par { display: none; } }

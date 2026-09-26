@@ -48,6 +48,10 @@ const TEXT_TOKENS = [
   'tone-crimson-text',
   'tone-rose-text',
   'accent-text',
+  'green-reserva-text',
+  'green-mata-text',
+  'green-parque-text',
+  'green-jardim-text',
 ]
 
 /** Tokens usados como preenchimento, contorno ou marcador. */
@@ -63,6 +67,10 @@ const GRAPHIC_TOKENS = [
   'tone-moss',
   'tone-crimson',
   'tone-rose',
+  'green-reserva',
+  'green-mata',
+  'green-parque',
+  'green-jardim',
 ]
 
 /** Os fundos sobre os quais tudo isto assenta. */

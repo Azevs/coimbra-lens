@@ -305,7 +305,7 @@ export default function HeroSection() {
   const variacao = variacaoDoCaudal(river?.series)
   const lead = manchete(weather?.temperature, air?.aqi, river?.trend, river?.discharge != null)
 
-  const tempSeries = forecast?.hourly?.map((h) => h.temp) ?? []
+  const tempSeries = forecast?.hourly?.slice(0, 24).map((h) => h.temp) ?? []
   const horaAgora = agora ? Number(new Intl.DateTimeFormat('pt-PT', { hour: 'numeric', hourCycle: 'h23', timeZone: LISBOA }).format(agora)) : undefined
   const riverSeries = river?.series?.map((p) => p.discharge) ?? []
   const riverSplit = river?.series?.findIndex((p) => p.forecast) ?? -1

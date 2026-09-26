@@ -2,8 +2,7 @@ import type { Metadata } from 'next'
 import Navbar from '@/components/navigation/Navbar'
 import SiteFooter from '@/components/navigation/SiteFooter'
 import DataTicker from '@/components/hero/DataTicker'
-import GreenMap from '@/components/map/GreenMap'
-import GreenList from '@/components/sections/GreenList'
+import GreenExplorer from '@/components/sections/GreenExplorer'
 import { IN_CITY, SPACES, TOTAL_HA, formatHa } from '@/lib/green'
 
 export const metadata: Metadata = {
@@ -46,7 +45,12 @@ export default function ZonasVerdesPage() {
             </span>
           </h1>
 
-          <div style={{ borderTop: '1px solid var(--border-panel)', paddingTop: '1.75rem' }}>
+        </div>
+
+        {/* A frase de abertura vai para dentro do explorador, que a põe ao
+            lado do herbário: é o herbário que dá corpo ao que ela diz. */}
+        <GreenExplorer
+          intro={
             <p
               className="font-display"
               style={{
@@ -61,11 +65,8 @@ export default function ZonasVerdesPage() {
               com nome, {formatHa(TOTAL_HA)} hectares, dos quais {IN_CITY.length} se alcançam a pé
               de quem mora no centro.
             </p>
-          </div>
-        </div>
-
-        <GreenMap />
-        <GreenList />
+          }
+        />
       </main>
 
       <SiteFooter />

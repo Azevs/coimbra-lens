@@ -30,43 +30,83 @@ const SORTS: Record<SortId, { label: string; compare: (a: GreenSpace, b: GreenSp
   },
 }
 
-/** A maior da lista dá a escala da barra a todas as outras. */
-const LARGEST = Math.max(...SPACES.map((s) => s.areaHa))
-
-function Entry({ space }: { space: GreenSpace }) {
+/**
+ * A forma do lugar, em miniatura.
+ *
+ * Cada uma no seu próprio tamanho, esticada à caixa — não à mesma escala.
+ * A comparação de tamanhos faz-se no herbário, lá em cima; aqui a forma
+ * serve para reconhecer o lugar, como a silhueta de um país num atlas.
+ */
+function Thumb({ space }: { space: GreenSpace }) {
+  const [x0, y0, x1, y1] = space.box
+  const side = Math.max(x1 - x0, y1 - y0) * 1.1
+  const cx = (x0 + x1) / 2
+  const cy = (y0 + y1) / 2
   const kind = KINDS[space.kind]
   return (
-    <li className="green-row">
-      <span className="green-row-kind" style={{ background: kind.color }} aria-hidden="true" />
+    <svg
+      className="green-row-thumb"
+      viewBox={`${cx - side / 2} ${cy - side / 2} ${side} ${side}`}
+      aria-hidden="true"
+    >
+      <path d={space.d} fill={kind.color} stroke={kind.edge} />
+    </svg>
+  )
+}
 
-      <div className="green-row-name">
-        <span className="font-display" style={{ fontSize: '1.0625rem', lineHeight: 1.25 }}>
-          {displayName(space)}
+function Entry({
+  space,
+  selected,
+  onSelect,
+}: {
+  space: GreenSpace
+  selected: boolean
+  onSelect: (id: string) => void
+}) {
+  const kind = KINDS[space.kind]
+  return (
+    <li>
+      <button
+        type="button"
+        className={`green-row${selected ? ' is-selected' : ''}`}
+        aria-pressed={selected}
+        onClick={() => onSelect(space.id)}
+      >
+        <Thumb space={space} />
+
+        <span className="green-row-name">
+          <span className="font-display" style={{ fontSize: '1.0625rem', lineHeight: 1.25 }}>
+            {displayName(space)}
+          </span>
+          <span className="ui-note">
+            <span style={{ color: kind.text, fontWeight: 600 }}>{kind.label}</span> · {parishName(space)}
+            {space.paid && ' · entrada paga'}
+          </span>
         </span>
-        <span className="ui-note">
-          {kind.label} · {parishName(space)}
+
+        <span className="green-row-area font-data">{formatHa(space.areaHa)} ha</span>
+        <span className="green-row-dist ui-note">{formatDistance(space.distanceKm)}</span>
+        <span className="green-row-go ui-note" aria-hidden="true">
+          Ver no mapa ↑
         </span>
-      </div>
-
-      <div className="green-row-bar" aria-hidden="true">
-        {/* Raiz quadrada, e não proporção directa: entre 0,2 e 586 hectares
-            uma barra linear deixaria vinte e nove riscos invisíveis ao lado
-            de um. A área lê-se no número; a barra serve para comparar. */}
-        <span
-          style={{
-            width: `${Math.sqrt(space.areaHa / LARGEST) * 100}%`,
-            background: kind.color,
-          }}
-        />
-      </div>
-
-      <span className="green-row-area font-data">{formatHa(space.areaHa)} ha</span>
-      <span className="green-row-dist ui-note">{formatDistance(space.distanceKm)}</span>
+      </button>
     </li>
   )
 }
 
-function Group({ title, note, spaces }: { title: string; note: string; spaces: GreenSpace[] }) {
+function Group({
+  title,
+  note,
+  spaces,
+  selected,
+  onSelect,
+}: {
+  title: string
+  note: string
+  spaces: GreenSpace[]
+  selected: string | null
+  onSelect: (id: string) => void
+}) {
   if (!spaces.length) return null
   return (
     <div className="green-group">
@@ -76,7 +116,7 @@ function Group({ title, note, spaces }: { title: string; note: string; spaces: G
       </div>
       <ul className="green-rows">
         {spaces.map((space) => (
-          <Entry key={space.id} space={space} />
+          <Entry key={space.id} space={space} selected={space.id === selected} onSelect={onSelect} />
         ))}
       </ul>
     </div>
@@ -91,8 +131,16 @@ function Group({ title, note, spaces }: { title: string; note: string; spaces: G
  * cento de todos os hectares desta página e está a onze quilómetros e meio
  * do Largo da Portagem — misturá-la com o Jardim da Sereia numa só lista
  * daria a entender que se vai a um como se vai ao outro.
+ *
+ * Cada linha é um botão: escolhe o lugar e desce ao mapa.
  */
-export default function GreenList() {
+export default function GreenList({
+  selected,
+  onSelect,
+}: {
+  selected: string | null
+  onSelect: (id: string) => void
+}) {
   const [sort, setSort] = useState<SortId>('area')
 
   if (!SPACES.length) return null
@@ -102,11 +150,11 @@ export default function GreenList() {
   const longe = [...OUT_OF_CITY].sort(order)
 
   return (
-    <SectionReveal id="lista">
+    <SectionReveal id="lista" className="green-section">
       <SectionTitle
         label="A LISTA"
         title="Todas, uma a uma"
-        subtitle="Cada zona com a sua área medida no polígono, a freguesia onde cai e a distância em linha recta ao centro."
+        subtitle="Cada zona com a sua área medida no polígono, a freguesia onde cai e a distância em linha recta ao centro. Toque numa para a ver no mapa."
       />
 
       <div className="green-sorts" role="group" aria-label="Ordenação da lista">
@@ -127,11 +175,15 @@ export default function GreenList() {
         title="Na cidade"
         note={`Até ${CITY_RADIUS_KM} km do Largo da Portagem · ${perto.length} lugares`}
         spaces={perto}
+        selected={selected}
+        onSelect={onSelect}
       />
       <Group
         title="Fora da cidade"
         note={`Mais de ${CITY_RADIUS_KM} km · ${longe.length} lugares`}
         spaces={longe}
+        selected={selected}
+        onSelect={onSelect}
       />
 
       <DataSource meta={GREEN_META} />

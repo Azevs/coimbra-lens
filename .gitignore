@@ -60,3 +60,4 @@ scripts/blender/*-orto-*.png
 # jogo (código em tinta-na-alta/, compilado para public/tinta-na-alta/)
 /tinta-na-alta/node_modules
 /tinta-na-alta/dist
+/tinta-na-alta/scripts/.cache/

@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
 import { useAirQuality, type Pollen, type PollenLevel } from '@/hooks/useAirQuality'
 import GlassCard from '@/components/ui/GlassCard'
+import Label from '@/components/ui/Label'
 import DataSource, { DataUnavailable } from '@/components/ui/DataSource'
 import { colorMix } from '@/lib/color'
+import { fmt } from '@/lib/format'
 
 /** Bandas do European AQI, em tons da paleta do painel. */
 function getAqiColor(eaqi: number): string {
@@ -18,64 +19,31 @@ function getAqiColor(eaqi: number): string {
 /** O EAQI satura a 100; acima disso a escala é aberta. */
 const EAQI_MAX = 100
 
-function AqiArc({ value }: { value: number }) {
-  const circleRef = useRef<SVGCircleElement>(null)
-  const color = getAqiColor(value)
-  const R = 42
-  const circumference = 2 * Math.PI * R
-  const filled = (Math.min(value, EAQI_MAX) / EAQI_MAX) * circumference * 0.75
+const POLUENTES = [
+  { key: 'pm25', nome: 'PM2.5', artigo: 'pelas partículas finas (PM2.5)' },
+  { key: 'pm10', nome: 'PM10', artigo: 'pelas partículas (PM10)' },
+  { key: 'no2', nome: 'NO₂', artigo: 'pelo dióxido de azoto' },
+  { key: 'o3', nome: 'O₃', artigo: 'pelo ozono' },
+] as const
 
-  useEffect(() => {
-    const el = circleRef.current
-    if (!el) return
-    el.style.transition = 'stroke-dasharray 1.2s cubic-bezier(0.4,0,0.2,1), stroke 0.6s ease'
-    el.style.strokeDasharray = `${filled} ${circumference}`
-    el.style.stroke = color
-  }, [value, color, filled, circumference])
-
+/**
+ * Cada poluente no seu sub-índice, todos na mesma escala do índice geral.
+ * O índice é o pior deles — as barras mostram qual o está a puxar.
+ */
+function PoluenteRow({ nome, conc, sub, dominante }: { nome: string; conc: number | null; sub: number | null; dominante: boolean }) {
+  const color = sub === null ? 'var(--tone-muted)' : getAqiColor(sub)
   return (
-    <svg width="110" height="80" viewBox="0 0 110 80" role="img" aria-label={`Índice europeu de qualidade do ar: ${value}`}>
-      <circle cx="55" cy="70" r={R} fill="none"
-        stroke="rgba(20,23,28,0.10)" strokeWidth="8" strokeLinecap="round"
-        strokeDasharray={`${circumference * 0.75} ${circumference}`}
-        transform="rotate(135 55 70)"
-      />
-      <circle ref={circleRef} cx="55" cy="70" r={R} fill="none"
-        stroke={color} strokeWidth="8" strokeLinecap="round"
-        strokeDasharray={`0 ${circumference}`}
-        transform="rotate(135 55 70)"
-        style={{ filter: `drop-shadow(0 0 6px ${colorMix(color, 50)})` }}
-      />
-      <text x="55" y="64" textAnchor="middle" fill={color}
-        fontFamily="var(--font-jetbrains)" fontSize="22" fontWeight="700">
-        {value}
-      </text>
-      <text x="55" y="76" textAnchor="middle" fill="var(--text-tertiary)"
-        fontFamily="var(--font-ibm-plex)" fontSize="11" letterSpacing="2">
-        EAQI
-      </text>
-    </svg>
-  )
-}
-
-function PollutantRow({ label, value, max, color }: { label: string; value: number | null; max: number; color: string }) {
-  const pct = value === null ? 0 : Math.min(100, (value / max) * 100)
-  return (
-    <div style={{ marginBottom: '0.6rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
-        <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontFamily: 'var(--font-ibm-plex)', letterSpacing: '0.06em' }}>{label}</span>
-        <span style={{ fontFamily: 'var(--font-jetbrains)', fontSize: '11px', color: 'var(--text-primary)' }}>
-          {value === null ? '—' : value}
-        </span>
-      </div>
-      <div style={{ height: '3px', background: 'rgba(20,23,28,0.10)', borderRadius: '2px' }}>
-        <div style={{
-          height: '100%', width: `${pct}%`,
-          background: color, borderRadius: '2px',
-          boxShadow: `0 0 6px ${colorMix(color, 31)}`,
-          transition: 'width 1s cubic-bezier(0.4,0,0.2,1)',
-        }} />
-      </div>
+    <div className={`ar-poluente ${dominante ? 'is-dominante' : ''}`}>
+      <span className="ar-nome">{nome}</span>
+      <span className="ar-pista" aria-hidden="true">
+        {sub !== null && (
+          <i style={{ width: `${Math.min(100, (sub / EAQI_MAX) * 100)}%`, background: color, boxShadow: dominante ? `0 0 8px ${colorMix(color, 40)}` : 'none' }} />
+        )}
+      </span>
+      <span className="ar-conc">
+        {conc === null ? '—' : fmt(conc, conc < 10 ? 1 : 0)}
+        <small> µg/m³</small>
+      </span>
     </div>
   )
 }
@@ -90,13 +58,22 @@ const POLLEN_STYLE: Record<PollenLevel, { label: string; color: string; pct: num
 function PollenSection({ pollen }: { pollen: Pollen[] }) {
   if (pollen.length === 0) return null
 
+  // Tudo baixo é uma frase, não quatro barras vazias.
+  if (pollen.every((p) => p.level === 'baixo')) {
+    return (
+      <p className="ar-polen-resumo">
+        <Label style={{ margin: 0 }}>Pólen</Label>
+        <span>
+          <b style={{ color: POLLEN_STYLE.baixo.color }}>Baixo</b> em todas as espécies —{' '}
+          {pollen.map((p) => p.label.toLowerCase()).join(', ')}.
+        </span>
+      </p>
+    )
+  }
+
   return (
     <div style={{ marginTop: '1rem', paddingTop: '0.875rem', borderTop: '1px solid var(--border-subtle)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.625rem' }}>
-        <span style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
-          Pólen · grãos/m³
-        </span>
-      </div>
+      <Label style={{ marginBottom: '0.625rem' }}>Pólen · grãos/m³</Label>
       {pollen.map((p) => {
         const s = POLLEN_STYLE[p.level]
         return (
@@ -108,7 +85,7 @@ function PollenSection({ pollen }: { pollen: Pollen[] }) {
               </span>
             </div>
             <div style={{ height: '3px', background: 'rgba(20,23,28,0.10)', borderRadius: '2px' }}>
-              <div style={{ height: '100%', width: `${s.pct}%`, background: s.color, borderRadius: '2px', boxShadow: `0 0 4px ${colorMix(s.color, 31)}`, transition: 'width 1s ease' }} />
+              <div style={{ height: '100%', width: `${s.pct}%`, background: s.color, borderRadius: '2px', transition: 'width 1s ease' }} />
             </div>
           </div>
         )
@@ -132,11 +109,7 @@ export default function AirQualityModule() {
     )
   }
 
-  const header = (
-    <span style={{ fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-secondary)', fontFamily: 'var(--font-ibm-plex)', display: 'block', marginBottom: '0.75rem' }}>
-      Qualidade do Ar
-    </span>
-  )
+  const header = <Label style={{ marginBottom: '0.75rem' }}>Qualidade do ar</Label>
 
   // Sem leitura, o módulo diz que não sabe em vez de mostrar um valor plausível.
   if (air.aqi === null) {
@@ -150,40 +123,37 @@ export default function AirQualityModule() {
   }
 
   const color = getAqiColor(air.aqi)
+  const sub = air.subIndex ?? { pm25: null, pm10: null, no2: null, o3: null }
+  const subs = POLUENTES.map((p) => sub[p.key] ?? -1)
+  const iDom = subs.indexOf(Math.max(...subs))
+  const dominante = subs[iDom] >= 0 ? POLUENTES[iDom] : null
 
   return (
-    <GlassCard style={{ overflow: 'hidden', position: 'relative' }}>
-      <div style={{
-        position: 'absolute', top: '-20px', right: '-20px',
-        width: '120px', height: '120px', borderRadius: '50%',
-        background: `radial-gradient(circle, ${colorMix(color, 9)} 0%, transparent 70%)`,
-        pointerEvents: 'none',
-      }} />
-
+    <GlassCard>
       {header}
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem', paddingBottom: '1.25rem', borderBottom: '1px solid var(--border-subtle)' }}>
-        <AqiArc value={air.aqi} />
-        <div>
-          <span style={{
-            display: 'inline-block', padding: '4px 12px', borderRadius: '3px',
-            fontSize: '12px', fontWeight: 700, fontFamily: 'var(--font-ibm-plex)',
-            background: `${colorMix(color, 13)}`, color,
-            border: `1px solid ${colorMix(color, 27)}`,
-            marginBottom: '6px',
-          }}>
-            {air.status}
-          </span>
-          <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
-            Índice Europeu de<br />Qualidade do Ar
-          </p>
-        </div>
-      </div>
+      <p className="ar-frase">
+        <span className="ar-estado" style={{ color, background: colorMix(color, 13), borderColor: colorMix(color, 30) }}>
+          {air.status}
+        </span>
+        {/* Com ar bom, não há nada a puxar o índice. */}
+        {dominante && air.aqi > 20 ? <> — puxada {dominante.artigo}.</> : null}
+      </p>
 
-      <PollutantRow label="PM2.5 μg/m³" value={air.pm25} max={75} color="var(--tone-amber)" />
-      <PollutantRow label="PM10 μg/m³" value={air.pm10} max={150} color="var(--tone-blue)" />
-      <PollutantRow label="NO₂ μg/m³" value={air.no2} max={200} color="var(--tone-teal)" />
-      <PollutantRow label="O₃ μg/m³" value={air.o3} max={240} color="var(--accent)" />
+      <div className="ar-escala" aria-hidden="true">
+        <span />
+        <span className="ar-escala-marcas"><span>0</span><span>sub-índice europeu</span><span>100</span></span>
+        <span />
+      </div>
+      {POLUENTES.map((p, i) => (
+        <PoluenteRow
+          key={p.key}
+          nome={p.nome}
+          conc={air[p.key]}
+          sub={sub[p.key]}
+          dominante={i === iDom && dominante !== null}
+        />
+      ))}
 
       <PollenSection pollen={air.pollen} />
 

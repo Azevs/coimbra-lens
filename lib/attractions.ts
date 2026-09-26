@@ -16,6 +16,16 @@
  * quando existe (`lib/monumentos.ts`).
  */
 
+import { GREEN_SPACES } from '@/lib/green-spaces'
+
+/**
+ * A área do Botânico é a que a página das Zonas verdes mede no polígono.
+ * Esteve aqui escrito "vinte hectares", que não batia com a medição nem
+ * com os treze que a Universidade indica; lida do mesmo sítio, as duas
+ * páginas não voltam a contradizer-se.
+ */
+const BOTANICO_HA = GREEN_SPACES.find((s) => s.id === 'jardim-botanico-da-universidade-de-coimbra')?.areaHa
+
 export type PlateKind =
   | 'biblioteca'
   | 'torre'
@@ -153,7 +163,8 @@ export const ATTRACTIONS: Attraction[] = [
     name: 'Jardim Botânico',
     area: 'alta',
     blurb:
-      'Vinte hectares em socalcos a descer para o vale, com estufas, bambual e o arboreto. A entrada no jardim exterior é livre.',
+      `Um jardim ${BOTANICO_HA ? `de ${Math.round(BOTANICO_HA)} hectares ` : ''}em socalcos a descer para o vale, ` +
+      'com estufas, bambual e o arboreto. A entrada no jardim exterior é livre.',
     fact: 'Fundado em 1772 · gerido pela Universidade de Coimbra',
     plate: 'estufa',
     pos: [40.20353, -8.42352],

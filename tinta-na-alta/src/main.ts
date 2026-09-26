@@ -1,3 +1,7 @@
+/**
+ * O motor: jogador, arma, inimigos, som e HUD, a correr a missão de `?m=<id>`.
+ * A página de missões (`menu.ts`) só importa isto quando há missão.
+ */
 import * as THREE from 'three'
 import { Octree } from 'three/addons/math/Octree.js'
 import { Mundo, type Nivel } from './mundo'
@@ -6,10 +10,14 @@ import { redimensionar, Esboco } from './tinta'
 import { Arma } from './arma'
 import { Som } from './audio'
 import { Efeitos } from './efeitos'
-import { Inimigo, type Alvo } from './inimigos'
-import { Fadista } from './fadista'
+import { Inimigo, gritos, escolher, type Alvo } from './inimigos'
 import { Hud } from './hud'
 import type { Parte } from './bonecos'
+import { fichaDe, marcarCumprida } from './missoes/registo'
+import type { Ctx } from './missoes/tipos'
+
+const ficha = fichaDe(new URLSearchParams(location.search).get('m'))
+if (!ficha) throw new Error('Missão desconhecida')
 
 // ------------------------------------------------------------------ base --
 const renderer = new THREE.WebGLRenderer({ antialias: true })
@@ -28,24 +36,34 @@ const botao = document.querySelector('#comecar') as HTMLButtonElement
 const aCarregar = document.querySelector('#carregar') as HTMLElement
 botao.disabled = true
 
-const nivel: Nivel = await (await fetch(import.meta.env.BASE_URL + 'nivel.json')).json()
-// As placas das ruas são desenhadas num canvas com a letra do HUD: esperar por ela.
-await Promise.race([document.fonts.load('64px "Patrick Hand"'), new Promise((r) => setTimeout(r, 2500))]).catch(() => {})
-const mundo = new Mundo(nivel)
+const [nivel, { default: missao }] = await Promise.all([
+  fetch(`${import.meta.env.BASE_URL}niveis/${ficha.nivel}.json`).then((r) => r.json() as Promise<Nivel>),
+  ficha.carregar(),
+  // As placas das ruas são desenhadas num canvas com a letra do HUD: esperar por ela.
+  Promise.race([document.fonts.load('64px "Patrick Hand"'), new Promise((r) => setTimeout(r, 2500))]).catch(() => {}),
+])
+const mundo = new Mundo(nivel, missao.mundo)
+// Com o que se vê ao longe, a câmara vê até lá.
+if (nivel.longe) { camera.far = 1600; camera.updateProjectionMatrix() }
 mundo.construir()
 cena.add(mundo.cena)
 // Duas octrees: a dos tiros e da visão tem o chão; a da física não (o chão é a função de altura).
+// O que é só da física (guardas invisíveis por cima de um peitoril) fica fora da dos tiros.
+const soFisica = mundo.colisao.children.filter((m) => m.userData.soFisica)
+for (const m of soFisica) mundo.colisao.remove(m)
 const octreeTiros = new Octree()
 octreeTiros.fromGraphNode(mundo.colisao)
+for (const m of soFisica) mundo.colisao.add(m)
 const semChao = new THREE.Group()
-for (const m of [...mundo.colisao.children]) if (!m.userData.terreno) semChao.add(m)
+// As rampas das escadas só param balas: para andar, são chão (`mundo.piso`).
+for (const m of [...mundo.colisao.children]) if (!m.userData.terreno && !m.userData.soTiros) semChao.add(m)
 const octreeFisica = new Octree()
 octreeFisica.fromGraphNode(semChao)
 const octree = {
   capsuleIntersect: (c: Parameters<Octree['capsuleIntersect']>[0]) => octreeFisica.capsuleIntersect(c),
   rayIntersect: (r: THREE.Ray) => octreeTiros.rayIntersect(r),
 } as unknown as Octree
-Corpo.chao = (x, z) => mundo.chao(x, -z)
+Corpo.chao = (x, z, pes) => Math.max(mundo.chao(x, -z), mundo.piso(x, -z, pes))
 const P = mundo.pontos
 
 const efeitos = new Efeitos()
@@ -124,85 +142,6 @@ function criar(pos: THREE.Vector3, olhar: THREE.Vector3, opt: { telhado?: boolea
   return e
 }
 
-const rota = [P.inicio, P.olharInicio, P.arco, P.largoArco, P.escadasBase, P.escadasMeio, P.escadasTopo, P.largo, P.portaClaustro, P.dentroClaustro, P.patio]
-function povoar() {
-  const tel = new Set<string>()
-  const [, barba, arco, largoArco, eB, eM, eT, largo, porta, dentro, patio] = rota
-  criar(naRota(arco, largoArco, 0.9, 2.5), arco)
-  criar(naRota(largoArco, eB, 0.35, -2), arco, { patrulha: [naRota(largoArco, eB, 0.2, 0), naRota(largoArco, eB, 0.8, 0)] })
-  criar(naRota(largoArco, eB, 0.95, 1.2), largoArco)
-  criar(naRota(eB, eM, 0.55, 0.8), eB)
-  criar(naRota(eB, eM, 0.85, -0.8), eB, { patrulha: [naRota(eB, eM, 0.7, 0), naRota(eM, eT, 0.2, 0)] })
-  const t1 = telhadoPerto(naRota(eB, eM, 0.5, 0), tel); if (t1) criar(t1, eB, { telhado: true })
-  criar(naRota(eM, eT, 0.6, 1), eM)
-  const t2 = telhadoPerto(naRota(eM, eT, 0.7, 0), tel); if (t2) criar(t2, eM, { telhado: true })
-  criar(naRota(eT, largo, 0.3, -2), eT)
-  criar(naRota(eT, largo, 0.9, 3), eT, { patrulha: [naRota(eT, largo, 0.9, 3), naRota(largo, porta, 0.4, 0)] })
-  criar(naRota(largo, porta, 0.6, -3), largo)
-  const t3 = telhadoPerto(largo, tel); if (t3) criar(t3, eT, { telhado: true })
-  criar(naRota(largo, porta, 0.95, 2), largo)
-  criar(naRota(porta, dentro, 1, 0).add(new THREE.Vector3(0, 0, 0)), porta)
-  // Galeria do claustro e pátio.
-  criar(naRota(dentro, patio, 0.35, 5), dentro)
-  criar(naRota(dentro, patio, 0.35, -5), dentro)
-  criar(naRota(dentro, patio, 0.75, 4), dentro)
-  criar(naRota(dentro, patio, 1.05, -3), dentro, { patrulha: [naRota(dentro, patio, 1.05, -3), naRota(dentro, patio, 1.05, 4)] })
-  guardasDoFadista()
-  // Atiradores nas varandas: parados, a vigiar a rua lá em baixo.
-  for (const v of mundo.varandas) criar(v.pos, v.olhar, { telhado: true })
-  void barba
-}
-
-/** Guardas em roda do banco do fadista, dentro do pátio e longe do fontanário. */
-function guardasDoFadista() {
-  const patio = nivel.edificios.find((b) => b.osm === 'relation/3475986')?.furos[0]
-  if (!patio) return
-  const cx = P.patio.x, cy = -P.patio.z
-  const fonte: [number, number] = [cx + 3, cy - 2]
-  const noPatio = (x: number, y: number) => {
-    let d = false
-    for (let i = 0, j = patio.length - 1; i < patio.length; j = i++) {
-      const [xi, yi] = patio[i], [xj, yj] = patio[j]
-      if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) d = !d
-    }
-    return d && Math.hypot(x - fonte[0], y - fonte[1]) > 2.4
-  }
-  const ponto = (ang: number, r0: number) => {
-    for (let r = r0; r > 1.6; r -= 0.4) {
-      const x = cx + Math.cos(ang) * r, y = cy + Math.sin(ang) * r
-      if (noPatio(x, y)) return new THREE.Vector3(x, mundo.chao(x, y), -y)
-    }
-    return null
-  }
-  // A entrada do pátio vem da galeria do lado da porta: um olha para lá, os outros cobrem as arcadas.
-  const entrada = Math.atan2(-P.dentroClaustro.z - cy, P.dentroClaustro.x - cx)
-  for (const da of [0, 2.1, -2.1]) {
-    const p = ponto(entrada + da, 3.2)
-    if (p) criar(p, p.clone().add(p.clone().sub(P.patio).setY(0).multiplyScalar(4)))
-  }
-  const ronda = [0, 1, 2, 3].map((k) => ponto(entrada + 0.8 + (k * Math.PI) / 2, 5.5)).filter((p): p is THREE.Vector3 => !!p)
-  if (ronda.length >= 2) criar(ronda[0], P.patio, { patrulha: ronda })
-  const arcada = ponto(entrada + Math.PI, 7)
-  if (arcada) criar(arcada, P.dentroClaustro)
-}
-
-function reforcos() {
-  const alvo = jog.corpo.pes
-  const [, , arco, largoArco, eB, eM, eT, largo, porta] = rota
-  criar(naRota(largo, porta, 0.2, 4), porta, { alerta: alvo })
-  criar(naRota(eT, largo, 0.6, -2), porta, { alerta: alvo })
-  criar(naRota(eM, eT, 0.3, 0.8), eT, { alerta: alvo })
-  criar(naRota(eB, eM, 0.2, 1), eM, { alerta: alvo })
-  criar(naRota(eB, eM, 0.3, -1), eM, { alerta: alvo })
-  criar(naRota(largoArco, eB, 0.6, 1.5), eB)
-  criar(naRota(arco, largoArco, 0.4, -1.5), eB)
-}
-
-// ------------------------------------------------------------- fadista --
-const patioYaw = (() => { const d = P.dentroClaustro.clone().sub(P.patio); return Math.atan2(-d.x, -d.z) })()
-const fadista = new Fadista(P.patio.clone(), patioYaw)
-cena.add(fadista.boneco.raiz, fadista.cadeira)
-
 // ------------------------------------------------------ alvos e munições --
 const alvoJogador: Alvo = {
   olhos: () => jog.olhos.clone(),
@@ -211,12 +150,14 @@ const alvoJogador: Alvo = {
   ferir: () => {},
   vivo: () => !jog.morto,
 }
-const alvoFadista: Alvo = {
-  olhos: () => fadista.olhos(),
-  pes: () => fadista.corpo.pes,
-  velocidade: () => fadista.vel,
+/** Quem a missão manda proteger (se houver): só é alvo depois de solto. */
+const protegido = () => missao.protegido?.quem ?? null
+const alvoProtegido: Alvo = {
+  olhos: () => protegido()!.olhos(),
+  pes: () => protegido()!.corpo.pes,
+  velocidade: () => protegido()!.vel,
   ferir: () => {},
-  vivo: () => fadista.estado === 'livre',
+  vivo: () => protegido()?.estado === 'livre',
 }
 
 type Pente = { obj: THREE.Group; pos: THREE.Vector3 }
@@ -231,74 +172,35 @@ function largarPente(pos: THREE.Vector3) {
   pentes.push({ obj: g, pos: g.position.clone() })
 }
 
-// ------------------------------------------------- o que desce da Sé --
-let guedes: { e: Inimigo; desde: number; gritou: boolean } | null = null
-/** Um Borrão sai do portal da Sé e desce a correr pelas ruas até ao jogador. */
-function desceDaSe() {
-  const origem = P.portalSe ?? P.largo
-  const sJog = mundo.sDe(jog.corpo.pes), sLargo = mundo.sDe(P.largo)
-  const e = criar(origem, P.largo)
-  e.rota = mundo.percurso.filter((_, k) => { const s = mundo.comprimentos[k]; return s >= sJog && s <= sLargo }).reverse()
-  e.pressa = true
-  e.ouvir(jog.corpo.pes, som)
-  guedes = { e, desde: tempoJogo, gritou: false }
-}
-
 // --------------------------------------------------------------- missão --
-type Fase = 'arco' | 'largo' | 'claustro' | 'soltar' | 'fuga' | 'fim'
-let fase: Fase = 'arco'
 let emJogo = false
 let acabou = false
 let tempoJogo = 0
 let abatidos = 0
 let disparos = 0
 let acertos = 0
-let soltarProgresso = 0
 let ultimoDano = -99
 let falouFerido = false
 let proximoCoracao = 0
 
-const OBJ: Record<Fase, string> = {
-  arco: 'Passa o Arco de Almedina',
-  largo: 'Sobe o Quebra-Costas até ao Largo da Sé Velha',
-  claustro: 'Entra no claustro da Sé Velha',
-  soltar: 'Solta o fadista no pátio do claustro',
-  fuga: 'Leva o fadista até ao Arco de Almedina',
-  fim: '',
-}
-const alvoFase = (): THREE.Vector3 | null =>
-  fase === 'arco' ? P.arco : fase === 'largo' ? P.largo : fase === 'claustro' ? P.dentroClaustro
-    : fase === 'soltar' ? P.patio : fase === 'fuga' ? P.olharInicio : null
-
-function avancar(nova: Fase, fala?: string) {
-  fase = nova
-  if (OBJ[nova]) hud.objectivo(OBJ[nova])
-  if (fala) setTimeout(() => som.falar(fala, 'radio'), 400)
-}
-
-const GUITARRA: [number, number, number][] = [
-  [0, 57, 1.2], [0.05, 64, 0.4], [0.3, 69, 0.4], [0.6, 72, 0.4], [0.9, 71, 0.3], [1.2, 69, 0.7], [1.2, 53, 1.2],
-  [1.8, 67, 0.3], [2.1, 65, 0.3], [2.4, 64, 1.2], [2.4, 52, 1.2], [3.2, 68, 0.3], [3.5, 71, 0.3], [3.8, 69, 1.4], [3.8, 57, 1.4],
-]
-
 function terminar(vitoria: boolean, motivo: string) {
   if (acabou) return
   acabou = true
-  fase = 'fim'
+  if (vitoria) marcarCumprida(missao.id)
   const precisao = disparos ? Math.round((acertos / disparos) * 100) : 0
   const m = Math.floor(tempoJogo / 60), s = Math.floor(tempoJogo % 60)
   setTimeout(() => {
     document.exitPointerLock()
     hud.ecra('fim', `
       <p class="carimbo">${vitoria ? 'cumprida' : 'falhada'}</p>
-      <h2>${vitoria ? 'A Serenata está salva' : 'Missão falhada'}</h2>
+      <h2>${vitoria ? missao.textos.vitoria : missao.textos.derrota}</h2>
       <p>${motivo}</p>
       <table>
         <tr><td>tempo</td><td>${m}:${String(s).padStart(2, '0')}</td></tr>
         <tr><td>Borrões abatidos</td><td>${abatidos}</td></tr>
         <tr><td>pontaria</td><td>${precisao}%</td></tr>
       </table>
-      <button onclick="location.reload()">Outra vez</button>`)
+      <p class="botoes"><button onclick="location.reload()">Outra vez</button> <a class="botao" href="${import.meta.env.BASE_URL}">Missões</a></p>`)
   }, vitoria ? 6500 : 3500)
 }
 
@@ -322,12 +224,12 @@ document.addEventListener('keydown', (e) => {
 botao.addEventListener('click', () => {
   // O bloqueio do rato tem de ser pedido já, dentro do clique; o som carrega a seguir.
   document.body.requestPointerLock()
-  void som.iniciar()
+  void som.iniciar(missao.id)
   if (!emJogo) {
     emJogo = true
     hud.ecra(null)
-    avancar('arco', 'radio_inicio')
-    setTimeout(() => som.sino(P.largo.clone().add(new THREE.Vector3(40, 30, 0)), 3), 9000)
+    missao.comecar(ctx)
+    missao.inicio(ctx)
   }
 })
 document.addEventListener('pointerlockchange', () => {
@@ -337,7 +239,8 @@ document.addEventListener('pointerlockchange', () => {
   if (!bloqueado) { aDisparar = false; aMirar = false; jog.teclas.clear() }
   if (som.pronto) void (bloqueado ? som.ctx.resume() : som.ctx.suspend())
 })
-document.querySelector('#pausa')!.addEventListener('click', () => document.body.requestPointerLock())
+// Na pausa: qualquer clique continua, menos o de voltar às missões.
+document.querySelector('#pausa')!.addEventListener('click', (e) => { if (!(e.target as HTMLElement).closest('a')) document.body.requestPointerLock() })
 addEventListener('resize', () => {
   renderer.setSize(innerWidth, innerHeight)
   camera.aspect = innerWidth / innerHeight
@@ -388,7 +291,7 @@ function dispararJogador() {
       abatidos++
       largarPente(e.corpo.pes)
       const vizinho = inimigos.find((o) => o.vivo && o !== e && o.corpo.pes.distanceTo(e.corpo.pes) < 25)
-      if (vizinho) setTimeout(() => som.falar(Math.random() < 0.5 ? 'inimigo_baixa_1' : 'inimigo_baixa_2', { inimigo: vizinho.id }, vizinho.cabeca), 700)
+      if (vizinho) setTimeout(() => som.falar(escolher(gritos.baixa), { inimigo: vizinho.id }, vizinho.cabeca), 700)
       for (const o of inimigos) if (o.vivo && o.corpo.pes.distanceTo(e.corpo.pes) < 22) o.ouvir(jog.corpo.pes, som)
     }
   } else if (hitM) {
@@ -418,7 +321,7 @@ function ferirJogador(dano: number, de: THREE.Vector3) {
     jog.morto = true
     aDisparar = false
     som.falar('radio_morreste', 'radio')
-    terminar(false, 'Caíste nas ruelas da Alta. Os Borrões ficaram com o fadista.')
+    terminar(false, missao.textos.morreste)
   }
 }
 
@@ -430,16 +333,16 @@ function tiroInimigo(boca: THREE.Vector3, alvo: Alvo, acerto: boolean, ponto: TH
   if (acerto && !bloqueado) {
     efeitos.rasto(boca, ponto, true)
     if (alvo === alvoJogador) ferirJogador(7 + Math.random() * 4, boca)
-    else if (fadista.estado === 'livre') {
-      fadista.vida -= 6
+    else if (missao.protegido && missao.protegido.quem.estado === 'livre') {
+      const p = missao.protegido.quem
+      p.vida -= 6
       efeitos.sangue(ponto, dir, false)
-      if (Math.random() < 0.5) som.falar(Math.random() < 0.5 ? 'fadista_medo_1' : 'fadista_medo_2', 'fadista', fadista.olhos())
-      if (fadista.vida <= 0) {
-        fadista.estado = 'morto'
-        fadista.boneco.morrer(1)
-        som.queda(fadista.corpo.pes)
-        som.falar('radio_fadista_caiu', 'radio')
-        terminar(false, 'O fadista não chegou à Serenata.')
+      missao.protegido.ferido?.(ctx)
+      if (p.vida <= 0) {
+        p.estado = 'morto'
+        p.boneco.morrer(1)
+        som.queda(p.corpo.pes)
+        missao.protegido.caiu(ctx)
       }
     }
     return
@@ -463,17 +366,28 @@ function tiroInimigo(boca: THREE.Vector3, alvo: Alvo, acerto: boolean, ponto: TH
   }
 }
 
+// ------------------------------------------------------------- a missão --
+const ctx: Ctx = {
+  cena, mundo, nivel, P, jog, som, hud, efeitos, inimigos,
+  criar, naRota, telhadoPerto, largarPente, terminar, ferirJogador,
+  tempo: () => tempoJogo,
+  acabou: () => acabou,
+  olharPara,
+}
+missao.povoar(ctx)
+if (missao.protegido) hud.rotuloProtegido(missao.protegido.rotulo)
+
 // ---------------------------------------------------------------- ciclo --
-povoar()
 aCarregar.textContent = ''
 botao.disabled = false
 
 const q = new URLSearchParams(location.search)
-if (q.get('em') && P[q.get('em')!]) { jog.corpo.colocar(P[q.get('em')!]); olharPara(P[q.get('olhar') ?? 'largo'] ?? P.largo) }
-;(window as any).dbg = { THREE, octree, mundo, jog, camera, inimigos, fadista, P, arma, som, hud, cena,
-  comecar: () => { emJogo = true; hud.ecra(null); avancar('arco') },
-  disparar: () => dispararJogador(), ferir: (d: number) => ferirJogador(d, jog.corpo.pes), soltar: () => { soltarProgresso = 1 }, fase: () => fase,
-  vencer: () => terminar(true, 'Teste.') }
+if (q.get('em') && P[q.get('em')!]) { jog.corpo.colocar(P[q.get('em')!]); olharPara(P[q.get('olhar') ?? 'olharInicio'] ?? P.olharInicio) }
+;(window as any).dbg = { THREE, octree, mundo, jog, camera, inimigos, P, arma, som, hud, cena, missao, ctx,
+  comecar: () => { emJogo = true; hud.ecra(null); missao.comecar(ctx) },
+  disparar: () => dispararJogador(), ferir: (d: number) => ferirJogador(d, jog.corpo.pes), fase: () => missao.fase?.(ctx),
+  vencer: () => terminar(true, 'Teste.'),
+  ...missao.dbg?.(ctx) }
 
 const relogio = new THREE.Timer()
 let yawAntes = jog.yaw, pitchAntes = jog.pitch
@@ -513,75 +427,30 @@ renderer.setAnimationLoop(() => {
       }
     }
 
-    // Inimigos e fadista.
-    const fAlvo = fadista.estado === 'livre' ? alvoFadista : null
+    // Inimigos e quem se protege.
+    const pAlvo = protegido()?.estado === 'livre' ? alvoProtegido : null
     for (const e of inimigos) {
       if (!e.vivo && e.corpo.pes.distanceTo(pes) > 200) continue
-      e.actualizar(dt, octree, alvoJogador, fAlvo, som, efeitos, tiroInimigo)
+      e.actualizar(dt, octree, alvoJogador, pAlvo, som, efeitos, tiroInimigo)
     }
-    fadista.actualizar(dt, octree, pes, jog.aCorrer)
+    protegido()?.actualizar(dt, octree, pes, jog.aCorrer)
 
     // Missão.
-    if (!acabou) {
-      if (!guedes && fase !== 'arco' && pes.distanceTo(P.escadasBase) < 8) desceDaSe()
-      if (guedes && !guedes.gritou && guedes.e.vivo) {
-        const g = guedes.e
-        const passa = inimigos.some((o) => o !== g && o.vivo && o.corpo.pes.distanceTo(g.corpo.pes) < 3.5)
-        if (passa || tempoJogo - guedes.desde > 8) {
-          som.falar('inimigo_guedes', { inimigo: g.id }, g.cabeca, true)
-          guedes.gritou = true
-        }
-      }
-      if (fase === 'arco' && pes.distanceTo(P.arco) < 7) avancar('largo', 'radio_arco')
-      else if (fase === 'largo' && pes.distanceTo(P.largo) < 14) avancar('claustro', 'radio_largo')
-      else if (fase === 'claustro' && pes.distanceTo(P.dentroClaustro) < 6) avancar('soltar', 'radio_claustro')
-      if (fase === 'soltar' || (fase !== 'fuga' && fadista.estado === 'preso' && pes.distanceTo(P.patio) < 2.4)) {
-        const perto = pes.distanceTo(P.patio) < 2.4
-        if (perto) {
-          const aSoltar = jog.teclas.has('KeyF')
-          soltarProgresso = aSoltar ? soltarProgresso + dt / 1.4 : Math.max(0, soltarProgresso - dt)
-          if (aSoltar && Math.floor(soltarProgresso * 5) !== Math.floor((soltarProgresso - dt / 1.4) * 5)) som.corda()
-          hud.accaoMostrar('Desatar o fadista (manter)', soltarProgresso)
-          if (soltarProgresso >= 1) {
-            hud.accaoMostrar(null)
-            fadista.soltar()
-            if (fase !== 'soltar') hud.objectivo(OBJ.soltar)
-            const dur = som.falar('fadista_solto', 'fadista', fadista.olhos())
-            som.guitarra(fadista.olhos(), GUITARRA.slice(0, 10))
-            setTimeout(() => { avancar('fuga', 'radio_fuga'); reforcos() }, (dur + 0.6) * 1000)
-            fase = 'fuga'
-            hud.objectivo('…')
-          }
-        } else hud.accaoMostrar(null)
-      }
-      if (fase === 'fuga' && fadista.estado === 'livre') {
-        if (pes.distanceTo(P.olharInicio) < 9 && fadista.corpo.pes.distanceTo(pes) < 14) {
-          fadista.estado = 'salvo'
-          const dur = som.falar('fadista_fim', 'fadista', fadista.olhos())
-          som.guitarra(fadista.olhos(), GUITARRA)
-          setTimeout(() => som.falar('radio_fim', 'radio'), (dur + 0.5) * 1000)
-          som.sino(P.largo.clone().add(new THREE.Vector3(40, 30, 0)), 4)
-          terminar(true, 'O fadista desceu o Quebra-Costas contigo. À meia-noite, nas escadas da Sé Velha, canta para ti.')
-        } else if (fadista.corpo.pes.distanceTo(pes) > 18 && Math.random() < dt * 0.15) {
-          som.falar('fadista_segue_2', 'fadista', fadista.olhos())
-        } else if (Math.random() < dt * 0.02) {
-          som.falar('fadista_segue_1', 'fadista', fadista.olhos())
-        }
-      }
-    }
+    if (!acabou) missao.actualizar(ctx, dt)
     efeitos.actualizar(dt)
     som.ouvinte.copy(camera.position)
     som.frenteOuvinte.copy(jog.frente())
   } else if (!emJogo) {
-    // Menu: a câmara respira devagar à entrada do Arco.
+    // Ecrã de início: a câmara respira devagar no ponto de partida.
     jog.yaw += Math.sin(performance.now() / 3000) * 0.0004
     jog.actualizar(dt, octree, false)
     for (const e of inimigos) e.boneco.animar(dt, 0, 0)
-    fadista.boneco.animar(dt, 0, 0, true)
+    protegido()?.actualizar(dt, octree, jog.corpo.pes, false)
   }
+  const p = protegido()
   hud.actualizar(jog.vida, arma.pente, arma.reserva, arma.dispersao(Math.hypot(jog.corpo.vel.x, jog.corpo.vel.z) / 4, jog.corpo.noChao),
-    arma.mira > 0.7, arma.aRecarregar > 0, fadista.estado === 'livre' ? fadista.vida : null)
-  hud.marcar(emJogo && !acabou ? alvoFase() : null, camera, jog.corpo.pes)
+    arma.mira > 0.7, arma.aRecarregar > 0, p?.estado === 'livre' ? p.vida : null)
+  hud.marcar(emJogo && !acabou ? missao.alvo(ctx) : null, camera, jog.corpo.pes)
 
   renderer.clear()
   renderer.render(cena, camera)

@@ -8,7 +8,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "build:nivel": "node scripts/build-nivel.mjs",
-    "build:vozes": "powershell -ExecutionPolicy Bypass -File scripts/vozes.ps1"
+    "build:vozes": "powershell -ExecutionPolicy Bypass -File scripts/vozes.ps1",
+    "build:mapa": "node scripts/build-mapa.mjs"
   },
   "dependencies": {
     "three": "^0.186.0"

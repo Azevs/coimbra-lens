@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type RefObject } from 'react'
 
 import SectionTitle from '@/components/ui/SectionTitle'
 import DataSource, { DataUnavailable } from '@/components/ui/DataSource'
@@ -42,7 +42,7 @@ function Legend({
           >
             <span
               className="green-legend-swatch"
-              style={{ background: KINDS[kind].color }}
+              style={{ background: KINDS[kind].color, borderColor: KINDS[kind].edge }}
               aria-hidden="true"
             />
             {KINDS[kind].plural}
@@ -63,18 +63,32 @@ function Legend({
  * fora da caixa. Trocar de escala é trocar o viewBox — o desenho é o
  * mesmo, e não há nada a recarregar.
  *
- * Escolher uma zona que não esteja na janela actual muda de escala em vez
- * de a realçar onde não se vê.
+ * O que está escolhido, a escala e as famílias à vista vivem no
+ * `GreenExplorer`, porque o herbário e a lista também escolhem.
  */
-export default function GreenMap() {
-  const [scale, setScale] = useState<Scale>('cidade')
-  const [selected, setSelected] = useState<string | null>(null)
+export default function GreenMap({
+  scale,
+  onScale,
+  selected,
+  onSelect,
+  hidden,
+  onToggle,
+  anchorRef,
+}: {
+  scale: Scale
+  onScale: (scale: Scale) => void
+  selected: string | null
+  onSelect: (id: string | null) => void
+  hidden: Set<GreenKind>
+  onToggle: (kind: GreenKind) => void
+  /** Para onde a página desce quando se escolhe um lugar fora do mapa. */
+  anchorRef: RefObject<HTMLDivElement | null>
+}) {
   const [active, setActive] = useState<string | null>(null)
-  const [hidden, setHidden] = useState<Set<GreenKind>>(new Set())
 
   if (!SPACES.length) {
     return (
-      <section id="mapa" className="page-section">
+      <section id="mapa" className="page-section green-section">
         <div className="section-container">
           <SectionTitle
             label="ZONAS VERDES"
@@ -90,30 +104,11 @@ export default function GreenMap() {
 
   const visible = SPACES.filter((s) => !hidden.has(s.kind))
   const space = SPACES.find((s) => s.id === selected) ?? null
-
-  const select = (id: string | null) => {
-    setSelected(id)
-    const chosen = SPACES.find((s) => s.id === id)
-    if (chosen && chosen.distanceKm > CITY_RADIUS_KM) setScale('concelho')
-  }
-
-  const toggle = (kind: GreenKind) => {
-    setHidden((current) => {
-      const next = new Set(current)
-      if (next.has(kind)) next.delete(kind)
-      else next.add(kind)
-      return next
-    })
-    // Esconder a família da zona escolhida deixava um painel a descrever
-    // uma forma que já não está no mapa.
-    if (space?.kind === kind) setSelected(null)
-  }
-
   const box = BOXES[scale]
   const hovered = visible.find((s) => s.id === active) ?? null
 
   return (
-    <section id="mapa" className="page-section">
+    <section id="mapa" className="page-section green-section">
       <div className="section-container">
         <SectionTitle
           label="ZONAS VERDES"
@@ -125,7 +120,7 @@ export default function GreenMap() {
           } destes lugares ficam fora dele.`}
         />
 
-        <div className="green-controls">
+        <div className="green-controls" ref={anchorRef}>
           <div className="green-scales" role="group" aria-label="Escala do mapa">
             {(['cidade', 'concelho'] as Scale[]).map((option) => (
               <button
@@ -133,20 +128,20 @@ export default function GreenMap() {
                 type="button"
                 className={`green-scale${scale === option ? ' is-on' : ''}`}
                 aria-pressed={scale === option}
-                onClick={() => setScale(option)}
+                onClick={() => onScale(option)}
               >
                 {option === 'cidade' ? 'Cidade' : 'Concelho'}
               </button>
             ))}
           </div>
-          <Legend hidden={hidden} onToggle={toggle} />
+          <Legend hidden={hidden} onToggle={onToggle} />
         </div>
 
         <p className="green-hint ui-note">
           Toque numa forma para ver a ficha. As linhas finas são as freguesias.
         </p>
 
-        <div className="green-layout" onKeyDown={(e) => e.key === 'Escape' && setSelected(null)}>
+        <div className="green-layout" onKeyDown={(e) => e.key === 'Escape' && onSelect(null)}>
           {/* A razão do desenho muda com a escala — a cidade é uma caixa
               quadrada, o concelho é mais alto do que largo. Vai em variável
               para o CSS, que é quem impede a carta de passar do ecrã. */}
@@ -159,13 +154,12 @@ export default function GreenMap() {
               scale={scale}
               selected={selected}
               active={active}
-              onSelect={select}
+              onSelect={onSelect}
               onActivate={setActive}
             />
 
-            {/* Quase nenhuma forma tem espaço para o nome escrito por
-                dentro. Sem isto, o mapa era um conjunto de manchas anónimas
-                que só se identificavam depois de clicadas. */}
+            {/* Nem todas as formas ficam com o nome escrito. Esta etiqueta
+                diz o de qualquer uma, debaixo do rato ou do foco. */}
             {hovered && hovered.id !== selected && (
               <div
                 className="green-tip"
@@ -189,7 +183,7 @@ export default function GreenMap() {
           </figure>
 
           <div className="green-aside">
-            <GreenDetail space={space} onClear={() => setSelected(null)} />
+            <GreenDetail space={space} onClear={() => onSelect(null)} />
           </div>
         </div>
 

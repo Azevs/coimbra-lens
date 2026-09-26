@@ -18,7 +18,8 @@ export class Hud {
   private barra = $('#accao-barra')
   private dano = $('#dano')
   private vinheta = $('#vinheta')
-  private fadistaEl = $('#fadista-vida')
+  private protegidoEl = $('#protegido-vida')
+  private relogioEl = $('#relogio')
   private tempoAcerto = 0
   private legendaAte = 0
 
@@ -59,7 +60,7 @@ export class Hud {
   }
 
   actualizar(vida: number, pente: number, reserva: number, espalhamento: number, aMirar: boolean, recarregar: boolean,
-    fadista: number | null) {
+    protegido: number | null) {
     this.vidaEl.textContent = String(Math.max(0, Math.ceil(vida)))
     this.coracao.classList.toggle('fraco', vida < 35)
     this.penteEl.textContent = recarregar ? '··' : String(pente)
@@ -70,12 +71,22 @@ export class Hud {
     this.mira.style.opacity = aMirar ? '0' : '1'
     this.vinheta.style.opacity = String(Math.max(0, (60 - vida) / 60))
     if (performance.now() > this.legendaAte) this.legendas.style.opacity = '0'
-    if (fadista === null) this.fadistaEl.style.display = 'none'
+    if (protegido === null) this.protegidoEl.style.display = 'none'
     else {
-      this.fadistaEl.style.display = 'block'
-      ;(this.fadistaEl.querySelector('i') as HTMLElement).style.width = `${Math.max(0, fadista)}%`
+      this.protegidoEl.style.display = 'block'
+      ;(this.protegidoEl.querySelector('i') as HTMLElement).style.width = `${Math.max(0, protegido)}%`
     }
   }
+
+  /** Um relógio discreto no canto (null esconde-o); `pouco` fá-lo piscar. */
+  relogio(texto: string | null, pouco = false) {
+    this.relogioEl.style.display = texto ? 'block' : 'none'
+    if (texto && this.relogioEl.textContent !== texto) this.relogioEl.textContent = texto
+    this.relogioEl.classList.toggle('pouco', pouco)
+  }
+
+  /** O nome por cima da barra de vida de quem se protege. */
+  rotuloProtegido(texto: string) { this.protegidoEl.querySelector('span')!.textContent = texto }
 
   /** Marcador do objectivo: símbolo a piscar, projectado no ecrã, com a distância. */
   marcar(ponto: THREE.Vector3 | null, camera: THREE.Camera, deOnde: THREE.Vector3) {
