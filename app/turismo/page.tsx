@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { ldMigalhas, pagina } from '@/lib/seo'
+import JsonLd from '@/components/seo/JsonLd'
 import Navbar from '@/components/navigation/Navbar'
 import SiteFooter from '@/components/navigation/SiteFooter'
 import DataTicker from '@/components/hero/DataTicker'
@@ -17,11 +19,13 @@ import {
   serie,
 } from '@/lib/turismo'
 
-export const metadata: Metadata = {
-  title: 'Turismo',
-  description:
+export const metadata: Metadata = pagina({
+  caminho: 'turismo',
+  titulo: 'Turismo em Coimbra: dormidas, hóspedes e alojamento',
+  tituloSocial: 'Turismo em Coimbra: uma noite e meia',
+  descricao:
     'Quantos turistas dormem em Coimbra, onde ficam e por quanto tempo: dormidas, camas, ocupação e alojamento, face a 2019 e ao resto do país.',
-}
+})
 
 const fmt = (n: number, dec = 0) =>
   n.toLocaleString('pt-PT', { minimumFractionDigits: dec, maximumFractionDigits: dec })
@@ -58,6 +62,7 @@ export default function TurismoPage() {
 
   return (
     <>
+      <JsonLd dados={ldMigalhas([{ nome: 'Turismo', caminho: 'turismo' }])} />
       <a href="#conteudo" className="skip-link">
         Saltar para o conteúdo
       </a>

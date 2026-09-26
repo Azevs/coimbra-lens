@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { ldMigalhas, ldPercurso, pagina } from '@/lib/seo'
+import JsonLd from '@/components/seo/JsonLd'
 import Link from 'next/link'
 import Navbar from '@/components/navigation/Navbar'
 import SiteFooter from '@/components/navigation/SiteFooter'
@@ -13,11 +15,13 @@ import { monumentoPorId, type Monumento } from '@/lib/monumentos'
 import { textosPorId, type TextoMonumento } from '@/lib/monumentos-textos'
 import { estimate } from '@/lib/provenance'
 
-export const metadata: Metadata = {
-  title: 'Visitar',
-  description:
+export const metadata: Metadata = pagina({
+  caminho: 'visitar',
+  titulo: 'Visitar Coimbra a pé: um dia da Baixa à Alta',
+  tituloSocial: 'Um dia em Coimbra a pé',
+  descricao:
     'Um dia em Coimbra a pé, lugar a lugar: da Baixa à Alta, pelo Jardim Botânico, até à outra margem. Com o Mosteiro de Santa Cruz, a Sé Velha e o Paço das Escolas em três dimensões.',
-}
+})
 
 /**
  * Visitar.
@@ -71,6 +75,8 @@ const dois = (n: number) => String(n).padStart(2, '0')
 export default function VisitarPage() {
   return (
     <>
+      <JsonLd dados={ldMigalhas([{ nome: 'Visitar', caminho: 'visitar' }])} />
+      <JsonLd dados={ldPercurso('Um dia em Coimbra a pé', TEMPOS.flatMap((t) => t.paragens.map((p) => p.a)))} />
       <a href="#conteudo" className="skip-link">
         Saltar para o conteúdo
       </a>

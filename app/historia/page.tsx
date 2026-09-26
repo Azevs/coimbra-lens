@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { ldMigalhas, pagina } from '@/lib/seo'
+import JsonLd from '@/components/seo/JsonLd'
 import Navbar from '@/components/navigation/Navbar'
 import SiteFooter from '@/components/navigation/SiteFooter'
 import DataTicker from '@/components/hero/DataTicker'
@@ -13,11 +15,12 @@ import Selo from '@/components/historia/Selo'
 import { EVIDENCIA_SENTIDO, type Evidencia } from '@/lib/evidencia'
 import { MARGENS, REFERENCIAS } from '@/lib/historia-aeminium-textos'
 
-export const metadata: Metadata = {
-  title: 'História · Aeminium',
-  description:
+export const metadata: Metadata = pagina({
+  caminho: 'historia',
+  titulo: 'Aeminium, a Coimbra romana',
+  descricao:
     'Antes de ser Coimbra, a cidade chamava-se Aeminium. O chão que os romanos construíram para o fórum — o criptopórtico — ainda lá está, por baixo do Museu Nacional Machado de Castro.',
-}
+})
 
 /**
  * História — capítulo I, Aeminium.
@@ -29,6 +32,7 @@ export const metadata: Metadata = {
 export default function HistoriaPage() {
   return (
     <>
+      <JsonLd dados={ldMigalhas([{ nome: 'História', caminho: 'historia' }])} />
       <a href="#conteudo" className="skip-link">
         Saltar para o conteúdo
       </a>

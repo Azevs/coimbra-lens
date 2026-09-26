@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Fraunces, JetBrains_Mono, IBM_Plex_Sans } from "next/font/google";
 import { Providers } from "@/lib/providers";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, siteUrl } from "@/lib/site";
+import { ldSite } from "@/lib/seo";
+import JsonLd from "@/components/seo/JsonLd";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -43,7 +45,8 @@ export const metadata: Metadata = {
     "Portugal",
   ],
   authors: [{ name: SITE_NAME }],
-  alternates: { canonical: "/" },
+  // Sem `alternates.canonical` aqui: herdado, fazia de cada página um
+  // duplicado da primeira. Cada página declara o seu (lib/seo.ts).
   openGraph: {
     type: "website",
     locale: "pt_PT",
@@ -77,6 +80,7 @@ export default function RootLayout({
       <body
         className={`${fraunces.variable} ${jetbrainsMono.variable} ${ibmPlexSans.variable} antialiased`}
       >
+        <JsonLd dados={ldSite()} />
         <Providers>{children}</Providers>
       </body>
     </html>

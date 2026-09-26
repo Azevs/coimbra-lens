@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { ldMigalhas, pagina } from '@/lib/seo'
+import JsonLd from '@/components/seo/JsonLd'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { ReactNode } from 'react'
@@ -12,10 +14,11 @@ import FilmeCoimbra, { type Fala } from '@/components/sobre/FilmeCoimbra'
 import { TRACKED } from '@/lib/reference-data'
 import { published, unavailable, type Sourced } from '@/lib/provenance'
 
-export const metadata: Metadata = {
-  title: 'Sobre',
-  description: 'O que é o CoimbraLens, como é feito e que regras segue.',
-}
+export const metadata: Metadata = pagina({
+  caminho: 'sobre',
+  titulo: 'Sobre o CoimbraLens',
+  descricao: 'O que é o CoimbraLens, como é feito e que regras segue.',
+})
 
 /** As falas das legendas portuguesas, para ler a narração sem ver o filme. */
 function lerFalas(): Fala[] {
@@ -116,6 +119,7 @@ export default function SobrePage() {
 
   return (
     <>
+      <JsonLd dados={ldMigalhas([{ nome: 'Sobre', caminho: 'sobre' }])} />
       <a href="#conteudo" className="skip-link">
         Saltar para o conteúdo
       </a>

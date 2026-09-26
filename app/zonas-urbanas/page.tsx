@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { ldMigalhas, pagina } from '@/lib/seo'
+import JsonLd from '@/components/seo/JsonLd'
 import Image from 'next/image'
 import Link from 'next/link'
 import Navbar from '@/components/navigation/Navbar'
@@ -6,12 +8,14 @@ import SiteFooter from '@/components/navigation/SiteFooter'
 import DataTicker from '@/components/hero/DataTicker'
 import { ZONAS_URBANAS, km, numero } from '@/lib/urban-zones-textos'
 
-export const metadata: Metadata = {
-  title: 'Zonas urbanas',
-  description:
+export const metadata: Metadata = pagina({
+  caminho: 'zonas-urbanas',
+  titulo: 'Zonas urbanas de Coimbra em maqueta 3D',
+  tituloSocial: 'Coimbra em maqueta',
+  descricao:
     'As zonas de Coimbra em maqueta tridimensional. ' +
     ZONAS_URBANAS.map(({ zona, resumo }) => `${zona.nome}: ${resumo}`).join(' '),
-}
+})
 
 /**
  * O índice das zonas urbanas. Cada zona tem página própria; aqui fica a
@@ -20,6 +24,7 @@ export const metadata: Metadata = {
 export default function ZonasUrbanasPage() {
   return (
     <>
+      <JsonLd dados={ldMigalhas([{ nome: 'Zonas urbanas', caminho: 'zonas-urbanas' }])} />
       <a href="#conteudo" className="skip-link">
         Saltar para o conteúdo
       </a>

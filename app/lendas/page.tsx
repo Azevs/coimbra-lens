@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { ldMigalhas, pagina } from '@/lib/seo'
+import JsonLd from '@/components/seo/JsonLd'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import Navbar from '@/components/navigation/Navbar'
@@ -6,10 +8,11 @@ import SiteFooter from '@/components/navigation/SiteFooter'
 import DataTicker from '@/components/hero/DataTicker'
 import FilmeLenda, { type Capitulo, type Fala } from '@/components/lendas/FilmeLenda'
 
-export const metadata: Metadata = {
-  title: 'Lendas',
-  description: 'As lendas de Coimbra em desenho animado. Primeiro episódio: Pedro e Inês.',
-}
+export const metadata: Metadata = pagina({
+  caminho: 'lendas',
+  titulo: 'Lendas de Coimbra em desenho animado',
+  descricao: 'As lendas de Coimbra em desenho animado. Primeiro episódio: Pedro e Inês.',
+})
 
 /**
  * Lendas — um episódio por lenda, empilhados.
@@ -85,6 +88,7 @@ const EPISODIOS: Episodio[] = [
 export default function LendasPage() {
   return (
     <>
+      <JsonLd dados={ldMigalhas([{ nome: 'Lendas', caminho: 'lendas' }])} />
       <a href="#conteudo" className="skip-link">
         Saltar para o conteúdo
       </a>

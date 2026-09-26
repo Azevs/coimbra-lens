@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { ldMigalhas, pagina } from '@/lib/seo'
+import JsonLd from '@/components/seo/JsonLd'
 import Navbar from '@/components/navigation/Navbar'
 import SiteFooter from '@/components/navigation/SiteFooter'
 import DataTicker from '@/components/hero/DataTicker'
@@ -7,14 +9,17 @@ import SectionTitle from '@/components/ui/SectionTitle'
 import CultureSection from '@/components/sections/CultureSection'
 import AgendaList from '@/components/agenda/AgendaList'
 
-export const metadata: Metadata = {
-  title: 'Agenda',
-  description: 'O que está marcado em Coimbra este mês, dia a dia, e as festas que se repetem todos os anos.',
-}
+export const metadata: Metadata = pagina({
+  caminho: 'agenda',
+  titulo: 'Agenda de Coimbra: eventos e festas',
+  tituloSocial: 'O que há para fazer em Coimbra',
+  descricao: 'O que está marcado em Coimbra este mês, dia a dia, e as festas que se repetem todos os anos.',
+})
 
 export default function AgendaPage() {
   return (
     <>
+      <JsonLd dados={ldMigalhas([{ nome: 'Agenda', caminho: 'agenda' }])} />
       <a href="#conteudo" className="skip-link">
         Saltar para o conteúdo
       </a>

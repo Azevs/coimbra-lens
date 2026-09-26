@@ -1,20 +1,24 @@
 import type { Metadata } from 'next'
+import { ldMigalhas, pagina } from '@/lib/seo'
+import JsonLd from '@/components/seo/JsonLd'
 import Navbar from '@/components/navigation/Navbar'
 import SiteFooter from '@/components/navigation/SiteFooter'
 import DataTicker from '@/components/hero/DataTicker'
 import GreenExplorer from '@/components/sections/GreenExplorer'
 import { IN_CITY, SPACES, TOTAL_HA, formatHa } from '@/lib/green'
 
-export const metadata: Metadata = {
-  title: 'Zonas verdes',
-  description:
+export const metadata: Metadata = pagina({
+  caminho: 'zonas-verdes',
+  titulo: 'Zonas verdes de Coimbra: parques, matas e jardins',
+  descricao:
     'Os espaços verdes públicos de Coimbra em mapa e em número: matas, parques e jardins com nome, ' +
     'a sua área medida e a distância a que ficam do centro.',
-}
+})
 
 export default function ZonasVerdesPage() {
   return (
     <>
+      <JsonLd dados={ldMigalhas([{ nome: 'Zonas verdes', caminho: 'zonas-verdes' }])} />
       <a href="#conteudo" className="skip-link">
         Saltar para o conteúdo
       </a>

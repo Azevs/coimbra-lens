@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Navbar from '@/components/navigation/Navbar'
 import HeroSection from '@/components/hero/HeroSection'
 import ClimateSection from '@/components/sections/ClimateSection'
@@ -11,6 +12,11 @@ import SiteFooter from '@/components/navigation/SiteFooter'
 // cultural para /agenda — cada área tem página própria desde que o site
 // deixou de ser só dados.
 import { MetrobusAerial, TrafficMap } from '@/components/map/LazyMaps'
+
+/** O título, a descrição e o Open Graph vêm do layout; aqui só o endereço canónico. */
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+}
 
 /**
  * A ordem é a de quem abre a página: primeiro o agora (o herói), depois o

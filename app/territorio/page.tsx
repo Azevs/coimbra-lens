@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { ldMigalhas, pagina } from '@/lib/seo'
+import JsonLd from '@/components/seo/JsonLd'
 import Navbar from '@/components/navigation/Navbar'
 import SiteFooter from '@/components/navigation/SiteFooter'
 import DataTicker from '@/components/hero/DataTicker'
@@ -7,10 +9,11 @@ import ParishPieces from '@/components/sections/ParishPieces'
 import { proportionalLayout } from '@/lib/parish-geometry'
 import { MUNICIPALITY, PARISH_ROWS } from '@/lib/parish-metrics'
 
-export const metadata: Metadata = {
-  title: 'Território',
-  description: 'As 18 freguesias de Coimbra em mapa e em número: onde vive a população do município.',
-}
+export const metadata: Metadata = pagina({
+  caminho: 'territorio',
+  titulo: 'As 18 freguesias de Coimbra: mapa e população',
+  descricao: 'As 18 freguesias de Coimbra em mapa e em número: onde vive a população do município.',
+})
 
 const COUNT_WORDS = ['uma', 'duas', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove']
 
@@ -40,6 +43,7 @@ export default function TerritorioPage() {
 
   return (
     <>
+      <JsonLd dados={ldMigalhas([{ nome: 'Território', caminho: 'territorio' }])} />
       <a href="#conteudo" className="skip-link">
         Saltar para o conteúdo
       </a>

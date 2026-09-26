@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { ldMigalhas, pagina } from '@/lib/seo'
+import JsonLd from '@/components/seo/JsonLd'
 import { notFound } from 'next/navigation'
 import Navbar from '@/components/navigation/Navbar'
 import SiteFooter from '@/components/navigation/SiteFooter'
@@ -19,10 +21,12 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const z = textoDe((await params).zona)
   if (!z) return {}
-  return {
-    title: `${z.zona.nome} · Zonas urbanas`,
-    description: `A ${z.zona.nome} em maqueta tridimensional: ${z.resumo}`,
-  }
+  return pagina({
+    caminho: `zonas-urbanas/${z.zona.id}`,
+    titulo: `${z.zona.nome}, Coimbra, em maqueta 3D`,
+    tituloSocial: `${z.zona.nome} em maqueta`,
+    descricao: `A ${z.zona.nome} em maqueta tridimensional: ${z.resumo}`,
+  })
 }
 
 export default async function ZonaUrbanaPage({ params }: Props) {
@@ -31,6 +35,12 @@ export default async function ZonaUrbanaPage({ params }: Props) {
 
   return (
     <>
+      <JsonLd
+        dados={ldMigalhas([
+          { nome: 'Zonas urbanas', caminho: 'zonas-urbanas' },
+          { nome: z.zona.nome, caminho: `zonas-urbanas/${z.zona.id}` },
+        ])}
+      />
       <a href="#conteudo" className="skip-link">
         Saltar para o conteúdo
       </a>
