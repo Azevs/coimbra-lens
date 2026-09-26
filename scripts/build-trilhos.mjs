@@ -17,8 +17,10 @@
  * mapas desenhados, sem coordenadas. O que há em aberto, por ordem de
  * preferência quando dois dizem o mesmo:
  *
- *   1. Município de Cantanhede — GPX das suas pequenas rotas em
- *      dados.gov.pt, CC-BY. É a entidade promotora a publicar o seu traçado.
+ *   1. As câmaras — o GPX, KML ou KMZ que cada município publica na página
+ *      dos seus percursos (Arganil, Cantanhede, Figueira da Foz, Góis,
+ *      Lousã, Mealhada, Mira, Mortágua, Tábua). É a entidade promotora a
+ *      publicar o traçado oficial, e ganha a qualquer outro.
  *   2. ICNF — a camada "Percursos na natureza" do WFS da Base de Dados
  *      Geográfica, com os percursos das áreas protegidas.
  *   3. OpenStreetMap — relações `route=hiking|foot`, desenhadas por quem as
@@ -68,6 +70,7 @@ import { merge, mesh, feature } from 'topojson-client'
 import { presimplify, simplify, quantile } from 'topojson-simplify'
 
 import { polylabel } from './lib/geo.mjs'
+import { lerTracado } from './lib/tracos.mjs'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const CACHE = join(ROOT, 'scripts', 'data', 'trilhos', 'cache')
@@ -99,13 +102,137 @@ const ICNF_WFS =
   'https://si.icnf.pt/wfs/bdg?service=wfs&version=2.0.0&request=GetFeature&typeNames=BDG:percursos_pedestres' +
   `&outputFormat=application/json&srsName=EPSG:4326&bbox=${CAIXA.join(',')},urn:ogc:def:crs:EPSG::4326`
 
-/** GPX publicados pelo Município de Cantanhede em dados.gov.pt (CC-BY). */
-const CANTANHEDE = [
-  { codigo: 'PR2 CNT', nome: 'Rota da Vinha', url: 'https://dados.gov.pt/s/resources/pr3-cnt-rota-do-calcario-cantanhede/20251009-144831/pr2cnt-rotadavinha.gpx' },
-  { codigo: 'PR3 CNT', nome: 'Rota do Calcário', url: 'https://dados.gov.pt/s/resources/pr3-cnt-rota-do-calcario/20251009-103906/pr3cnt-rotadocalcario.gpx' },
-  { codigo: 'PR4 CNT', nome: 'Rota das Areias Douradas', url: 'https://dados.gov.pt/s/resources/pr3-cnt-rota-do-calcario-cantanhede/20251009-144905/pr4cnt-rotadasareiasdouradas.gpx' },
+/**
+ * Traçados publicados pelas câmaras.
+ *
+ * `pecas` escolhe, pelo nome, que partes do ficheiro são o percurso: os KML
+ * trazem muitas vezes variantes, troços interditos ou condicionados e
+ * pontos de interesse. Sem `pecas`, conta tudo o que for linha.
+ *
+ * Ficaram de fora, com a razão:
+ *   · Pampilhosa da Serra, Penela — remetem para plataformas proprietárias
+ *     (MyXistoTrails, Outdooractive), sem ficheiro próprio;
+ *   · Penacova, Oliveira do Hospital, Miranda do Corvo, Coimbra — não
+ *     publicam ficheiro nas páginas dos percursos;
+ *   · Tábua PR1 — a ligação do GPX dá 404;
+ *   · Arganil PI da Margaraça — 0,5 km, metade do percurso; fica o do ICNF;
+ *   · Arganil GR22 — é a etapa Linhares–Piódão, quase toda fora da região;
+ *     fica a do OSM, que traz a rota inteira para recortar;
+ *   · o "percurso urbano" de Mortágua — um desenho CAD em 176 bocados.
+ */
+const AGN = 'https://www.visitarganil.pt/wp-content/uploads'
+const GOI = 'https://www.cm-gois.pt/cmgois/uploads/writer_file/document'
+const MRT = 'https://www.cm-mortagua.pt/cmmortagua/uploads/writer_file/document'
+const TBU = 'https://tabuaoencantodasbeiras.pt/wp-content/uploads'
+const CNT = 'https://dados.gov.pt/s/resources'
+const LSA = 'https://www.google.com/maps/d/kml?mid=1xRkm38ItnU93FFIWYjOza1LsS0w&forcekml=1'
+const MIR = (mid) => `https://www.google.com/maps/d/kml?mid=${mid}&forcekml=1`
+/** A Lousã publica a rede toda num só mapa; cada PR é a peça "PRn - …", sem variantes nem troço interdito. */
+const lsa = (n, nome) => ({
+  concelho: 'Lousã',
+  codigo: `PR${n} LSA`,
+  nome,
+  url: LSA,
+  pecas: new RegExp(`^PR${n}(?![.0-9])(?!.*(Interdito|Variante))`),
+})
+
+const CAMARAS = [
+  { concelho: 'Arganil', codigo: 'PR1 AGN', nome: 'Caminho do Xisto de Benfeita', url: `${AGN}/2016/04/PR1_AGN_04-04-2016.gpx` },
+  { concelho: 'Arganil', codigo: 'PR2 AGN', nome: 'Os Povos das Ribeiras de Piodam', url: `${AGN}/2016/04/PR2-AGN.gpx`, pecas: /^PR2$/ },
+  { concelho: 'Arganil', codigo: 'PR2.1 AGN', nome: 'Os Povos das Ribeiras de Piodam — variante', url: `${AGN}/2016/04/PR2-AGN.gpx`, pecas: /^PR2\.1$/ },
+  { concelho: 'Arganil', codigo: 'PR3 AGN', nome: 'Açor', url: `${AGN}/2016/04/PR3_AGN_24-02_2015.gpx` },
+  { concelho: 'Arganil', codigo: 'PR4 AGN', nome: 'Caminho do Xisto de Vila Cova de Alva', url: `${AGN}/2016/04/PR4_AGN_v11-07-2023.gpx` },
+  { concelho: 'Arganil', codigo: 'PR5 AGN', nome: 'Entre o Alva e a Ribeira da Mata', url: `${AGN}/2020/12/PR5_AGN.gpx`, pecas: /^PR5 AGN$/ },
+  { concelho: 'Arganil', codigo: 'PR5.1 AGN', nome: 'Entre o Alva e a Ribeira da Mata — variante do Pisão', url: `${AGN}/2020/12/PR5_AGN.gpx`, pecas: /^PR5\.1/ },
+  { concelho: 'Arganil', codigo: 'PR5.2 AGN', nome: 'Entre o Alva e a Ribeira da Mata — variante do Urtigal', url: `${AGN}/2020/12/PR5_AGN.gpx`, pecas: /^PR5\.2/ },
+  { concelho: 'Arganil', codigo: 'GR21.1', nome: 'Grande Rota das Aldeias do Xisto', url: `${AGN}/2021/03/GR21.1_AXAGN_17-07-2023.gpx` },
+  { concelho: 'Arganil', codigo: 'GR51', nome: 'Grande Rota do Alva', url: `${AGN}/2023/06/gr51-grande-rota-do-alva-1.gpx` },
+  { concelho: 'Cantanhede', codigo: 'PR2 CNT', nome: 'Rota da Vinha', url: `${CNT}/pr3-cnt-rota-do-calcario-cantanhede/20251009-144831/pr2cnt-rotadavinha.gpx` },
+  { concelho: 'Cantanhede', codigo: 'PR3 CNT', nome: 'Rota do Calcário', url: `${CNT}/pr3-cnt-rota-do-calcario/20251009-103906/pr3cnt-rotadocalcario.gpx` },
+  { concelho: 'Cantanhede', codigo: 'PR4 CNT', nome: 'Rota das Areias Douradas', url: `${CNT}/pr3-cnt-rota-do-calcario-cantanhede/20251009-144905/pr4cnt-rotadasareiasdouradas.gpx` },
+  // O ficheiro chama-se "Rota de Maiorca PR1 FIG", mas o traçado (13,2 km,
+  // circular, a partir de Maiorca) é o da Rota dos Arrozais, a PR1 FIG.
+  { concelho: 'Figueira da Foz', codigo: 'PR1 FIG', nome: 'Rota dos Arrozais', url: 'https://www.cm-figfoz.pt/cmfigueiradafoz/uploads/document/file/3080/rota_de_maiorca_pr1_fig_vnet.kmz' },
+  { concelho: 'Góis', codigo: 'PR1 GOI', nome: 'Aldeias do Xisto de Góis', url: `${GOI}/1754/pr1goi.kmz` },
+  { concelho: 'Góis', codigo: 'PR2 GOI', nome: 'Trilhos dos Pisões', url: `${GOI}/1747/pr2goi.kmz` },
+  { concelho: 'Góis', codigo: 'PR3 GOI', nome: 'Trilho do Vale do Ceira I', url: `${GOI}/1748/pr3goi.kmz` },
+  { concelho: 'Góis', codigo: 'PR4 GOI', nome: 'Trilho da Serra do Açor', url: `${GOI}/1749/pr4goi.kmz` },
+  { concelho: 'Góis', codigo: 'PR6 GOI', nome: 'Trilho do Vale Encantado', url: `${GOI}/1751/pr6goi.kmz` },
+  { concelho: 'Góis', codigo: 'PR7 GOI', nome: 'Trilho do Vale do Ceira II', url: `${GOI}/1752/pr7goi.kmz` },
+  { concelho: 'Góis', codigo: 'PR9 GOI', nome: 'Aldeias de Góis — Trilho do Baile', url: `${GOI}/1755/pr9goi.kmz` },
+  { concelho: 'Góis', codigo: 'PR11 GOI', nome: 'Trilho da Central', url: `${GOI}/5142/pr11goi.kmz` },
+  lsa(1, 'Rota dos Moinhos'),
+  lsa(2, 'Rota das Aldeias do Xisto'),
+  lsa(3, 'Rota da Levada'),
+  lsa(4, 'Rota do Trevim'),
+  lsa(5, 'Bosques do Catarredor'),
+  lsa(6, 'Trilho dos Moleiros'),
+  lsa(7, 'À Descoberta da Floresta'),
+  lsa(8, 'Rota do Marigo'),
+  lsa(9, 'Mata do Sobral'),
+  lsa(10, 'Da Senhora da Graça à Epigenia do Ceira'),
+  { concelho: 'Mealhada', codigo: 'PR1 MLD', nome: 'Luso-Bussaco 360', url: 'https://www.google.com/maps/d/kml?mid=126xS8Z0ES01G5CSs166IM_LYZMQ&forcekml=1' },
+  { concelho: 'Mira', codigo: 'PR1 MIR', nome: 'Rota dos Museus', url: MIR('zq-TLzlBYqdM.kxKovq19rwoE'), pecas: /^PR1 MIR/ },
+  { concelho: 'Mira', codigo: 'PR2 MIR', nome: 'Rota dos Moinhos', url: MIR('zq-TLzlBYqdM.k-5gPW6m-GoE'), pecas: /^PR2 MIR/ },
+  { concelho: 'Mira', codigo: 'PR4 MIR', nome: 'Rota do Conglomerado', url: MIR('zq-TLzlBYqdM.kHcWPTb5z-BE'), pecas: /^PR4 MIR/ },
+  { concelho: 'Mira', codigo: 'PR5 MIR', nome: 'Rota das Dunas de Mira', url: MIR('1OIqKOqN52HU8dvN3G2QtZheetS8'), pecas: /^PR5 - / },
+  { concelho: 'Mortágua', codigo: 'PR1 MRT', nome: 'Quedas de Água das Paredes', url: `${MRT}/443/pr1.kml`, pecas: /^PR 1/ },
+  { concelho: 'Mortágua', codigo: 'PR2 MRT', nome: 'Trilho da Ribeira da Fraga', url: `${MRT}/444/pr2.kmz` },
+  { concelho: 'Mortágua', codigo: 'CNE', nome: 'Caminho Natural da Espiritualidade', url: `${MRT}/446/caminhos_espritualidade.kml`, pecas: /^C_Nat_Espiritualidade/ },
+  { concelho: 'Tábua', codigo: 'PR2 TBU', nome: 'Caminho do Xisto de Sevilha', url: `${TBU}/2023/11/PR2-tbu-caminho-do-xisto-SEVILHA.gpx` },
+  { concelho: 'Tábua', codigo: 'PR3 TBU', nome: 'Rota das Pontes', url: `${TBU}/2025/03/PR3_Tabua_Rota_das_Pontes-1.gpx` },
+  { concelho: 'Tábua', codigo: 'PR4 TBU', nome: 'Trilho dos Gaios', url: `${TBU}/2025/03/Track-PR4-TBU-Trilho-dos-Gaios-um-Percurso-com-Historia.gpx` },
 ]
-const CANTANHEDE_PAGINA = 'https://dados.gov.pt/datasets/percursos-pedestres-cantanhede-pr-pequenas-rotas'
+
+/**
+ * Traçados em ficheiro local, na pasta `GPX/` (fora do git). Reunidos à mão
+ * pelo utilizador para os percursos que nenhuma câmara publica — quase todos
+ * gravações de caminhantes no Wikiloc.
+ *
+ * `idaEVolta`: a gravação foi e voltou pelo mesmo caminho num percurso que a
+ * ficha declara linear. Fica só a ida, cortada no ponto mais afastado do
+ * início. Só se marca quando as duas coisas batem (linear na ficha, traçado
+ * fechado); Ribeira de Poiares e Pedra da Ferida voltam ao início mas
+ * cortá-los dava metade do declarado, e ficam inteiros.
+ *
+ * O PR1 PCV vem do KML (6,0 km, como a ficha), não do GPX de 7,8.
+ */
+const PASTA_LOCAL = join(ROOT, 'GPX')
+const LOCAIS = [
+  { ficheiro: 'capela-de-ferraria-de-sao-joao.gpx', concelho: 'Penela', codigo: 'PR1 PNL', nome: 'Trilho do Rebanho' },
+  { ficheiro: 'pr2-pnl-da-pedra-ferida-a-loucainha.gpx', concelho: 'Penela', codigo: 'PR2 PNL', nome: 'Da Pedra da Ferida à Louçainha' },
+  { ficheiro: 'penacova-pr3-rota-do-alva.gpx', concelho: 'Penacova', codigo: 'PR3 PCV', nome: 'Rota do Alva' },
+  { ficheiro: 'PR1 Penacova e o Rio Mondego kml.kml', concelho: 'Penacova', codigo: 'PR1 PCV', nome: 'Penacova e o Rio Mondego' },
+  { ficheiro: 'pr4-pcv-ribeira-de-arcos.gpx', concelho: 'Penacova', codigo: 'PR4 PCV', nome: 'Ribeira de Arcos' },
+  { ficheiro: 'pr5-pcv-livraria-do-mondego-penacova.gpx', concelho: 'Penacova', codigo: 'PR5 PCV', nome: 'Livraria do Mondego' },
+  { ficheiro: 'percurso-pedestre-viver-o-alva-inserido-na-gr-alva.gpx', concelho: 'Vila Nova de Poiares', codigo: 'PR3 VNP', nome: 'Viver o Alva' },
+  { ficheiro: 'pr1-prs-serra-do-carvalho.gpx', concelho: 'Vila Nova de Poiares', codigo: 'PR1 VNP', nome: 'Serra do Carvalho', idaEVolta: true },
+  { ficheiro: 'ribeira-de-poiares-1-pr2-vnp.gpx', concelho: 'Vila Nova de Poiares', codigo: 'PR2 VNP', nome: 'Ribeira de Poiares' },
+  { ficheiro: 'pr1-cbr-percurso-interpretativo-mata-nacional-de-vale-de-can.gpx', concelho: 'Coimbra', codigo: 'PR1 CBR', nome: 'Mata Nacional de Vale de Canas' },
+  { ficheiro: 'pr3-cbr-percurso-pedestre-ribeirinho.gpx', concelho: 'Coimbra', codigo: 'PR3 CBR', nome: 'Ribeirinho', idaEVolta: true },
+  { ficheiro: 'pr4-cbr-rota-da-tecelagem.gpx', concelho: 'Coimbra', codigo: 'PR4 CBR', nome: 'Rota da Tecelagem' },
+  { ficheiro: 'pr5-cbr-rota-da-bio-reserva-da-senhora-da-alegria.gpx', concelho: 'Coimbra', codigo: 'PR5 CBR', nome: 'Rota Bio-Reserva Sr.ª da Alegria' },
+  { ficheiro: 'pr6-cbr-rota-da-torre-de-bera-almalagues.gpx', concelho: 'Coimbra', codigo: 'PR6 CBR', nome: 'Rota da Torre de Bera', idaEVolta: true },
+  { ficheiro: 'pr1-cdn-rota-de-conimbriga.gpx', concelho: 'Condeixa-a-Nova', codigo: 'PR1 CDN', nome: 'Rota de Conímbriga' },
+  { ficheiro: 'pr1-mcv.gpx', concelho: 'Miranda do Corvo', codigo: 'PR1 MCV', nome: 'Caminho do Xisto Acessível de Gondramaz', idaEVolta: true },
+  { ficheiro: 'pr2-mcv-caminho-do-xisto-de-gondramaz-nos-passos-do-moleiro.gpx', concelho: 'Miranda do Corvo', codigo: 'PR2 MCV', nome: 'Caminho do Xisto de Gondramaz — Nos passos do moleiro' },
+  { ficheiro: 'pr4-mcv-miranda-do-corvo-ida-e-volta-lousa.gpx', concelho: 'Miranda do Corvo', codigo: 'PR4 MCV', nome: 'Caminhando ao longo do rio', idaEVolta: true },
+  { ficheiro: 'pr1-mmv-rota-monumental-das-aves-de-montemor-o-velho.gpx', concelho: 'Montemor-o-Velho', codigo: 'PR1 MMV', nome: 'Rota Monumental das Aves de Montemor-o-Velho' },
+  { ficheiro: 'pr6-fig-rota-das-salinas-figueira-da-foz.gpx', concelho: 'Figueira da Foz', codigo: 'PR6 FIG', nome: 'Rota das Salinas' },
+  { ficheiro: 'pr8-goi-trilho-do-papel.gpx', concelho: 'Góis', codigo: 'PR8 GOI', nome: 'Trilho do Papel' },
+  { ficheiro: 'pr3-mir-mira-rota-da-vala-real.gpx', concelho: 'Mira', codigo: 'PR3 MIR', nome: 'Rota da Vala Real' },
+  { ficheiro: 'pr6-ohp-rota-do-narciso.gpx', concelho: 'Oliveira do Hospital', codigo: 'PR6 OHP', nome: 'Rota do Narciso' },
+  { ficheiro: 'pr7-ohp-rota-das-palheiras-fiais-da-beira.gpx', concelho: 'Oliveira do Hospital', codigo: 'PR7 OHP', nome: 'Rota das Palheiras' },
+  { ficheiro: 'pr1-pps-caminho-do-xisto-de-fajao-pampilhosa-da-serra.gpx', concelho: 'Pampilhosa da Serra', codigo: 'PR1 PPS', nome: 'Caminho do Xisto de Fajão — Subida aos Penedos' },
+  { ficheiro: 'voltinha-ao-ceira-pr2-pps-fajao-pampilhosa-da-serra.gpx', concelho: 'Pampilhosa da Serra', codigo: 'PR2 PPS', nome: 'Caminho do Xisto de Fajão — Voltinhas do Ceira' },
+  { ficheiro: 'pr4-pps-janeiro-de-baixo.gpx', concelho: 'Pampilhosa da Serra', codigo: 'PR4 PPS', nome: 'Caminho do Xisto de Janeiro de Baixo' },
+  { ficheiro: 'pps-pr5-caminho-do-xisto-de-pessegueiro.gpx', concelho: 'Pampilhosa da Serra', codigo: 'PR5 PPS', nome: 'Caminho do Xisto de Pessegueiro' },
+  { ficheiro: 'pr7-pps-caminho-do-xisto-de-pampilhosa-da-serra-villa-pampil.gpx', concelho: 'Pampilhosa da Serra', codigo: 'PR7 PPS', nome: 'Caminho do Xisto de Pampilhosa da Serra' },
+  { ficheiro: 'pr8-ppsgpx.gpx', concelho: 'Pampilhosa da Serra', codigo: 'PR8 PPS', nome: 'Rota do Rio Unhais' },
+  { ficheiro: 'pr9-pps-rota-velho-de-unhais.gpx', concelho: 'Pampilhosa da Serra', codigo: 'PR9 PPS', nome: 'Rota do Velho Unhais' },
+  { ficheiro: 'pr8-sre-rota-das-dolinas-e-lagoas-do-planalto-de-sico.gpx', concelho: 'Soure', codigo: 'PR8 SRE', nome: 'Rota das Dolinas e Lagoas do Planalto de Sicó' },
+  { ficheiro: 'pr1-tbu-caminho-do-xisto-de-midoes-na-peugada-de-joao-branda.gpx', concelho: 'Tábua', codigo: 'PR1 TBU', nome: 'Caminho do Xisto de Midões' },
+]
 
 /** Mosaicos de 1° × 1° do Copernicus DEM GLO-30 que cobrem a região. */
 const DEM_MOSAICOS = ['N39_00_W009', 'N39_00_W008', 'N40_00_W009', 'N40_00_W008'].map(
@@ -136,6 +263,9 @@ const CIRCULAR_M = 250
  * como PRS. Normaliza-se para o que está sinalizado no terreno.
  */
 const ALIAS_CONCELHO = { FF: 'FIG', CND: 'CDN', PRS: 'VNP' }
+
+/** Os códigos de concelho da CIM, como sinalizados nos PR. */
+const CODIGOS_CIM = new Set(['AGN', 'CNT', 'CBR', 'CDN', 'FIG', 'GOI', 'LSA', 'MLD', 'MIR', 'MCV', 'MMV', 'MRT', 'OHP', 'PPS', 'PCV', 'PNL', 'SRE', 'TBU', 'VNP'])
 
 /**
  * Correspondências que o código não resolve, porque os percursos
@@ -180,6 +310,17 @@ async function comCache(nome, obter) {
   const texto = await obter()
   writeFileSync(ficheiro, texto)
   return texto
+}
+
+/** Como `comCache`, para ficheiros binários (KMZ). */
+async function comCacheBin(nome, url) {
+  const ficheiro = join(CACHE, nome)
+  if (!REFRESCAR && existsSync(ficheiro)) return readFileSync(ficheiro)
+  const res = await fetch(url, { signal: AbortSignal.timeout(120000), headers: { 'User-Agent': 'Mozilla/5.0 ' + USER_AGENT } })
+  if (!res.ok) throw new Error(`${url.slice(0, 90)} respondeu ${res.status}`)
+  const buf = Buffer.from(await res.arrayBuffer())
+  writeFileSync(ficheiro, buf)
+  return buf
 }
 
 async function overpass(query) {
@@ -606,33 +747,78 @@ async function lerICNF() {
     })
 }
 
-async function lerCantanhede() {
+async function lerCamaras() {
   const out = []
-  for (const p of CANTANHEDE) {
-    const gpx = await comCache(`cantanhede-${slug(p.codigo)}.gpx`, () => pedir(p.url))
-    const trks = [...gpx.matchAll(/<trkseg>([\s\S]*?)<\/trkseg>/g)].map((m) => m[1])
-    const blocos = trks.length ? trks : [gpx]
-    const linhas = blocos
-      .map((b) =>
-        [...b.matchAll(/<(?:trkpt|rtept)\s+([^>]*?)\/?>/g)].map((m) => {
-          const lat = Number(/lat="([^"]+)"/.exec(m[1])[1])
-          const lon = Number(/lon="([^"]+)"/.exec(m[1])[1])
-          return [lon, lat]
-        }),
-      )
-      .filter((l) => l.length > 1)
-      // O GPX da Rota do Calcário traz o mesmo segmento duas vezes; cosido,
-      // dava um percurso com o dobro da extensão.
+  for (const p of CAMARAS) {
+    const nome = `camara-${slug(p.url).slice(-60)}`
+    let pecas
+    try {
+      pecas = lerTracado(await comCacheBin(nome, p.url))
+    } catch (err) {
+      process.stdout.write(`  ${p.codigo}: ${err.message}\n`)
+      continue
+    }
+    const escolhidas = p.pecas ? pecas.filter((x) => p.pecas.test(x.nome)) : pecas
+    const linhas = escolhidas
+      .flatMap((x) => x.linhas)
+      // Há GPX com o mesmo segmento duas vezes (a Rota do Calcário);
+      // cosido, dava um percurso com o dobro da extensão.
       .filter((l, i, todas) => todas.findIndex((o) => o.length === l.length && haversine(o[0], l[0]) < 5) === i)
+    if (!linhas.length) {
+      process.stdout.write(`  ${p.codigo}: nenhuma peça com o nome pedido\n`)
+      continue
+    }
     out.push({
-      fonte: 'cantanhede',
+      fonte: 'camara',
       fonteRef: p.url,
       nome: p.nome,
       ref: p.codigo,
+      codigoFixo: p.codigo,
       partes: ordenar(coser(linhas)),
-      website: CANTANHEDE_PAGINA,
-      operador: 'Município de Cantanhede',
+      website: null,
+      operador: `Município de ${p.concelho}`,
       roundtrip: null,
+      declaradoKm: null,
+    })
+  }
+  return out
+}
+
+/** Ida e volta: fica a ida, até ao ponto mais afastado do início. */
+function soIda(linha) {
+  let longe = 0
+  let i = 0
+  for (const [k, p] of linha.entries()) {
+    const d = haversine(linha[0], p)
+    if (d > longe) {
+      longe = d
+      i = k
+    }
+  }
+  return linha.slice(0, i + 1)
+}
+
+function lerLocais() {
+  if (!existsSync(PASTA_LOCAL)) return []
+  const out = []
+  for (const p of LOCAIS) {
+    const ficheiro = join(PASTA_LOCAL, p.ficheiro)
+    if (!existsSync(ficheiro)) {
+      process.stdout.write(`  ${p.codigo}: falta ${p.ficheiro}\n`)
+      continue
+    }
+    let linhas = lerTracado(readFileSync(ficheiro)).flatMap((x) => x.linhas)
+    if (p.idaEVolta) linhas = [soIda(linhas.flat())]
+    out.push({
+      fonte: 'ficheiro',
+      fonteRef: p.ficheiro,
+      nome: p.nome,
+      ref: p.codigo,
+      codigoFixo: p.codigo,
+      partes: ordenar(coser(linhas)),
+      website: null,
+      operador: null,
+      roundtrip: p.idaEVolta ? 'no' : null,
       declaradoKm: null,
     })
   }
@@ -641,7 +827,7 @@ async function lerCantanhede() {
 
 // ── Principal ──────────────────────────────────────────────────────────
 
-const PRIORIDADE = { cantanhede: 0, icnf: 1, osm: 2 }
+const PRIORIDADE = { camara: 0, icnf: 1, ficheiro: 2, osm: 3 }
 
 async function main() {
   process.stdout.write('A ler os concelhos (CAOP via geoapi.pt)…\n')
@@ -662,21 +848,28 @@ async function main() {
   process.stdout.write('A ler os percursos…\n')
   const { rotas: osm, dataBase } = await lerOSM()
   const icnf = await lerICNF()
-  const cnt = await lerCantanhede()
-  process.stdout.write(`  OSM ${osm.length} · ICNF ${icnf.length} · Cantanhede ${cnt.length}\n`)
+  const cam = await lerCamaras()
+  const loc = lerLocais()
+  process.stdout.write(`  OSM ${osm.length} · ICNF ${icnf.length} · câmaras ${cam.length} · ficheiros ${loc.length}\n`)
 
   process.stdout.write('A carregar o DEM (Copernicus GLO-30)…\n')
   const cota = await carregarDEM()
 
   // Recortar à região e medir.
   const candidatos = []
-  for (const r of [...cnt, ...icnf, ...osm]) {
+  for (const r of [...cam, ...icnf, ...loc, ...osm]) {
     if (EXCLUIR[`${r.fonte}:${r.fonteRef}`]) continue
     const antes = r.partes.reduce((s, p) => s + comprimento(p), 0)
-    const partes = r.partes.flatMap((p) => recortar(p, regiaoAneis, regiaoCaixa))
-    if (!partes.length) continue
+    // O código de uma câmara vem declarado à mão; o CNE não é PR nem GR.
+    const cod = lerCodigo(r.ref) ?? lerCodigo(r.nome) ?? (r.codigoFixo ? { tipo: null, codigo: r.codigoFixo } : null)
+    const recortes = r.partes.flatMap((p) => recortar(p, regiaoAneis, regiaoCaixa))
+    if (!recortes.length) continue
+    // Uma pequena rota de um concelho da CIM mostra-se inteira, mesmo que
+    // espreite para o vizinho (o Trilho do Rebanho anda metade em Figueiró
+    // dos Vinhos). O recorte é para as grandes rotas que atravessam a região.
+    const daRegiao = cod?.tipo === 'PR' && CODIGOS_CIM.has(cod.codigo.split(' ')[1])
+    const partes = daRegiao ? r.partes : recortes
     const depois = partes.reduce((s, p) => s + comprimento(p), 0)
-    const cod = lerCodigo(r.ref) ?? lerCodigo(r.nome)
     candidatos.push({ ...r, partes: ordenar(partes), comprimento: depois, recortado: antes - depois > 500, cod })
   }
 
@@ -870,7 +1063,7 @@ async function main() {
  */
 
 export type TipoTrilho = 'GR' | 'PR' | 'PI'
-export type FonteTrilho = 'osm' | 'icnf' | 'cantanhede'
+export type FonteTrilho = 'osm' | 'icnf' | 'camara' | 'ficheiro'
 
 export interface TrilhoDados {
   id: string

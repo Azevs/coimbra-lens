@@ -16,12 +16,12 @@ const ESCALAS: { chave: keyof Dificuldade; nome: string }[] = [
   { chave: 'orientacao', nome: 'Orientação' },
 ]
 
-function Facto({ rotulo, valor, origem }: { rotulo: string; valor: string; origem?: 'guia' | 'medido' }) {
+function Facto({ rotulo, valor, origem }: { rotulo: string; valor: string; origem?: 'ficha' | 'medido' }) {
   return (
     <div className="trilho-facto">
       <dt>
         {rotulo}
-        {origem && <span className={`trilho-origem trilho-origem-${origem}`}>{origem === 'guia' ? 'guia' : 'medido'}</span>}
+        {origem && <span className={`trilho-origem trilho-origem-${origem}`}>{origem}</span>}
       </dt>
       <dd className="font-data">{valor}</dd>
     </div>
@@ -32,9 +32,10 @@ function Facto({ rotulo, valor, origem }: { rotulo: string; valor: string; orige
  * A ficha de um trilho.
  *
  * Duas colunas de verdade diferente, e cada número diz de qual é: o que a
- * CIM declara no guia (duração, dificuldade, época) e o que se mede no
- * traçado (distância, subida, perfil). Um percurso sem ficha no guia fica
- * sem duração e sem dificuldade — não se calculam.
+ * ficha publicada declara (duração, dificuldade, época — do guia da CIM ou
+ * do Turismo Centro) e o que se mede no traçado (distância, subida,
+ * perfil). O que a ficha não traz é medido quando se pode medir; duração e
+ * dificuldade nunca — não se calculam.
  */
 export default function FichaTrilho({ trilho: t }: { trilho: Trilho }) {
   const posicao = useTrilhos((s) => s.posicao)
@@ -43,15 +44,18 @@ export default function FichaTrilho({ trilho: t }: { trilho: Trilho }) {
   const [animar, setAnimar] = useState(false)
   useEffect(() => setAnimar(canAnimate()), [])
 
-  const g = t.guia
+  const d = t.declarada
+  const mide = d?.mide ?? null
   const fonte = ligacaoFonte(t)
   const cor = FAMILIAS[t.familia].linha
+  const subidaMedida = `↑ ${fmt(t.subida)} m`
+  const altitudeMedida = `${fmt(t.cotaMin)}–${fmt(t.cotaMax)} m`
 
   return (
     <article className="trilho-ficha" aria-labelledby="trilho-ficha-titulo">
       <header className="trilho-ficha-topo">
         <Marca familia={t.familia} codigo={t.codigo} grande />
-        {g && <span className="trilho-selo">Ficha oficial</span>}
+        {d && <span className="trilho-selo">Ficha oficial</span>}
         <button type="button" className="trilho-fechar" onClick={() => escolher(null)} aria-label="Fechar a ficha e voltar à carta">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
             <path d="M18 6L6 18M6 6l12 12" />
@@ -68,14 +72,26 @@ export default function FichaTrilho({ trilho: t }: { trilho: Trilho }) {
       </p>
 
       <dl className="trilho-factos">
-        {g ? (
+        {d ? (
           <>
-            <Facto rotulo="Extensão" valor={km(g.extensaoKm)} origem="guia" />
-            <Facto rotulo="Duração" valor={duracao(g.duracaoMin)} origem="guia" />
-            <Facto rotulo="Desnível" valor={g.desnivel ?? '—'} origem="guia" />
-            <Facto rotulo="Altitude" valor={g.altitude ? `${fmt(g.altitude.min)}–${fmt(g.altitude.max)} m` : '—'} origem="guia" />
-            <Facto rotulo="Percurso" valor={g.tipo} origem="guia" />
-            <Facto rotulo="Época" valor={g.epoca} origem="guia" />
+            <Facto rotulo="Extensão" valor={km(d.extensaoKm)} origem="ficha" />
+            <Facto rotulo="Duração" valor={d.duracaoMin != null ? duracao(d.duracaoMin) : '—'} origem={d.duracaoMin != null ? 'ficha' : undefined} />
+            {d.desnivel ? (
+              <Facto rotulo="Desnível" valor={d.desnivel} origem="ficha" />
+            ) : (
+              <Facto rotulo="Sobe" valor={subidaMedida} origem="medido" />
+            )}
+            {d.altitude ? (
+              <Facto rotulo="Altitude" valor={`${fmt(d.altitude.min)}–${fmt(d.altitude.max)} m`} origem="ficha" />
+            ) : (
+              <Facto rotulo="Altitude" valor={altitudeMedida} origem="medido" />
+            )}
+            <Facto rotulo="Percurso" valor={forma(t)} origem={d.tipo ? 'ficha' : 'medido'} />
+            {d.epoca ? (
+              <Facto rotulo="Época" valor={d.epoca} origem="ficha" />
+            ) : (
+              <Facto rotulo="Dificuldade" valor={d.dificuldade ?? '—'} origem={d.dificuldade ? 'ficha' : undefined} />
+            )}
           </>
         ) : (
           <>
@@ -83,7 +99,7 @@ export default function FichaTrilho({ trilho: t }: { trilho: Trilho }) {
             <Facto rotulo="Percurso" valor={forma(t)} origem="medido" />
             <Facto rotulo="Sobe" valor={`${fmt(t.subida)} m`} origem="medido" />
             <Facto rotulo="Desce" valor={`${fmt(t.descida)} m`} origem="medido" />
-            <Facto rotulo="Altitude" valor={`${fmt(t.cotaMin)}–${fmt(t.cotaMax)} m`} origem="medido" />
+            <Facto rotulo="Altitude" valor={altitudeMedida} origem="medido" />
             <Facto rotulo="Duração" valor="Sem ficha" />
           </>
         )}
@@ -91,19 +107,19 @@ export default function FichaTrilho({ trilho: t }: { trilho: Trilho }) {
 
       {t.divergencia && (
         <p className="trilho-aviso">
-          O traçado no mapa mede {km(t.divergencia.medidoKm)}; o guia declara {km(t.divergencia.guiaKm)}. Descrevem
+          O traçado no mapa mede {km(t.divergencia.medidoKm)}; a ficha declara {km(t.divergencia.guiaKm)}. Descrevem
           versões diferentes do percurso.
         </p>
       )}
 
-      {g && (
+      {mide && (
         <div className="trilho-dificuldade" aria-label="Dificuldade, de 1 a 5">
           {ESCALAS.map((e) => (
             <div key={e.chave} className="trilho-escala">
               <span className="trilho-escala-nome">{e.nome}</span>
-              <span className="trilho-escala-pontos" aria-label={`${g.dificuldade[e.chave]} em 5`}>
+              <span className="trilho-escala-pontos" aria-label={`${mide[e.chave]} em 5`}>
                 {[1, 2, 3, 4, 5].map((n) => (
-                  <span key={n} className={n <= g.dificuldade[e.chave] ? 'is-cheio' : undefined} />
+                  <span key={n} className={n <= mide[e.chave] ? 'is-cheio' : undefined} />
                 ))}
               </span>
             </div>
@@ -141,21 +157,25 @@ export default function FichaTrilho({ trilho: t }: { trilho: Trilho }) {
             )}
           </button>
         )}
-        <div className="trilho-ligacoes">
-          <a href={fonte.href} target="_blank" rel="noopener noreferrer">
-            {fonte.texto} ↗
-          </a>
-          {t.website && t.fonte !== 'cantanhede' && (
-            <a href={t.website} target="_blank" rel="noopener noreferrer">
-              Página do percurso ↗
-            </a>
-          )}
-          {g && (
-            <a href={GUIA_URL} target="_blank" rel="noopener noreferrer">
-              Guia da CIM, p. {g.pagina} ↗
-            </a>
-          )}
-        </div>
+        {(fonte || (t.website && t.fonte !== 'camara') || d?.pagina) && (
+          <div className="trilho-ligacoes">
+            {fonte && (
+              <a href={fonte.href} target="_blank" rel="noopener noreferrer">
+                {fonte.texto} ↗
+              </a>
+            )}
+            {t.website && t.fonte !== 'camara' && (
+              <a href={t.website} target="_blank" rel="noopener noreferrer">
+                Página do percurso ↗
+              </a>
+            )}
+            {d?.pagina && (
+              <a href={GUIA_URL} target="_blank" rel="noopener noreferrer">
+                Guia da CIM, p. {d.pagina} ↗
+              </a>
+            )}
+          </div>
+        )}
       </div>
     </article>
   )

@@ -64,7 +64,7 @@ export default function ListaTrilhos() {
               <button type="button" className="trilho-cartao" onClick={() => abrir(t.id)} style={{ '--cor-trilho': FAMILIAS[t.familia].linha } as React.CSSProperties}>
                 <span className="trilho-cartao-topo">
                   <Marca familia={t.familia} codigo={t.codigo} />
-                  {t.guia && <span className="trilho-selo trilho-selo-pequeno">Ficha oficial</span>}
+                  {t.declarada && <span className="trilho-selo trilho-selo-pequeno">Ficha oficial</span>}
                 </span>
                 <span className="trilho-cartao-nome">{t.titulo}</span>
                 <span className="trilho-cartao-onde">
@@ -73,10 +73,10 @@ export default function ListaTrilhos() {
                 </span>
                 <Perfil cotas={t.perfil} distanciaKm={t.distanciaKm} mini cor={FAMILIAS[t.familia].linha} />
                 <span className="trilho-cartao-numeros font-data">
-                  <span>{km(t.guia && !t.divergencia ? t.guia.extensaoKm : t.distanciaKm)}</span>
+                  <span>{km(t.declarada && !t.divergencia ? t.declarada.extensaoKm : t.distanciaKm)}</span>
                   <span>↑ {fmt(t.subida)} m</span>
                   <span>{forma(t)}</span>
-                  {t.guia && <span>{duracao(t.guia.duracaoMin)}</span>}
+                  {t.declarada?.duracaoMin != null && <span>{duracao(t.declarada.duracaoMin)}</span>}
                 </span>
               </button>
             </li>

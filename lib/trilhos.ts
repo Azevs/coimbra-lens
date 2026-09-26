@@ -9,10 +9,12 @@
 
 import { published, type Sourced } from '@/lib/provenance'
 import { fmt } from '@/lib/format'
-import { GUIA_DATA, GUIA_FICHAS, GUIA_FONTE, type FichaGuia } from '@/lib/trilhos-guia'
+import { GUIA_DATA, GUIA_FICHAS, GUIA_FONTE, type Dificuldade, type FichaGuia } from '@/lib/trilhos-guia'
+import { FICHAS_TC, type FichaTC } from '@/lib/trilhos-fichas-tc'
 import { TRILHOS_DADOS, TRILHOS_OBTIDOS_EM, type TrilhoDados } from '@/lib/trilhos-dados'
 
-export type { FichaGuia, TrilhoDados }
+export type { FichaGuia, FichaTC, TrilhoDados }
+export { FICHAS_TC } from '@/lib/trilhos-fichas-tc'
 export { GUIA_REDE, GUIA_URL } from '@/lib/trilhos-guia'
 export { REGIAO_CAIXA } from '@/lib/trilhos-dados'
 
@@ -51,12 +53,61 @@ export const FAMILIAS: Record<Familia, { nome: string; plural: string; linha: st
 
 export const FAMILIA_ORDEM: Familia[] = ['GR', 'PR', 'outro']
 
+/**
+ * A ficha que se mostra, venha do guia da CIM ou do Turismo Centro.
+ * O guia traz mais (altitudes, época, as quatro escalas MIDE); o Turismo
+ * Centro traz a dificuldade na escala de cada câmara, como texto.
+ */
+export interface Declarada {
+  origem: 'guia' | 'tc'
+  nome: string
+  extensaoKm: number
+  duracaoMin: number | null
+  desnivel: string | null
+  altitude: { max: number; min: number } | null
+  tipo: 'Circular' | 'Linear' | null
+  epoca: string | null
+  mide: Dificuldade | null
+  dificuldade: string | null
+  pagina: number | null
+}
+
+const deGuia = (g: FichaGuia): Declarada => ({
+  origem: 'guia',
+  nome: g.nome,
+  extensaoKm: g.extensaoKm,
+  duracaoMin: g.duracaoMin,
+  desnivel: g.desnivel,
+  altitude: g.altitude,
+  tipo: g.tipo,
+  epoca: g.epoca,
+  mide: g.dificuldade,
+  dificuldade: null,
+  pagina: g.pagina,
+})
+
+const deTC = (f: FichaTC): Declarada => ({
+  origem: 'tc',
+  nome: f.nome,
+  extensaoKm: f.extensaoKm,
+  duracaoMin: f.duracaoMin,
+  desnivel: f.desnivel,
+  altitude: null,
+  tipo: f.tipo,
+  epoca: null,
+  mide: null,
+  dificuldade: f.dificuldade,
+  pagina: null,
+})
+
 export interface Trilho extends TrilhoDados {
   familia: Familia
   /** O nome a mostrar: o do guia quando há ficha, senão o da fonte. */
   titulo: string
   ficha: string | null
   guia: FichaGuia | null
+  /** A ficha a mostrar: a do guia, ou, sem ela, a do Turismo Centro. */
+  declarada: Declarada | null
   /**
    * Quando o traçado e a ficha discordam na extensão em mais de 20 %, a
    * ficha descreve outra versão do percurso. Não se esconde nenhum dos
@@ -66,17 +117,21 @@ export interface Trilho extends TrilhoDados {
 }
 
 const fichas = new Map(GUIA_FICHAS.map((f) => [f.id, f]))
+const fichasTC = new Map(FICHAS_TC.filter((f) => f.codigo).map((f) => [f.codigo!, f]))
 
 export const TRILHOS: Trilho[] = TRILHOS_DADOS.map((t) => {
   const guia = t.ficha ? (fichas.get(t.ficha) ?? null) : null
   const familia: Familia = t.tipo === 'GR' ? 'GR' : t.tipo === 'PR' ? 'PR' : 'outro'
-  const diverge = guia && !t.troco && Math.abs(t.distanciaKm / guia.extensaoKm - 1) > 0.2
+  const tc = !guia && t.codigo ? (fichasTC.get(t.codigo) ?? null) : null
+  const declarada = guia ? deGuia(guia) : tc ? deTC(tc) : null
+  const diverge = declarada && !t.troco && Math.abs(t.distanciaKm / declarada.extensaoKm - 1) > 0.2
   return {
     ...t,
     familia,
     titulo: guia?.nome ?? t.nome,
     guia,
-    divergencia: diverge ? { medidoKm: t.distanciaKm, guiaKm: guia.extensaoKm } : null,
+    declarada,
+    divergencia: diverge ? { medidoKm: t.distanciaKm, guiaKm: declarada.extensaoKm } : null,
   }
 })
 
@@ -84,7 +139,7 @@ export const TRILHO_POR_ID = new Map(TRILHOS.map((t) => [t.id, t]))
 
 /** Quilómetros de traçado no mapa. */
 export const TOTAL_KM = TRILHOS.reduce((s, t) => s + t.distanciaKm, 0)
-export const COM_FICHA = TRILHOS.filter((t) => t.guia)
+export const COM_FICHA = TRILHOS.filter((t) => t.declarada)
 
 // ── Filtros ────────────────────────────────────────────────────────────
 
@@ -108,8 +163,8 @@ export const FILTROS_INICIAIS: Filtros = { familias: ['GR', 'PR', 'outro'], exte
 export function passa(t: Trilho, f: Filtros): boolean {
   if (!f.familias.includes(t.familia)) return false
   if (f.extensao && !EXTENSOES[f.extensao].teste(t.distanciaKm)) return false
-  if (f.circular && !(t.guia ? t.guia.tipo === 'Circular' : t.circular)) return false
-  if (f.soFicha && !t.guia) return false
+  if (f.circular && forma(t) !== 'Circular') return false
+  if (f.soFicha && !t.declarada) return false
   return true
 }
 
@@ -125,29 +180,36 @@ export function duracao(min: number): string {
   return m ? `${h} h ${String(m).padStart(2, '0')}` : `${h} h`
 }
 
-/** Circular ou linear: o guia manda; sem guia, a geometria. */
+/** Circular ou linear: a ficha manda; sem ela, a geometria. */
 export function forma(t: Trilho): 'Circular' | 'Linear' {
-  return t.guia?.tipo ?? (t.circular ? 'Circular' : 'Linear')
+  return t.declarada?.tipo ?? (t.circular ? 'Circular' : 'Linear')
 }
 
 /** Onde conferir o traçado na fonte. */
-export function ligacaoFonte(t: Trilho): { href: string; texto: string } {
+export function ligacaoFonte(t: Trilho): { href: string; texto: string } | null {
   if (t.fonte === 'osm') return { href: `https://www.openstreetmap.org/${t.fonteRef}`, texto: 'Traçado no OpenStreetMap' }
-  if (t.fonte === 'cantanhede') return { href: t.website ?? t.fonteRef, texto: 'GPX do Município de Cantanhede' }
+  // Os traçados das câmaras não levam ligação: a página é informativa.
+  if (t.fonte === 'camara' || t.fonte === 'ficheiro') return null
   return { href: 'https://geocatalogo.icnf.pt/', texto: 'Traçado do ICNF' }
 }
 
 // ── Proveniência ───────────────────────────────────────────────────────
 
 export const TRILHOS_META: Sourced = published(
-  'OpenStreetMap · ICNF · Município de Cantanhede · Copernicus DEM · Guia da CIM Região de Coimbra',
+  'Câmaras municipais · OpenStreetMap · ICNF · Copernicus DEM · CIM Região de Coimbra · Turismo Centro de Portugal',
   `Traçados de ${TRILHOS_OBTIDOS_EM.slice(0, 7).split('-').reverse().join('/')}`,
   'Distância medida no traçado; altitudes e desnível medidos sobre o modelo Copernicus de 30 m, que é de superfície e ' +
-    'pode somar copas em mata cerrada. Duração, dificuldade e época vêm só da ficha do guia da CIM; não se calculam. ' +
+    'pode somar copas em mata cerrada. Duração, dificuldade e época vêm só das fichas publicadas (guia da CIM, Turismo Centro); não se calculam. ' +
     'Os códigos PR e GR são os do registo nacional da FCMP, que não publica quais estão homologados.',
   // Sem instante: é uma extracção datada, e o selo diria "há 14 h" como se
   // fosse uma medição de hoje. A data vai no rótulo.
   null,
+)
+
+export const REDE_META: Sourced = published(
+  `${GUIA_FONTE} · Turismo Centro de Portugal`,
+  `Guia de ${GUIA_DATA.slice(0, 4)} · Turismo Centro, 09/2026`,
+  'Fichas transcritas tal como publicadas.',
 )
 
 export const GUIA_META: Sourced = published(GUIA_FONTE, `Guia de ${GUIA_DATA.slice(0, 4)}`, 'Fichas transcritas do guia, tal como impressas.')

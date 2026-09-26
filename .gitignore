@@ -61,3 +61,6 @@ scripts/blender/*-orto-*.png
 /tinta-na-alta/node_modules
 /tinta-na-alta/dist
 /tinta-na-alta/scripts/.cache/
+
+# trilhos: traçados reunidos à mão (Wikiloc e outros), só para o gerador
+/GPX/

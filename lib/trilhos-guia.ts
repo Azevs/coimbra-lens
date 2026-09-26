@@ -110,7 +110,8 @@ export const GUIA_FICHAS: FichaGuia[] = [
  * principais percursos pedestres da Região"). Só nome e código — o guia não
  * traz mais nada destes. `ficha` aponta para `GUIA_FICHAS` quando existe.
  *
- * Penacova escreve "PR3" e "PR4" sem código de concelho; fica como está.
+ * Penacova escreve "PR3" e "PR4" sem código de concelho; o Turismo Centro
+ * escreve PR3 PCV e PR4 PCV, que é como estão sinalizados.
  */
 export interface EntradaRede {
   codigo: string | null
@@ -194,8 +195,8 @@ export const GUIA_REDE: EntradaRede[] = [
   r('Pampilhosa da Serra', 'PR9 PPS', 'Rota Velho de Unhais'),
   r('Penacova', 'PR1 PCV', 'Penacova, o Mondego e a Lampreia'),
   r('Penacova', 'PR2 PCV', 'Na Rota dos Moinhos do Buçaco'),
-  r('Penacova', 'PR3', 'Rota do Alva'),
-  r('Penacova', 'PR4', 'Ribeira de Arcos'),
+  r('Penacova', 'PR3 PCV', 'Rota do Alva'),
+  r('Penacova', 'PR4 PCV', 'Ribeira de Arcos'),
   r('Penacova', null, 'Livraria do Mondego', 'pi-livraria'),
   r('Penela', 'PR1 PNL', 'Trilho do Rebanho', 'pr1-pnl'),
   r('Penela', 'PR2 PNL', 'Percurso Pedestre da Pedra da Ferida à Louçainha'),

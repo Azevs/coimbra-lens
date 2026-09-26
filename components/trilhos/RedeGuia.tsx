@@ -2,7 +2,7 @@
 
 import SectionTitle from '@/components/ui/SectionTitle'
 import DataSource from '@/components/ui/DataSource'
-import { GUIA_META, GUIA_REDE, GUIA_URL, TRILHOS } from '@/lib/trilhos'
+import { FICHAS_TC, REDE_META, GUIA_REDE, GUIA_URL, TRILHOS } from '@/lib/trilhos'
 import { useTrilhos } from '@/lib/trilhos-estado'
 
 type Estado = 'carta' | 'ficha' | 'nome'
@@ -10,20 +10,41 @@ type Estado = 'carta' | 'ficha' | 'nome'
 const ESTADOS: Record<Estado, string> = {
   carta: 'Na carta',
   ficha: 'Com ficha, sem traçado publicado',
-  nome: 'Só o nome no guia',
+  nome: 'Só o nome',
 }
 
-/** Para cada entrada do índice do guia, o trilho da carta que lhe corresponde. */
-const REDE = GUIA_REDE.map((e) => {
+/**
+ * A rede: o índice do guia da CIM, mais as pequenas rotas que o Turismo
+ * Centro lista e o guia não (a rede nova da Lousã, os PR de Almalaguês, o
+ * Luso-Bussaco 360…). As grandes rotas ficam de fora — estão na carta.
+ */
+const noGuia = new Set(GUIA_REDE.map((e) => e.codigo).filter(Boolean))
+const EXTRA = FICHAS_TC.filter((f) => !/^(GR|CNE)/.test(f.codigo ?? '') && !(f.codigo && noGuia.has(f.codigo))).map((f) => ({
+  codigo: f.codigo,
+  nome: f.nome,
+  concelho: f.concelho,
+  ficha: f.id,
+}))
+
+/** Para cada entrada, o trilho da carta que lhe corresponde. */
+const REDE = [...GUIA_REDE, ...EXTRA].map((e) => {
   const trilho = TRILHOS.find((t) => (e.ficha && t.ficha === e.ficha) || (e.codigo && t.codigo === e.codigo)) ?? null
-  const estado: Estado = trilho ? 'carta' : e.ficha ? 'ficha' : 'nome'
-  return { ...e, trilho, estado }
+  const temFicha = Boolean(e.ficha) || FICHAS_TC.some((f) => f.codigo && f.codigo === e.codigo)
+  const estado: Estado = trilho ? 'carta' : temFicha ? 'ficha' : 'nome'
+  // O guia é de 2021 e a Lousã refez a rede depois (a "Rota das 4 Aldeias"
+  // é hoje a Rota do Trevim): vale o nome da carta ou da ficha mais recente.
+  const tc = e.codigo ? FICHAS_TC.find((f) => f.codigo === e.codigo) : null
+  const nome = trilho?.titulo ?? tc?.nome ?? e.nome
+  return { ...e, nome, trilho, estado }
 })
 
-const POR_CONCELHO = [...new Set(REDE.map((e) => e.concelho))].map((c) => ({
-  concelho: c,
-  entradas: REDE.filter((e) => e.concelho === c),
-}))
+const ordemCodigo = (c: string | null) => Number(/\d+(\.\d+)?/.exec(c ?? '')?.[0] ?? 99)
+const POR_CONCELHO = [...new Set(REDE.map((e) => e.concelho))]
+  .sort((a, b) => a.localeCompare(b, 'pt'))
+  .map((c) => ({
+    concelho: c,
+    entradas: REDE.filter((e) => e.concelho === c).sort((a, b) => ordemCodigo(a.codigo) - ordemCodigo(b.codigo)),
+  }))
 
 const CONTA = {
   carta: REDE.filter((e) => e.estado === 'carta').length,
@@ -51,7 +72,7 @@ export default function RedeGuia() {
         <SectionTitle
           label="A REDE"
           title="Concelho a concelho"
-          subtitle={`O guia de percursos da Região de Coimbra lista ${REDE.length} pequenas rotas e percursos interpretativos. ${CONTA.carta} estão desenhados na carta; ${CONTA.ficha} têm ficha mas ainda não têm traçado publicado; os restantes aparecem no guia só pelo nome.`}
+          subtitle={`A rede de pequenas rotas e percursos interpretativos da Região de Coimbra soma ${REDE.length} caminhos. ${CONTA.carta} estão desenhados na carta; ${CONTA.ficha} têm ficha mas ainda não têm traçado publicado; os restantes são conhecidos só pelo nome.`}
         />
 
         <ul className="trilhos-rede-legenda" aria-label="Legenda">
@@ -92,7 +113,7 @@ export default function RedeGuia() {
             O guia completo, com os mapas impressos de cada percurso ↗
           </a>
         </p>
-        <DataSource meta={GUIA_META} />
+        <DataSource meta={REDE_META} />
       </div>
     </section>
   )

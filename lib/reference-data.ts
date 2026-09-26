@@ -155,11 +155,21 @@ export const TRACKED: TrackedDatum[] = [
     // O TRILHOS_OBTIDOS_EM de lib/trilhos-dados.ts, repetido à mão pela
     // mesma razão das zonas verdes (o ficheiro gerado tem 70 KB).
     asOf: '2026-09',
-    source: 'OpenStreetMap · ICNF · Município de Cantanhede · Copernicus DEM',
+    source: 'Câmaras municipais · OpenStreetMap · ICNF · Copernicus DEM',
     // Os percursos novos entram no OSM aos poucos, e as câmaras vão
     // publicando GPX: uma revisão por semestre.
     refreshEvery: 6,
     usedIn: 'lib/trilhos-dados (scripts/build-trilhos.mjs)',
+  },
+  {
+    id: 'trilhos-tc',
+    label: 'Fichas de percursos do Turismo Centro de Portugal',
+    // FICHAS_TC em lib/trilhos-fichas-tc.ts, transcrito à mão do artigo.
+    asOf: '2026-09',
+    source: 'Turismo Centro de Portugal',
+    // Artigo vivo, sem data de revisão: ver uma vez por ano se mudou.
+    refreshEvery: 12,
+    usedIn: 'lib/trilhos-fichas-tc (FICHAS_TC)',
   },
   {
     id: 'trilhos-guia',

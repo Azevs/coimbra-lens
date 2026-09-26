@@ -4240,7 +4240,7 @@ footer a {
 }
 .trilho-facto dd { margin: 0.2rem 0 0; font-size: 1.05rem; color: var(--text-primary); line-height: 1.2; }
 .trilho-origem { font-size: 8.5px; letter-spacing: 0.06em; text-transform: lowercase; }
-.trilho-origem-guia { color: var(--tone-teal-text); }
+.trilho-origem-ficha { color: var(--tone-teal-text); }
 .trilho-origem-medido { color: var(--tone-amber-text); }
 
 .trilho-aviso {
