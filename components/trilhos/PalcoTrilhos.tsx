@@ -128,7 +128,7 @@ export default function PalcoTrilhos() {
               Da serra <em>ao mar</em>
             </h1>
             <p className="trilhos-lede">
-              {TRILHOS.length} percursos a pé em {concelhos} dos 19 concelhos, {fmt(TOTAL_KM)} quilómetros de caminho — das
+              {TRILHOS.length} percursos a pé na Região de Coimbra, em {concelhos} dos 19 concelhos: {fmt(TOTAL_KM)} quilómetros de caminho — das
               aldeias de xisto do Açor à Serra da Boa Viagem, sobre o mar.
             </p>
             <Filtros />

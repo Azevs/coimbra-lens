@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { ldMigalhas, pagina } from '@/lib/seo'
+import { ldPagina, pagina } from '@/lib/seo'
 import JsonLd from '@/components/seo/JsonLd'
 import { notFound } from 'next/navigation'
 import Navbar from '@/components/navigation/Navbar'
@@ -36,7 +36,7 @@ export default async function ZonaUrbanaPage({ params }: Props) {
   return (
     <>
       <JsonLd
-        dados={ldMigalhas([
+        dados={ldPagina([
           { nome: 'Zonas urbanas', caminho: 'zonas-urbanas' },
           { nome: z.zona.nome, caminho: `zonas-urbanas/${z.zona.id}` },
         ])}

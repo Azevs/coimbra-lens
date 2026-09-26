@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { ldMigalhas, pagina } from '@/lib/seo'
+import { ldPagina, pagina } from '@/lib/seo'
 import JsonLd from '@/components/seo/JsonLd'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -119,7 +119,7 @@ export default function SobrePage() {
 
   return (
     <>
-      <JsonLd dados={ldMigalhas([{ nome: 'Sobre', caminho: 'sobre' }])} />
+      <JsonLd dados={ldPagina([{ nome: 'Sobre', caminho: 'sobre' }])} />
       <a href="#conteudo" className="skip-link">
         Saltar para o conteúdo
       </a>

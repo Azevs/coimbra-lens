@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { ldMigalhas, pagina } from '@/lib/seo'
+import { ldPagina, pagina } from '@/lib/seo'
 import JsonLd from '@/components/seo/JsonLd'
 import Navbar from '@/components/navigation/Navbar'
 import SiteFooter from '@/components/navigation/SiteFooter'
@@ -19,7 +19,7 @@ export const metadata: Metadata = pagina({
   caminho: 'historia',
   titulo: 'Aeminium, a Coimbra romana',
   descricao:
-    'Antes de ser Coimbra, a cidade chamava-se Aeminium. O chão que os romanos construíram para o fórum — o criptopórtico — ainda lá está, por baixo do Museu Nacional Machado de Castro.',
+    'Antes de ser Coimbra, a cidade chamava-se Aeminium. O chão que os romanos construíram para o fórum — o criptopórtico — ainda lá está, por baixo do Museu Nacional de Machado de Castro.',
 })
 
 /**
@@ -32,7 +32,7 @@ export const metadata: Metadata = pagina({
 export default function HistoriaPage() {
   return (
     <>
-      <JsonLd dados={ldMigalhas([{ nome: 'História', caminho: 'historia' }])} />
+      <JsonLd dados={ldPagina([{ nome: 'História', caminho: 'historia' }])} />
       <a href="#conteudo" className="skip-link">
         Saltar para o conteúdo
       </a>
@@ -65,8 +65,9 @@ export default function HistoriaPage() {
 
           <div className="historia-entrada">
             <p className="historia-lede">
-              Antes de ser Coimbra, a cidade chamava-se Aeminium. O chão que os romanos construíram para a praça
-              principal <em>ainda lá está</em> — por baixo de um museu, na encosta que desce para o Mondego.
+              Antes de ser Coimbra, a cidade romana chamava-se Aeminium. O chão que os romanos construíram para a
+              praça principal <em>ainda lá está</em> — por baixo do Museu Nacional de Machado de Castro, na encosta que
+              desce para o Mondego.
             </p>
 
             <div className="historia-chave-caixa">

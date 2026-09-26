@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
-import { ldMigalhas, pagina } from '@/lib/seo'
+import { ldPagina, ldTrilhos, pagina } from '@/lib/seo'
+import { TRILHOS } from '@/lib/trilhos'
 import JsonLd from '@/components/seo/JsonLd'
 import Navbar from '@/components/navigation/Navbar'
 import SiteFooter from '@/components/navigation/SiteFooter'
@@ -23,7 +24,8 @@ export const metadata: Metadata = pagina({
 export default function TrilhosPage() {
   return (
     <>
-      <JsonLd dados={ldMigalhas([{ nome: 'Trilhos', caminho: 'trilhos' }])} />
+      <JsonLd dados={ldPagina([{ nome: 'Trilhos', caminho: 'trilhos' }])} />
+      <JsonLd dados={ldTrilhos(TRILHOS)} />
       <a href="#mapa" className="skip-link">
         Saltar para a carta
       </a>

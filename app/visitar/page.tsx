@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { ldMigalhas, ldPercurso, pagina } from '@/lib/seo'
+import { ldPagina, ldPercurso, pagina } from '@/lib/seo'
 import JsonLd from '@/components/seo/JsonLd'
 import Link from 'next/link'
 import Navbar from '@/components/navigation/Navbar'
@@ -72,11 +72,14 @@ for (const t of TEMPOS) for (const { a } of t.paragens) if (a.em3d && !primeiroC
 
 const dois = (n: number) => String(n).padStart(2, '0')
 
+/** O percurso inteiro, pela ordem do dia. */
+const PARAGENS = TEMPOS.flatMap((t) => t.paragens.map((p) => p.a))
+
 export default function VisitarPage() {
   return (
     <>
-      <JsonLd dados={ldMigalhas([{ nome: 'Visitar', caminho: 'visitar' }])} />
-      <JsonLd dados={ldPercurso('Um dia em Coimbra a pé', TEMPOS.flatMap((t) => t.paragens.map((p) => p.a)))} />
+      <JsonLd dados={ldPagina([{ nome: 'Visitar', caminho: 'visitar' }])} />
+      <JsonLd dados={ldPercurso('Um dia em Coimbra a pé', PARAGENS)} />
       <a href="#conteudo" className="skip-link">
         Saltar para o conteúdo
       </a>
@@ -101,8 +104,8 @@ export default function VisitarPage() {
           <div className="visitar-entrada">
             <p className="visitar-lede">
               Coimbra lê-se por andares. Em baixo, a Baixa e o Mondego; no alto da colina, o pátio da
-              universidade; do outro lado da ponte, a margem de onde se vê a Alta inteira. Um dia chega para
-              tudo — se se começar por baixo.
+              universidade; do outro lado da ponte, a margem de onde se vê a Alta inteira. Um dia a pé chega
+              para as {PARAGENS.length} paragens deste percurso — se se começar por baixo.
             </p>
             <ol className="visitar-indice" aria-label="Nesta página">
               <li>

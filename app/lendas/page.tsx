@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { ldMigalhas, pagina } from '@/lib/seo'
+import { ldPagina, pagina } from '@/lib/seo'
 import JsonLd from '@/components/seo/JsonLd'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -88,7 +88,7 @@ const EPISODIOS: Episodio[] = [
 export default function LendasPage() {
   return (
     <>
-      <JsonLd dados={ldMigalhas([{ nome: 'Lendas', caminho: 'lendas' }])} />
+      <JsonLd dados={ldPagina([{ nome: 'Lendas', caminho: 'lendas' }])} />
       <a href="#conteudo" className="skip-link">
         Saltar para o conteúdo
       </a>
@@ -116,7 +116,7 @@ export default function LendasPage() {
             <span className="font-display-italic" style={{ color: 'var(--accent)' }}>de Coimbra</span>
           </h1>
           <p className="lendas-entrada">
-            Histórias que a cidade conta há séculos, em desenho animado. Por baixo de cada episódio fica separado o que
+            Histórias que Coimbra conta há séculos, em desenho animado. Por baixo de cada episódio fica separado o que
             aconteceu do que se conta.
           </p>
         </div>

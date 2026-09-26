@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { ldMigalhas, pagina } from '@/lib/seo'
+import { ldPagina, pagina } from '@/lib/seo'
 import JsonLd from '@/components/seo/JsonLd'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -17,6 +17,11 @@ export const metadata: Metadata = pagina({
     ZONAS_URBANAS.map(({ zona, resumo }) => `${zona.nome}: ${resumo}`).join(' '),
 })
 
+/** "A Rua do Brasil e a Baixa" — as zonas têm todas nome feminino, como a descrição de cada uma já assume. */
+const NOMES = ZONAS_URBANAS.map(({ zona }) => `a ${zona.nome}`)
+const LISTA = (NOMES.length > 1 ? `${NOMES.slice(0, -1).join(', ')} e ${NOMES.at(-1)}` : NOMES[0]).replace(/^a/, 'A')
+const EDIFICIOS = ZONAS_URBANAS.reduce((s, { zona }) => s + zona.edificios, 0)
+
 /**
  * O índice das zonas urbanas. Cada zona tem página própria; aqui fica a
  * estampa de conjunto e dois números, e a grelha cresce com as zonas.
@@ -24,7 +29,7 @@ export const metadata: Metadata = pagina({
 export default function ZonasUrbanasPage() {
   return (
     <>
-      <JsonLd dados={ldMigalhas([{ nome: 'Zonas urbanas', caminho: 'zonas-urbanas' }])} />
+      <JsonLd dados={ldPagina([{ nome: 'Zonas urbanas', caminho: 'zonas-urbanas' }])} />
       <a href="#conteudo" className="skip-link">
         Saltar para o conteúdo
       </a>
@@ -66,8 +71,9 @@ export default function ZonasUrbanasPage() {
                 textWrap: 'pretty',
               }}
             >
-              Cada zona é uma rua, ou uma sequência de ruas, e o que está construído de um lado e do
-              outro. Escolha uma para a ver inteira e rodá-la.
+              {LISTA} de Coimbra em maqueta tridimensional: {numero(EDIFICIOS)} edifícios, um a um. Cada zona
+              é uma rua, ou uma sequência de ruas, e o que está construído de um lado e do outro. Escolha uma
+              para a ver inteira e rodá-la.
             </p>
           </div>
         </div>

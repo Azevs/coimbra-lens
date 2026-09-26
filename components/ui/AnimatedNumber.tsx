@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef, useSyncExternalStore } from 'react'
 import { gsap } from '@/lib/gsap-config'
 import { canAnimate } from '@/lib/motion'
 
@@ -12,6 +12,8 @@ interface AnimatedNumberProps {
   decimals?: number
   className?: string
 }
+
+const nada = () => () => {}
 
 function formatNum(val: number, decimals: number): string {
   return val.toLocaleString('pt-PT', {
@@ -47,6 +49,28 @@ export default function AnimatedNumber({
   const revealed = useRef(false)
   /** O último valor escrito, de onde a próxima transição parte. */
   const shown = useRef(0)
+  /** Veio no HTML do servidor: o render de hidratação usa o instantâneo do servidor. */
+  const doServidor = useRef(useSyncExternalStore(nada, () => false, () => true))
+
+  // O HTML traz o número verdadeiro — é o que lêem os motores de pesquisa e
+  // quem ainda não tem o JavaScript. Antes da primeira pintura decide-se a
+  // contagem: um número que veio do servidor e já está à vista fica como
+  // está (contar a partir de zero seria vê-lo desaparecer); os outros
+  // voltam a zero sem ninguém ver e contam quando entrarem em ecrã.
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    const aVista = r.bottom > 0 && r.top < window.innerHeight
+    if (doServidor.current && aVista) {
+      shown.current = value
+      revealed.current = true
+      return
+    }
+    if (canAnimate()) el.textContent = `${prefix}${formatNum(0, decimals)}${suffix}`
+    // Só à montagem: as mudanças de valor seguem pelo efeito de baixo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     const el = ref.current
@@ -100,7 +124,7 @@ export default function AnimatedNumber({
 
   return (
     <span ref={ref} className={`font-data ${className}`}>
-      {prefix}0{suffix}
+      {prefix}{formatNum(value, decimals)}{suffix}
     </span>
   )
 }

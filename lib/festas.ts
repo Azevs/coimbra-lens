@@ -5,6 +5,10 @@ export interface CulturalEvent {
   description: string
   month: number
   day: number
+  /** O dia é o da festa, e não só uma ordem dentro do mês. */
+  diaCerto?: boolean
+  /** Mês em que acaba, quando atravessa mais de um. */
+  mesFim?: number
   color: string
   icon: IconName
   category: string
@@ -34,14 +38,14 @@ export const EVENTS: CulturalEvent[] = [
   {
     name: 'Festas da Cidade e da Rainha Santa',
     description: 'A partir de 4 de julho, feriado municipal e dia da padroeira: dez dias de concertos e animação, e as procissões da Rainha Santa entre Santa Clara-a-Nova e Santa Cruz.',
-    month: 7, day: 4,
+    month: 7, day: 4, diaCerto: true,
     color: 'var(--tone-teal-text)', icon: 'landmark', category: 'Cidade',
     url: 'https://www.cm-coimbra.pt/areas/viver/cultura/eventos-regulares/festas-da-cidade-de-coimbra',
   },
   {
     name: 'Festival das Artes QuebraJazz',
     description: 'Música clássica e jazz ao ar livre, no anfiteatro da Colina de Camões, nos jardins da Quinta das Lágrimas. Estende-se por julho e agosto.',
-    month: 7, day: 12,
+    month: 7, day: 12, mesFim: 8,
     color: 'var(--tone-crimson-text)', icon: 'theatre', category: 'Música',
     url: 'https://www.festivaldasartes.com/',
   },

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
-import { ldMigalhas, pagina } from '@/lib/seo'
+import { PUBLICADORES, ldDataset, ldPagina, pagina } from '@/lib/seo'
+import { LIDO_EM } from '@/lib/frescura'
 import JsonLd from '@/components/seo/JsonLd'
 import Navbar from '@/components/navigation/Navbar'
 import SiteFooter from '@/components/navigation/SiteFooter'
@@ -8,6 +9,8 @@ import ParishMap from '@/components/map/ParishMap'
 import ParishPieces from '@/components/sections/ParishPieces'
 import { proportionalLayout } from '@/lib/parish-geometry'
 import { MUNICIPALITY, PARISH_ROWS } from '@/lib/parish-metrics'
+import { PARISH_CENSUS_YEAR } from '@/lib/parishes'
+import { fmt } from '@/lib/format'
 
 export const metadata: Metadata = pagina({
   caminho: 'territorio',
@@ -43,7 +46,27 @@ export default function TerritorioPage() {
 
   return (
     <>
-      <JsonLd dados={ldMigalhas([{ nome: 'Território', caminho: 'territorio' }])} />
+      <JsonLd dados={ldPagina([{ nome: 'Território', caminho: 'territorio' }])} />
+      <JsonLd
+        dados={ldDataset({
+          caminho: 'territorio',
+          nome: 'População e território das freguesias de Coimbra',
+          descricao:
+            'População residente, área, densidade, variação da população entre 2011 e 2021, índice de envelhecimento ' +
+            'e alojamentos sem residentes, para cada uma das 18 freguesias do concelho de Coimbra e para o concelho.',
+          publicadores: [PUBLICADORES.ine, PUBLICADORES.dgt],
+          variaveis: [
+            'População residente',
+            'Área (km²)',
+            'Densidade populacional (hab./km²)',
+            'Variação da população 2011–2021 (%)',
+            'Índice de envelhecimento',
+            'Alojamentos clássicos sem residentes (%)',
+          ],
+          periodo: `2011/${PARISH_CENSUS_YEAR}`,
+          lidoEm: LIDO_EM.territorio,
+        })}
+      />
       <a href="#conteudo" className="skip-link">
         Saltar para o conteúdo
       </a>
@@ -77,7 +100,8 @@ export default function TerritorioPage() {
               className="font-display"
               style={{ fontSize: 'clamp(1.25rem, 2.4vw, 1.625rem)', fontWeight: 400, lineHeight: 1.3, maxWidth: '36rem', textWrap: 'pretty' }}
             >
-              Dezoito freguesias, das colinas da cidade ao Baixo Mondego. Mais de metade de quem cá
+              Em {PARISH_CENSUS_YEAR}, o concelho de Coimbra tinha {fmt(MUNICIPALITY.population)} habitantes
+              em dezoito freguesias, das colinas da cidade ao Baixo Mondego. Mais de metade de quem cá
               vive mora em {COUNT_WORDS[n - 1] ?? n} delas, que ocupam {Math.round(areaShare)}% da
               área do concelho.
             </p>

@@ -1,11 +1,13 @@
 import type { Metadata } from 'next'
-import { ldMigalhas, pagina } from '@/lib/seo'
+import { PUBLICADORES, ldDataset, ldPagina, ldParques, pagina } from '@/lib/seo'
+import { LIDO_EM } from '@/lib/frescura'
 import JsonLd from '@/components/seo/JsonLd'
 import Navbar from '@/components/navigation/Navbar'
 import SiteFooter from '@/components/navigation/SiteFooter'
 import DataTicker from '@/components/hero/DataTicker'
 import GreenExplorer from '@/components/sections/GreenExplorer'
 import { IN_CITY, SPACES, TOTAL_HA, formatHa } from '@/lib/green'
+import { CITY_RADIUS_KM } from '@/lib/green-spaces'
 
 export const metadata: Metadata = pagina({
   caminho: 'zonas-verdes',
@@ -18,7 +20,21 @@ export const metadata: Metadata = pagina({
 export default function ZonasVerdesPage() {
   return (
     <>
-      <JsonLd dados={ldMigalhas([{ nome: 'Zonas verdes', caminho: 'zonas-verdes' }])} />
+      <JsonLd dados={ldPagina([{ nome: 'Zonas verdes', caminho: 'zonas-verdes' }])} />
+      <JsonLd
+        dados={ldDataset({
+          caminho: 'zonas-verdes',
+          nome: 'Espaços verdes públicos de Coimbra',
+          descricao:
+            'Matas, parques, jardins e reservas públicos com nome no concelho de Coimbra: tipo, área medida em ' +
+            'hectares, freguesia e distância em linha recta ao Largo da Portagem.',
+          publicadores: [PUBLICADORES.osm],
+          variaveis: ['Área (ha)', 'Tipo de espaço verde', 'Distância ao centro (km)', 'Freguesia'],
+          lidoEm: LIDO_EM['zonas-verdes'],
+          licenca: 'https://opendatacommons.org/licenses/odbl/1-0/',
+        })}
+      />
+      <JsonLd dados={ldParques(SPACES)} />
       <a href="#conteudo" className="skip-link">
         Saltar para o conteúdo
       </a>
@@ -65,9 +81,9 @@ export default function ZonasVerdesPage() {
                 textWrap: 'pretty',
               }}
             >
-              Da Mata do Choupal ao mais pequeno jardim de praça: {SPACES.length} lugares públicos
-              com nome, {formatHa(TOTAL_HA)} hectares, dos quais {IN_CITY.length} se alcançam a pé
-              de quem mora no centro.
+              Coimbra tem {SPACES.length} espaços verdes públicos com nome, da Mata do Choupal ao mais
+              pequeno jardim de praça: {formatHa(TOTAL_HA)} hectares, dos quais {IN_CITY.length} a menos
+              de {CITY_RADIUS_KM} km do centro, a pé.
             </p>
           }
         />

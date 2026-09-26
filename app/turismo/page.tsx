@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
-import { ldMigalhas, pagina } from '@/lib/seo'
+import { PUBLICADORES, ldDataset, ldPagina, pagina } from '@/lib/seo'
+import { LIDO_EM } from '@/lib/frescura'
 import JsonLd from '@/components/seo/JsonLd'
 import Navbar from '@/components/navigation/Navbar'
 import SiteFooter from '@/components/navigation/SiteFooter'
@@ -62,7 +63,20 @@ export default function TurismoPage() {
 
   return (
     <>
-      <JsonLd dados={ldMigalhas([{ nome: 'Turismo', caminho: 'turismo' }])} />
+      <JsonLd dados={ldPagina([{ nome: 'Turismo', caminho: 'turismo' }])} />
+      <JsonLd
+        dados={ldDataset({
+          caminho: 'turismo',
+          nome: 'Turismo em Coimbra: dormidas, hóspedes e alojamento',
+          descricao:
+            'Dormidas, hóspedes, estada média, capacidade, ocupação, proveitos e país de origem dos hóspedes nos ' +
+            'estabelecimentos de alojamento turístico do concelho de Coimbra, comparados com 2019 e com Portugal.',
+          publicadores: [PUBLICADORES.ine, PUBLICADORES.pordata],
+          variaveis: ['Dormidas', 'Hóspedes', 'Estada média (noites)', 'Camas', 'Taxa de ocupação cama (%)', 'Proveitos (€)', 'RevPAR (€)'],
+          periodo: `2019/${ultimoAno ?? 2024}`,
+          lidoEm: LIDO_EM.turismo,
+        })}
+      />
       <a href="#conteudo" className="skip-link">
         Saltar para o conteúdo
       </a>
@@ -97,7 +111,7 @@ export default function TurismoPage() {
               className="font-display"
               style={{ fontSize: 'clamp(1.25rem, 2.4vw, 1.625rem)', fontWeight: 400, lineHeight: 1.3, maxWidth: '38rem', textWrap: 'pretty' }}
             >
-              Perto de 700 mil dormidas por ano, quase tantas como antes da pandemia. Quem vem fica, em média, uma noite e meia — no resto do país são duas e meia.
+              Coimbra teve {fmt(Math.round(P.dormidas[2024] / 1000))} mil dormidas em 2024, quase tantas como antes da pandemia. Quem vem fica, em média, uma noite e meia — no resto do país são duas e meia.
             </p>
           </div>
 

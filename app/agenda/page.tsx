@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
-import { ldMigalhas, pagina } from '@/lib/seo'
+import { ldFestas, ldPagina, pagina } from '@/lib/seo'
+import { EVENTS } from '@/lib/festas'
 import JsonLd from '@/components/seo/JsonLd'
 import Navbar from '@/components/navigation/Navbar'
 import SiteFooter from '@/components/navigation/SiteFooter'
@@ -16,10 +17,14 @@ export const metadata: Metadata = pagina({
   descricao: 'O que está marcado em Coimbra este mês, dia a dia, e as festas que se repetem todos os anos.',
 })
 
+/** Refeita uma vez por dia: a próxima edição de cada festa muda de ano quando ela passa. */
+export const revalidate = 86400
+
 export default function AgendaPage() {
   return (
     <>
-      <JsonLd dados={ldMigalhas([{ nome: 'Agenda', caminho: 'agenda' }])} />
+      <JsonLd dados={ldPagina([{ nome: 'Agenda', caminho: 'agenda' }])} />
+      <JsonLd dados={ldFestas(EVENTS)} />
       <a href="#conteudo" className="skip-link">
         Saltar para o conteúdo
       </a>

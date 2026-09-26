@@ -11,6 +11,7 @@ import { useForecast } from '@/hooks/useForecast'
 import { useIpma, type Warning, type WarningLevel } from '@/hooks/useIpma'
 import AnimatedNumber from '@/components/ui/AnimatedNumber'
 import { HeroMap } from '@/components/map/LazyMaps'
+import type { LeiturasIniciais } from '@/lib/leituras'
 
 /**
  * Primeira página: Coimbra, agora.
@@ -85,6 +86,7 @@ function manchete(
   eaqi: number | null | undefined,
   rio: RiverTrend | undefined,
   temCaudal: boolean,
+  lidaEm: string | null | undefined,
 ): Oracao[] | null {
   const oracoes: Oracao[] = []
 
@@ -96,7 +98,7 @@ function manchete(
     })
   }
   if (temperatura != null) {
-    oracoes.push({ text: `${Math.round(temperatura)} graus ${alturaDoDia(new Date().getHours())}`, tone: TONE_TEMP })
+    oracoes.push({ text: `${Math.round(temperatura)} graus ${alturaDoDia(horaEmLisboa(lidaEm ? new Date(lidaEm) : new Date()))}`, tone: TONE_TEMP })
   }
 
   if (oracoes.length === 0) return null
@@ -116,12 +118,18 @@ function variacaoDoCaudal(serie: RiverPoint[] | undefined): number | null {
   return Math.round(((fim - inicio) / inicio) * 100)
 }
 
-/** Quem publica e há quanto tempo mediu. Nenhum número sem isto. */
-function sourceNote(meta: Sourced | undefined): string {
+/**
+ * Quem publica e há quanto tempo mediu. Nenhum número sem isto.
+ *
+ * Antes de o browser saber que horas são (no servidor e ao hidratar), diz
+ * a hora da leitura; depois, há quanto tempo foi.
+ */
+function sourceNote(meta: Sourced | undefined, agora: Date | null): string {
   if (!meta) return 'a ler…'
   if (meta.provenance === 'unavailable') return meta.note ?? 'fonte sem resposta'
   if (!meta.observedAt) return meta.source
-  const mins = Math.round((Date.now() - new Date(meta.observedAt).getTime()) / 60000)
+  if (!agora) return `${meta.source} · ${horaMinuto(new Date(meta.observedAt))}`
+  const mins = Math.round((agora.getTime() - new Date(meta.observedAt).getTime()) / 60000)
   const quando = mins < 1 ? 'agora' : mins < 60 ? `há ${mins} min` : `há ${Math.round(mins / 60)} h`
   return `${meta.source} · ${quando}`
 }
@@ -133,6 +141,12 @@ function dataDeEdicao(d: Date): string {
   const hora = new Intl.DateTimeFormat('pt-PT', { hour: '2-digit', minute: '2-digit', timeZone: LISBOA }).format(d)
   return `${dia} · ${hora.replace(':', 'h')}`
 }
+
+const horaMinuto = (d: Date) =>
+  new Intl.DateTimeFormat('pt-PT', { hour: '2-digit', minute: '2-digit', timeZone: LISBOA }).format(d).replace(':', 'h')
+
+const horaEmLisboa = (d: Date) =>
+  Number(new Intl.DateTimeFormat('pt-PT', { hour: 'numeric', hourCycle: 'h23', timeZone: LISBOA }).format(d))
 
 const diaLisboa = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: LISBOA }).format(d)
 
@@ -273,12 +287,16 @@ function Aviso({ warnings, agora }: { warnings: Warning[]; agora: Date }) {
 
 /* ── O herói ──────────────────────────────────────────────────────────── */
 
-export default function HeroSection() {
-  const { data: weather } = useWeather()
-  const { data: air } = useAirQuality()
-  const { data: river } = useRiver()
-  const { data: forecast } = useForecast()
-  const { data: ipma } = useIpma()
+/**
+ * `inicial` são as leituras que o servidor já fez: o HTML sai com a
+ * manchete e os números, e o browser substitui-as pelas suas quando chegam.
+ */
+export default function HeroSection({ inicial }: { inicial?: LeiturasIniciais }) {
+  const weather = useWeather().data ?? inicial?.weather
+  const air = useAirQuality().data ?? inicial?.air
+  const river = useRiver().data ?? inicial?.river
+  const forecast = useForecast().data ?? inicial?.forecast
+  const ipma = useIpma().data ?? inicial?.ipma
 
   // A hora e a luz são do browser de quem lê: calculadas depois de montar,
   // para o HTML do servidor não discordar do do cliente.
@@ -303,10 +321,10 @@ export default function HeroSection() {
 
   const hoje = forecast?.daily?.[0]
   const variacao = variacaoDoCaudal(river?.series)
-  const lead = manchete(weather?.temperature, air?.aqi, river?.trend, river?.discharge != null)
+  const lead = manchete(weather?.temperature, air?.aqi, river?.trend, river?.discharge != null, weather?.meta?.observedAt)
 
   const tempSeries = forecast?.hourly?.slice(0, 24).map((h) => h.temp) ?? []
-  const horaAgora = agora ? Number(new Intl.DateTimeFormat('pt-PT', { hour: 'numeric', hourCycle: 'h23', timeZone: LISBOA }).format(agora)) : undefined
+  const horaAgora = agora ? horaEmLisboa(agora) : undefined
   const riverSeries = river?.series?.map((p) => p.discharge) ?? []
   const riverSplit = river?.series?.findIndex((p) => p.forecast) ?? -1
 
@@ -358,7 +376,7 @@ export default function HeroSection() {
             decimals={1}
             unit="°C"
             qualifier={hoje ? `máx. ${fmt(hoje.maxTemp, 0)}° · mín. ${fmt(hoje.minTemp, 0)}°` : null}
-            note={sourceNote(weather?.meta)}
+            note={sourceNote(weather?.meta, agora)}
           >
             <Linha values={tempSeries} now={horaAgora} label="Temperatura de hoje, hora a hora, com a hora actual marcada" />
           </Sinal>
@@ -370,7 +388,7 @@ export default function HeroSection() {
             value={aqi}
             unit=" EAQI"
             qualifier={air?.status ?? null}
-            note={sourceNote(air?.meta)}
+            note={sourceNote(air?.meta, agora)}
           >
             <Escala
               steps={5}
@@ -394,7 +412,7 @@ export default function HeroSection() {
                 ? `${TREND_LABEL[river.trend]}${variacao != null ? ` · ${fmtSigned(variacao)}% em 7 dias` : ''}`
                 : null
             }
-            note={sourceNote(river?.meta)}
+            note={sourceNote(river?.meta, agora)}
           >
             <Linha
               values={riverSeries}
@@ -412,7 +430,7 @@ export default function HeroSection() {
             value={fire?.level ?? null}
             unit=" / 5"
             qualifier={fire?.label ?? null}
-            note={sourceNote(ipma?.meta)}
+            note={sourceNote(ipma?.meta, agora)}
           >
             <Escala
               steps={5}
